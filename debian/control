@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-ros
+Section: misc
+Priority: optional
+Maintainer: Michael Görner <me@v4hn.de>
+Build-Depends: debhelper (>= 9.0.0), ros-jazzy-ament-cmake, ros-jazzy-ros-workspace
+Homepage: http://moveit.ros.org
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-ros
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-jazzy-moveit-ros-benchmarks, ros-jazzy-moveit-ros-move-group, ros-jazzy-moveit-ros-planning, ros-jazzy-moveit-ros-planning-interface, ros-jazzy-moveit-ros-robot-interaction, ros-jazzy-moveit-ros-visualization, ros-jazzy-moveit-ros-warehouse, ros-jazzy-ros-workspace
+Description: Components of MoveIt that use ROS
