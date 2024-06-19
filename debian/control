@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-ros-control-interface
+Section: misc
+Priority: optional
+Maintainer: Henning Kayser <henningkayser@picknik.ai>
+Build-Depends: debhelper (>= 9.0.0), ros-jazzy-ament-cmake, ros-jazzy-controller-manager-msgs, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-moveit-simple-controller-manager, ros-jazzy-pluginlib (>= 1.11.2), ros-jazzy-rclcpp-action, ros-jazzy-trajectory-msgs, ros-jazzy-ros-workspace
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-ros-control-interface
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-jazzy-controller-manager-msgs, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-moveit-simple-controller-manager, ros-jazzy-pluginlib (>= 1.11.2), ros-jazzy-rclcpp-action, ros-jazzy-trajectory-msgs, ros-jazzy-ros-workspace
+Description: ros_control controller manager interface for MoveIt
