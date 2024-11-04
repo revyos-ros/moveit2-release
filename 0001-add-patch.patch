@@ -1,0 +1,69 @@
+From a360c80a5ec1053f80099d0b4855f09401253060 Mon Sep 17 00:00:00 2001
+From: Zheng Junjie <zhengjunjie@iscas.ac.cn>
+Date: Mon, 4 Nov 2024 11:51:37 +0800
+Subject: [PATCH] add patch
+
+---
+ debian/patches/series                         |  1 +
+ .../patches/update-deprecated-include.patch   | 41 +++++++++++++++++++
+ 2 files changed, 42 insertions(+)
+ create mode 100644 debian/patches/series
+ create mode 100644 debian/patches/update-deprecated-include.patch
+
+diff --git a/debian/patches/series b/debian/patches/series
+new file mode 100644
+index 000000000..2a895741d
+--- /dev/null
++++ b/debian/patches/series
+@@ -0,0 +1 @@
++update-deprecated-include.patch
+diff --git a/debian/patches/update-deprecated-include.patch b/debian/patches/update-deprecated-include.patch
+new file mode 100644
+index 000000000..69ad5886b
+--- /dev/null
++++ b/debian/patches/update-deprecated-include.patch
+@@ -0,0 +1,41 @@
++From b4187ffd73392d9a38c6b5d89a9d5c0d061c3c1f Mon Sep 17 00:00:00 2001
++From: Zheng Junjie <zhengjunjie@iscas.ac.cn>
++Date: Mon, 4 Nov 2024 11:50:29 +0800
++Subject: [PATCH] update deprecated include
++
++https://patch-diff.githubusercontent.com/raw/moveit/moveit2/pull/2811.diff
++---
++ src/BenchmarkExecutor.cpp | 7 ++-----
++ 1 file changed, 2 insertions(+), 5 deletions(-)
++
++diff --git a/src/BenchmarkExecutor.cpp b/src/BenchmarkExecutor.cpp
++index 00955e76c..80a5550ec 100644
++--- a/src/BenchmarkExecutor.cpp
+++++ b/src/BenchmarkExecutor.cpp
++@@ -39,13 +39,10 @@
++ #include <moveit/version.h>
++ #include <tf2_eigen/tf2_eigen.hpp>
++ 
++-// TODO(henningkayser): Switch to boost/timer/progress_display.hpp with Boost 1.72
++-// boost/progress.hpp is deprecated and will be replaced by boost/timer/progress_display.hpp in Boost 1.72.
++-// Until then we need to suppress the deprecation warning.
++ #define BOOST_ALLOW_DEPRECATED_HEADERS
++ #include <boost/regex.hpp>
++-#include <boost/progress.hpp>
++ #undef BOOST_ALLOW_DEPRECATED_HEADERS
+++#include <boost/timer/progress_display.hpp>
++ #include <boost/date_time/posix_time/posix_time.hpp>
++ #include <math.h>
++ #include <limits>
++@@ -784,7 +781,7 @@ void BenchmarkExecutor::runBenchmark(moveit_msgs::msg::MotionPlanRequest request
++   for (const std::pair<const std::string, std::vector<std::string>>& pipeline_entry : pipeline_map)
++     num_planners += pipeline_entry.second.size();
++ 
++-  boost::progress_display progress(num_planners * runs, std::cout);
+++  boost::timer::progress_display progress(num_planners * runs, std::cout);
++ 
++   // Iterate through all planning pipelines
++   for (const std::pair<const std::string, std::vector<std::string>>& pipeline_entry : pipeline_map)
++-- 
++2.46.0
++
+-- 
+2.46.0
+
