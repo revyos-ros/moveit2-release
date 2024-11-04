@@ -47,92 +47,94 @@ using namespace pilz_industrial_motion_planner;
 TEST(TrajectoryGeneratorTest, TestExceptionErrorCodeMapping)
 {
   {
-    auto tgil_ex = std::make_shared<TrajectoryGeneratorInvalidLimitsException>("");
+    std::shared_ptr<TrajectoryGeneratorInvalidLimitsException> tgil_ex{ new TrajectoryGeneratorInvalidLimitsException(
+        "") };
     EXPECT_EQ(tgil_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::FAILURE);
   }
 
   {
-    auto vsi_ex = std::make_shared<VelocityScalingIncorrect>("");
+    std::shared_ptr<VelocityScalingIncorrect> vsi_ex{ new VelocityScalingIncorrect("") };
     EXPECT_EQ(vsi_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_MOTION_PLAN);
   }
 
   {
-    auto asi_ex = std::make_shared<AccelerationScalingIncorrect>("");
+    std::shared_ptr<AccelerationScalingIncorrect> asi_ex{ new AccelerationScalingIncorrect("") };
     EXPECT_EQ(asi_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_MOTION_PLAN);
   }
 
   {
-    auto upg_ex = std::make_shared<UnknownPlanningGroup>("");
+    std::shared_ptr<UnknownPlanningGroup> upg_ex{ new UnknownPlanningGroup("") };
     EXPECT_EQ(upg_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_GROUP_NAME);
   }
 
   {
-    auto njniss_ex = std::make_shared<NoJointNamesInStartState>("");
+    std::shared_ptr<NoJointNamesInStartState> njniss_ex{ new NoJointNamesInStartState("") };
     EXPECT_EQ(njniss_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_ROBOT_STATE);
   }
 
   {
-    auto smiss_ex = std::make_shared<SizeMismatchInStartState>("");
+    std::shared_ptr<SizeMismatchInStartState> smiss_ex{ new SizeMismatchInStartState("") };
     EXPECT_EQ(smiss_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_ROBOT_STATE);
   }
 
   {
-    auto jofssoor_ex = std::make_shared<JointsOfStartStateOutOfRange>("");
+    std::shared_ptr<JointsOfStartStateOutOfRange> jofssoor_ex{ new JointsOfStartStateOutOfRange("") };
     EXPECT_EQ(jofssoor_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_ROBOT_STATE);
   }
 
   {
-    auto nzviss_ex = std::make_shared<NonZeroVelocityInStartState>("");
+    std::shared_ptr<NonZeroVelocityInStartState> nzviss_ex{ new NonZeroVelocityInStartState("") };
     EXPECT_EQ(nzviss_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_ROBOT_STATE);
   }
 
   {
-    auto neogcg_ex = std::make_shared<NotExactlyOneGoalConstraintGiven>("");
+    std::shared_ptr<NotExactlyOneGoalConstraintGiven> neogcg_ex{ new NotExactlyOneGoalConstraintGiven("") };
     EXPECT_EQ(neogcg_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_GOAL_CONSTRAINTS);
   }
 
   {
-    auto oogta_ex = std::make_shared<OnlyOneGoalTypeAllowed>("");
+    std::shared_ptr<OnlyOneGoalTypeAllowed> oogta_ex{ new OnlyOneGoalTypeAllowed("") };
     EXPECT_EQ(oogta_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_GOAL_CONSTRAINTS);
   }
 
   {
-    auto ssgsm_ex = std::make_shared<StartStateGoalStateMismatch>("");
+    std::shared_ptr<StartStateGoalStateMismatch> ssgsm_ex{ new StartStateGoalStateMismatch("") };
     EXPECT_EQ(ssgsm_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_GOAL_CONSTRAINTS);
   }
 
   {
-    auto jcdnbtg_ex = std::make_shared<JointConstraintDoesNotBelongToGroup>("");
+    std::shared_ptr<JointConstraintDoesNotBelongToGroup> jcdnbtg_ex{ new JointConstraintDoesNotBelongToGroup("") };
     EXPECT_EQ(jcdnbtg_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_GOAL_CONSTRAINTS);
   }
 
   {
-    auto jogoor_ex = std::make_shared<JointsOfGoalOutOfRange>("");
+    std::shared_ptr<JointsOfGoalOutOfRange> jogoor_ex{ new JointsOfGoalOutOfRange("") };
     EXPECT_EQ(jogoor_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_GOAL_CONSTRAINTS);
   }
 
   {
-    auto pcnm_ex = std::make_shared<PositionConstraintNameMissing>("");
+    std::shared_ptr<PositionConstraintNameMissing> pcnm_ex{ new PositionConstraintNameMissing("") };
     EXPECT_EQ(pcnm_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_GOAL_CONSTRAINTS);
   }
 
   {
-    auto ocnm_ex = std::make_shared<OrientationConstraintNameMissing>("");
+    std::shared_ptr<OrientationConstraintNameMissing> ocnm_ex{ new OrientationConstraintNameMissing("") };
     EXPECT_EQ(ocnm_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_GOAL_CONSTRAINTS);
   }
 
   {
-    auto pocnm_ex = std::make_shared<PositionOrientationConstraintNameMismatch>("");
+    std::shared_ptr<PositionOrientationConstraintNameMismatch> pocnm_ex{ new PositionOrientationConstraintNameMismatch(
+        "") };
     EXPECT_EQ(pocnm_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_GOAL_CONSTRAINTS);
   }
 
   {
-    auto nisa_ex = std::make_shared<NoIKSolverAvailable>("");
+    std::shared_ptr<NoIKSolverAvailable> nisa_ex{ new NoIKSolverAvailable("") };
     EXPECT_EQ(nisa_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::NO_IK_SOLUTION);
   }
 
   {
-    auto nppg_ex = std::make_shared<NoPrimitivePoseGiven>("");
+    std::shared_ptr<NoPrimitivePoseGiven> nppg_ex{ new NoPrimitivePoseGiven("") };
     EXPECT_EQ(nppg_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_GOAL_CONSTRAINTS);
   }
 }

@@ -51,7 +51,6 @@
 #include <moveit/utils/robot_model_test_utils.h>
 #include <moveit/ompl_interface/parameterization/joint_space/constrained_planning_state_space.h>
 #include <moveit_msgs/msg/constraints.hpp>
-#include <moveit/utils/logger.hpp>
 
 #include <ompl/util/Exception.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
@@ -59,10 +58,8 @@
 
 #include "load_test_robot.h"
 
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.planners.ompl.test_constrained_planning_state_space");
-}
+static const rclcpp::Logger LOGGER =
+    rclcpp::get_logger("moveit.ompl_planning.test.test_constrained_planning_state_space");
 
 /** \brief Dummy constraint for testing, always satisfied. We need this to create and OMPL ConstrainedStateSpace. **/
 class DummyConstraint : public ompl::base::Constraint
@@ -77,7 +74,7 @@ public:
   }
 };
 
-/** \brief Robot independent implementation of the tests.  **/
+/** \brief Robot indepentent implementation of the tests.  **/
 class TestConstrainedStateSpace : public ompl_interface_testing::LoadTestRobot, public testing::Test
 {
 protected:
@@ -218,9 +215,9 @@ protected:
       const moveit::core::JointModel* joint_model = joint_model_group_->getJointModel(joint_model_names[joint_index]);
       EXPECT_FALSE(joint_model == nullptr);
 
-      RCLCPP_DEBUG_STREAM(getLogger(), "Joint model: " << joint_model->getName() << " index: " << joint_index);
-      RCLCPP_DEBUG_STREAM(getLogger(), "first index: " << joint_model->getFirstVariableIndex() * sizeof(double));
-      RCLCPP_DEBUG_STREAM(getLogger(), "width: " << joint_model->getVariableCount() * sizeof(double));
+      RCLCPP_DEBUG_STREAM(LOGGER, "Joint model: " << joint_model->getName() << " index: " << joint_index);
+      RCLCPP_DEBUG_STREAM(LOGGER, "first index: " << joint_model->getFirstVariableIndex() * sizeof(double));
+      RCLCPP_DEBUG_STREAM(LOGGER, "width: " << joint_model->getVariableCount() * sizeof(double));
 
       moveit_state_space_->copyJointToOMPLState(ompl_state.get(), moveit_state, joint_model, joint_index);
     }

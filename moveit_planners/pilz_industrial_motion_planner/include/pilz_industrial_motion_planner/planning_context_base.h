@@ -78,7 +78,7 @@ public:
    * on failure
    * @return true on success, false otherwise
    */
-  void solve(planning_interface::MotionPlanResponse& res) override;
+  bool solve(planning_interface::MotionPlanResponse& res) override;
 
   /**
    * @brief Will return the same trajectory as
@@ -89,7 +89,7 @@ public:
    * @param res The detailed response
    * @return true on success, false otherwise
    */
-  void solve(planning_interface::MotionPlanDetailedResponse& res) override;
+  bool solve(planning_interface::MotionPlanDetailedResponse& res) override;
 
   /**
    * @brief Will terminate solve()
@@ -117,46 +117,51 @@ protected:
 };
 
 template <typename GeneratorT>
-void pilz_industrial_motion_planner::PlanningContextBase<GeneratorT>::solve(planning_interface::MotionPlanResponse& res)
+bool pilz_industrial_motion_planner::PlanningContextBase<GeneratorT>::solve(planning_interface::MotionPlanResponse& res)
 {
-  if (terminated_)
+  if (!terminated_)
   {
-    RCLCPP_ERROR(rclcpp::get_logger("moveit.pilz_industrial_motion_planner.planning_context_base"),
-                 "Using solve on a terminated planning context!");
-    res.error_code.val = moveit_msgs::msg::MoveItErrorCodes::PLANNING_FAILED;
-    return;
+    // Use current state as start state if not set
+    if (request_.start_state.joint_state.name.empty())
+    {
+      moveit_msgs::msg::RobotState current_state;
+      moveit::core::robotStateToRobotStateMsg(getPlanningScene()->getCurrentState(), current_state);
+      request_.start_state = current_state;
+    }
+    bool result = generator_.generate(getPlanningScene(), request_, res);
+    return result;
+    // res.error_code_.val = moveit_msgs::msg::MoveItErrorCodes::INVALID_MOTION_PLAN;
+    // return false; // TODO
   }
-  // Use current state as start state if not set
-  if (request_.start_state.joint_state.name.empty())
-  {
-    moveit_msgs::msg::RobotState current_state;
-    moveit::core::robotStateToRobotStateMsg(getPlanningScene()->getCurrentState(), current_state);
-    request_.start_state = current_state;
-  }
-  generator_.generate(getPlanningScene(), request_, res);
+
+  RCLCPP_ERROR(rclcpp::get_logger("moveit.pilz_industrial_motion_planner.planning_context_base"),
+               "Using solve on a terminated planning context!");
+  res.error_code_.val = moveit_msgs::msg::MoveItErrorCodes::PLANNING_FAILED;
+  return false;
 }
 
 template <typename GeneratorT>
-void pilz_industrial_motion_planner::PlanningContextBase<GeneratorT>::solve(
+bool pilz_industrial_motion_planner::PlanningContextBase<GeneratorT>::solve(
     planning_interface::MotionPlanDetailedResponse& res)
 {
   // delegate to regular response
   planning_interface::MotionPlanResponse undetailed_response;
-  solve(undetailed_response);
+  bool result = solve(undetailed_response);
 
-  res.description.push_back("plan");
-  res.trajectory.push_back(undetailed_response.trajectory);
-  res.processing_time.push_back(undetailed_response.planning_time);
+  res.description_.push_back("plan");
+  res.trajectory_.push_back(undetailed_response.trajectory_);
+  res.processing_time_.push_back(undetailed_response.planning_time_);
 
-  res.description.push_back("simplify");
-  res.trajectory.push_back(undetailed_response.trajectory);
-  res.processing_time.push_back(0);
+  res.description_.push_back("simplify");
+  res.trajectory_.push_back(undetailed_response.trajectory_);
+  res.processing_time_.push_back(0);
 
-  res.description.push_back("interpolate");
-  res.trajectory.push_back(undetailed_response.trajectory);
-  res.processing_time.push_back(0);
+  res.description_.push_back("interpolate");
+  res.trajectory_.push_back(undetailed_response.trajectory_);
+  res.processing_time_.push_back(0);
 
-  res.error_code = undetailed_response.error_code;
+  res.error_code_ = undetailed_response.error_code_;
+  return result;
 }
 
 template <typename GeneratorT>

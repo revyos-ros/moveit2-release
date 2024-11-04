@@ -105,30 +105,30 @@ public:
 
   /** \brief Make sure the active controllers are such that trajectories that actuate joints in the specified group can
      be executed.
-      \note If the 'moveit_manage_controllers' parameter is false and the controllers that happen to be active do not
-     cover the joints in the group to be actuated, this function fails. */
+      \note If manage_controllers_ is false and the controllers that happen to be active do not cover the joints in the
+     group to be actuated, this function fails. */
   bool ensureActiveControllersForGroup(const std::string& group);
 
   /** \brief Make sure the active controllers are such that trajectories that actuate joints in the specified set can be
      executed.
-      \note If the 'moveit_manage_controllers' parameter is false and the controllers that happen to be active do not
-     cover the joints to be actuated, this function fails. */
+      \note If manage_controllers_ is false and the controllers that happen to be active do not cover the joints to be
+     actuated, this function fails. */
   bool ensureActiveControllersForJoints(const std::vector<std::string>& joints);
 
   /** \brief Make sure a particular controller is active.
-      \note If the 'moveit_manage_controllers' parameter is false and the controllers that happen to be active do not
-     include the one specified as argument, this function fails. */
+      \note If manage_controllers_ is false and the controllers that happen to be active to not include the one
+     specified as argument, this function fails. */
   bool ensureActiveController(const std::string& controller);
 
   /** \brief Make sure a particular set of controllers are active.
-      \note If the 'moveit_manage_controllers' parameter is false and the controllers that happen to be active do not
-     include the ones specified as argument, this function fails. */
+      \note If manage_controllers_ is false and the controllers that happen to be active to not include the ones
+     specified as argument, this function fails. */
   bool ensureActiveControllers(const std::vector<std::string>& controllers);
 
-  /** \brief Check if a controller is active. */
+  /** \brief Check if a controller is active */
   bool isControllerActive(const std::string& controller);
 
-  /** \brief Check if a set of controllers is active. */
+  /** \brief Check if a set of controllers are active */
   bool areControllersActive(const std::vector<std::string>& controllers);
 
   /// Add a trajectory for future execution. Optionally specify a controller to use for the trajectory. If no controller
@@ -168,6 +168,41 @@ public:
   /// waitForExecution()
   moveit_controller_manager::ExecutionStatus executeAndWait(bool auto_clear = true);
 
+  /// Add a trajectory for immediate execution. Optionally specify a controller to use for the trajectory. If no
+  /// controller is specified, a default is used. This call is non-blocking.
+  bool pushAndExecute(const moveit_msgs::msg::RobotTrajectory& trajectory, const std::string& controller = "");
+
+  /// Add a trajectory for immediate execution. Optionally specify a controller to use for the trajectory. If no
+  /// controller is specified, a default is used. This call is non-blocking.
+  bool pushAndExecute(const trajectory_msgs::msg::JointTrajectory& trajectory, const std::string& controller = "");
+
+  /// Add a trajectory that consists of a single state for immediate execution. Optionally specify a controller to use
+  /// for the trajectory.
+  /// If no controller is specified, a default is used. This call is non-blocking.
+  bool pushAndExecute(const sensor_msgs::msg::JointState& state, const std::string& controller = "");
+
+  /// Add a trajectory for immediate execution. Optionally specify a set of controllers to consider using for the
+  /// trajectory. Multiple controllers can be used simultaneously
+  /// to execute the different parts of the trajectory. If multiple controllers can be used, preference is given to the
+  /// already loaded ones.
+  /// If no controller is specified, a default is used. This call is non-blocking.
+  bool pushAndExecute(const trajectory_msgs::msg::JointTrajectory& trajectory,
+                      const std::vector<std::string>& controllers);
+
+  /// Add a trajectory for immediate execution. Optionally specify a set of controllers to consider using for the
+  /// trajectory. Multiple controllers can be used simultaneously
+  /// to execute the different parts of the trajectory. If multiple controllers can be used, preference is given to the
+  /// already loaded ones.
+  /// If no controller is specified, a default is used. This call is non-blocking.
+  bool pushAndExecute(const moveit_msgs::msg::RobotTrajectory& trajectory, const std::vector<std::string>& controllers);
+
+  /// Add a trajectory that consists of a single state for immediate execution. Optionally specify a set of controllers
+  /// to consider using for the trajectory.
+  /// Multiple controllers can be used simultaneously to execute the different parts of the trajectory. If multiple
+  /// controllers can be used, preference
+  /// is given to the already loaded ones. If no controller is specified, a default is used. This call is non-blocking.
+  bool pushAndExecute(const sensor_msgs::msg::JointState& state, const std::vector<std::string>& controllers);
+
   /// Wait until the execution is complete. This only works for executions started by execute().  If you call this after
   /// pushAndExecute(), it will immediately stop execution.
   moveit_controller_manager::ExecutionStatus waitForExecution();
@@ -193,41 +228,23 @@ public:
   /// longer than expected, the trajectory is canceled
   void enableExecutionDurationMonitoring(bool flag);
 
-  /// Get the current status of the monitoring of trajectory execution duration.
-  bool executionDurationMonitoring() const;
-
   /// When determining the expected duration of a trajectory, this multiplicative factor is applied
   /// to get the allowed duration of execution
   void setAllowedExecutionDurationScaling(double scaling);
-
-  /// Get the current scaling of the duration of a trajectory to get the allowed duration of execution.
-  double allowedExecutionDurationScaling() const;
 
   /// When determining the expected duration of a trajectory, this multiplicative factor is applied
   /// to allow more than the expected execution time before triggering trajectory cancel
   void setAllowedGoalDurationMargin(double margin);
 
-  /// Get the current margin of the duration of a trajectory to get the allowed duration of execution.
-  double allowedGoalDurationMargin() const;
-
   /// Before sending a trajectory to a controller, scale the velocities by the factor specified.
   /// By default, this is 1.0
   void setExecutionVelocityScaling(double scaling);
 
-  /// Get the current scaling of the execution velocities.
-  double executionVelocityScaling() const;
-
   /// Set joint-value tolerance for validating trajectory's start point against current robot state
   void setAllowedStartTolerance(double tolerance);
 
-  /// Get the current joint-value for validating trajectory's start point against current robot state.
-  double allowedStartTolerance() const;
-
   /// Enable or disable waiting for trajectory completion
   void setWaitForTrajectoryCompletion(bool flag);
-
-  /// Get the current state of waiting for the trajectory being completed.
-  bool waitForTrajectoryCompletion() const;
 
   rclcpp::Node::SharedPtr getControllerManagerNode()
   {
@@ -285,6 +302,7 @@ private:
                      bool auto_clear);
   bool executePart(std::size_t part_index);
   bool waitForRobotToStop(const TrajectoryExecutionContext& context, double wait_time = 1.0);
+  void continuousExecutionThread();
 
   void stopExecutionInternal();
 
@@ -296,7 +314,6 @@ private:
   const std::string name_ = "trajectory_execution_manager";
 
   rclcpp::Node::SharedPtr node_;
-  rclcpp::Logger logger_;
   rclcpp::Node::SharedPtr controller_mgr_node_;
   std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> private_executor_;
   std::thread private_executor_thread_;
@@ -309,8 +326,14 @@ private:
   // thread used to execute trajectories using the execute() command
   std::unique_ptr<std::thread> execution_thread_;
 
+  // thread used to execute trajectories using pushAndExecute()
+  std::unique_ptr<std::thread> continuous_execution_thread_;
+
   std::mutex execution_state_mutex_;
+  std::mutex continuous_execution_mutex_;
   std::mutex execution_thread_mutex_;
+
+  std::condition_variable continuous_execution_condition_;
 
   // this condition is used to notify the completion of execution for given trajectories
   std::condition_variable execution_complete_condition_;
@@ -322,7 +345,10 @@ private:
   mutable std::mutex time_index_mutex_;
   bool execution_complete_;
 
+  bool stop_continuous_execution_;
+  bool run_continuous_execution_thread_;
   std::vector<TrajectoryExecutionContext*> trajectories_;
+  std::deque<TrajectoryExecutionContext*> continuous_execution_queue_;
 
   std::unique_ptr<pluginlib::ClassLoader<moveit_controller_manager::MoveItControllerManager> > controller_manager_loader_;
   moveit_controller_manager::MoveItControllerManagerPtr controller_manager_;
@@ -333,7 +359,6 @@ private:
   // 'global' values
   double allowed_execution_duration_scaling_;
   double allowed_goal_duration_margin_;
-  bool control_multi_dof_joint_variables_;
   // controller-specific values
   // override the 'global' values
   std::map<std::string, double> controller_allowed_execution_duration_scaling_;

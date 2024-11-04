@@ -173,7 +173,7 @@ private:
   /**
    * @brief Converts string vector to double vector.
    */
-  static inline std::vector<double> strVec2doubleVec(std::vector<std::string>& strVec);
+  inline static std::vector<double> strVec2doubleVec(std::vector<std::string>& strVec);
 
 public:
   /**

@@ -184,23 +184,23 @@ private Q_SLOTS:
 class ProgressBarEditor : public QWidget
 {
   Q_OBJECT
-  Q_PROPERTY(double value READ getValue WRITE setValue NOTIFY valueChanged USER true)
+  Q_PROPERTY(float value READ getValue WRITE setValue NOTIFY valueChanged USER true)
 
 public:
   /// Create a progressbar-like slider for editing values in range mix..max
-  ProgressBarEditor(QWidget* parent = nullptr, double min = -1.0, double max = 0.0, int digits = 0);
+  ProgressBarEditor(QWidget* parent = nullptr, float min = -1.0, float max = 0.0, int digits = 0);
 
-  void setValue(double value)
+  void setValue(float value)
   {
     value_ = value;
   }
-  double getValue() const
+  float getValue() const
   {
     return value_;
   }
 
 Q_SIGNALS:
-  void valueChanged(double value);
+  void valueChanged(float value);
   void editingFinished();
 
 protected:
@@ -210,9 +210,9 @@ protected:
   void mouseReleaseEvent(QMouseEvent* event) override;
 
 private:
-  double value_;
-  double min_;
-  double max_;
+  float value_;
+  float min_;
+  float max_;
   int digits_;  ///< number of decimal digits for formatting of the value
 };
 

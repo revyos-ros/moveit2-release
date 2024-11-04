@@ -365,9 +365,9 @@ private:
  *
  *  And then the constraints can be written as
  *
- *     - absolute_x_axis_tolerance < error[0] < absolute_x_axis_tolerance
- *     - absolute_y_axis_tolerance < error[1] < absolute_y_axis_tolerance
- *     - absolute_z_axis_tolerance < error[2] < absolute_z_axis_tolerance
+ *     - absolute_x_axis_tolerance / 2 < error[0] < absolute_x_axis_tolerance / 2
+ *     - absolute_y_axis_tolerance / 2 < error[1] < absolute_y_axis_tolerance / 2
+ *     - absolute_z_axis_tolerance / 2 < error[2] < absolute_z_axis_tolerance / 2
  *
  * **IMPORTANT** It is NOT how orientation error is handled in the default MoveIt constraint samplers, where XYZ
  * intrinsic euler angles are used. Using exponential coordinates is analog to how orientation error is calculated in
@@ -446,7 +446,7 @@ ompl::base::ConstraintPtr createOMPLConstraints(const moveit::core::RobotModelCo
  * https://ethz.ch/content/dam/ethz/special-interest/mavt/robotics-n-intelligent-systems/rsl-dam/documents/RobotDynamics2016/RD2016script.pdf
  * Eq. 2.107
  * */
-inline Eigen::Matrix3d angularVelocityToAngleAxis(double angle, const Eigen::Ref<const Eigen::Vector3d>& axis)
+inline Eigen::Matrix3d angularVelocityToAngleAxis(const double& angle, const Eigen::Ref<const Eigen::Vector3d>& axis)
 {
   double t{ std::abs(angle) };
   Eigen::Matrix3d r_skew;

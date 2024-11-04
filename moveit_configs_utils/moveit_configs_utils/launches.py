@@ -1,5 +1,3 @@
-import os
-
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
@@ -197,12 +195,7 @@ def generate_move_group_launch(moveit_config):
         DeclareBooleanLaunchArg("publish_monitored_planning_scene", default_value=True)
     )
     # load non-default MoveGroup capabilities (space separated)
-    ld.add_action(
-        DeclareLaunchArgument(
-            "capabilities",
-            default_value=moveit_config.move_group_capabilities["capabilities"],
-        )
-    )
+    ld.add_action(DeclareLaunchArgument("capabilities", default_value=""))
     # inhibit these default MoveGroup capabilities (space separated)
     ld.add_action(DeclareLaunchArgument("disable_capabilities", default_value=""))
 
@@ -244,16 +237,14 @@ def generate_move_group_launch(moveit_config):
         parameters=move_group_params,
         extra_debug_args=["--debug"],
         # Set the display variable, in case OpenGL code is used internally
-        additional_env={"DISPLAY": os.environ["DISPLAY"]},
+        additional_env={"DISPLAY": ":0"},
     )
     return ld
 
 
-def generate_demo_launch(moveit_config, launch_package_path=None):
+def generate_demo_launch(moveit_config):
     """
     Launches a self contained demo
-
-    launch_package_path is optional to use different launch and config packages
 
     Includes
      * static_virtual_joint_tfs
@@ -263,9 +254,6 @@ def generate_demo_launch(moveit_config, launch_package_path=None):
      * warehouse_db (optional)
      * ros2_control_node + controller spawners
     """
-    if launch_package_path == None:
-        launch_package_path = moveit_config.package_path
-
     ld = LaunchDescription()
     ld.add_action(
         DeclareBooleanLaunchArg(
@@ -282,11 +270,11 @@ def generate_demo_launch(moveit_config, launch_package_path=None):
         )
     )
     ld.add_action(DeclareBooleanLaunchArg("use_rviz", default_value=True))
+
     # If there are virtual joints, broadcast static tf by including virtual_joints launch
     virtual_joints_launch = (
-        launch_package_path / "launch/static_virtual_joint_tfs.launch.py"
+        moveit_config.package_path / "launch/static_virtual_joint_tfs.launch.py"
     )
-
     if virtual_joints_launch.exists():
         ld.add_action(
             IncludeLaunchDescription(
@@ -298,7 +286,7 @@ def generate_demo_launch(moveit_config, launch_package_path=None):
     ld.add_action(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                str(launch_package_path / "launch/rsp.launch.py")
+                str(moveit_config.package_path / "launch/rsp.launch.py")
             ),
         )
     )
@@ -306,7 +294,7 @@ def generate_demo_launch(moveit_config, launch_package_path=None):
     ld.add_action(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                str(launch_package_path / "launch/move_group.launch.py")
+                str(moveit_config.package_path / "launch/move_group.launch.py")
             ),
         )
     )
@@ -315,7 +303,7 @@ def generate_demo_launch(moveit_config, launch_package_path=None):
     ld.add_action(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                str(launch_package_path / "launch/moveit_rviz.launch.py")
+                str(moveit_config.package_path / "launch/moveit_rviz.launch.py")
             ),
             condition=IfCondition(LaunchConfiguration("use_rviz")),
         )
@@ -325,7 +313,7 @@ def generate_demo_launch(moveit_config, launch_package_path=None):
     ld.add_action(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                str(launch_package_path / "launch/warehouse_db.launch.py")
+                str(moveit_config.package_path / "launch/warehouse_db.launch.py")
             ),
             condition=IfCondition(LaunchConfiguration("db")),
         )
@@ -337,10 +325,8 @@ def generate_demo_launch(moveit_config, launch_package_path=None):
             package="controller_manager",
             executable="ros2_control_node",
             parameters=[
+                moveit_config.robot_description,
                 str(moveit_config.package_path / "config/ros2_controllers.yaml"),
-            ],
-            remappings=[
-                ("/controller_manager/robot_description", "/robot_description"),
             ],
         )
     )
@@ -348,7 +334,7 @@ def generate_demo_launch(moveit_config, launch_package_path=None):
     ld.add_action(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                str(launch_package_path / "launch/spawn_controllers.launch.py")
+                str(moveit_config.package_path / "launch/spawn_controllers.launch.py")
             ),
         )
     )

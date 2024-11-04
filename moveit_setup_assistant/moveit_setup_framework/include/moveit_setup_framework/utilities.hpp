@@ -36,7 +36,6 @@
 
 #pragma once
 
-#include <ament_index_cpp/get_package_prefix.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <filesystem>
 #include <string>
@@ -50,14 +49,7 @@ namespace moveit_setup
  */
 inline std::filesystem::path getSharePath(const std::string& package_name)
 {
-  try
-  {
-    return std::filesystem::path(ament_index_cpp::get_package_share_directory(package_name));
-  }
-  catch (const std::runtime_error& e)
-  {
-    return std::filesystem::path();
-  }
+  return std::filesystem::path(ament_index_cpp::get_package_share_directory(package_name));
 }
 
 /**

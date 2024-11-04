@@ -37,7 +37,6 @@
 #include <moveit/warehouse/planning_scene_storage.h>
 #include <moveit/warehouse/constraints_storage.h>
 #include <moveit/warehouse/state_storage.h>
-#include <moveit/utils/logger.hpp>
 #include <boost/program_options/cmdline.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -48,12 +47,7 @@
 #include <rclcpp/node.hpp>
 #include <rclcpp/node_options.hpp>
 #include <rclcpp/publisher.hpp>
-#include <rclcpp/version.h>
-#if RCLCPP_VERSION_GTE(20, 0, 0)
-#include <rclcpp/event_handler.hpp>
-#else
 #include <rclcpp/qos_event.hpp>
-#endif
 #include <rclcpp/rate.hpp>
 #include <rclcpp/utilities.hpp>
 
@@ -65,6 +59,8 @@ static const std::string CONSTRAINTS_TOPIC = "constraints";
 
 static const std::string STATES_TOPIC = "robot_states";
 
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.ros.warehouse.broadcast");
+
 using namespace std::chrono_literals;
 
 int main(int argc, char** argv)
@@ -74,7 +70,6 @@ int main(int argc, char** argv)
   node_options.allow_undeclared_parameters(true);
   node_options.automatically_declare_parameters_from_overrides(true);
   rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared("publish_warehouse_data", node_options);
-  moveit::setNodeLoggerName(node->get_name());
 
   // time to wait in between publishing messages
   double delay = 0.001;
@@ -121,7 +116,7 @@ int main(int argc, char** argv)
   rclcpp::executors::StaticSingleThreadedExecutor executor;
   executor.add_node(node);
 
-  rclcpp::Rate rate(static_cast<int64_t>(delay) * 1000ms);
+  rclcpp::Rate rate((int64_t)delay * 1000ms);
 
   // publish the scene
   if (vm.count("scene"))
@@ -141,7 +136,7 @@ int main(int argc, char** argv)
       moveit_warehouse::PlanningSceneWithMetadata pswm;
       if (pss.getPlanningScene(pswm, scene_name))
       {
-        RCLCPP_INFO(node->get_logger(), "Publishing scene '%s'",
+        RCLCPP_INFO(LOGGER, "Publishing scene '%s'",
                     pswm->lookupString(moveit_warehouse::PlanningSceneStorage::PLANNING_SCENE_ID_NAME).c_str());
         pub_scene->publish(static_cast<const moveit_msgs::msg::PlanningScene&>(*pswm));
         executor.spin_once(0ns);
@@ -154,14 +149,14 @@ int main(int argc, char** argv)
           std::vector<moveit_warehouse::MotionPlanRequestWithMetadata> planning_queries;
           std::vector<std::string> query_names;
           pss.getPlanningQueries(planning_queries, query_names, pswm->name);
-          RCLCPP_INFO(node->get_logger(), "There are %d planning queries associated to the scene",
+          RCLCPP_INFO(LOGGER, "There are %d planning queries associated to the scene",
                       static_cast<int>(planning_queries.size()));
           rclcpp::sleep_for(500ms);
           for (std::size_t i = 0; i < planning_queries.size(); ++i)
           {
             if (req)
             {
-              RCLCPP_INFO(node->get_logger(), "Publishing query '%s'", query_names[i].c_str());
+              RCLCPP_INFO(LOGGER, "Publishing query '%s'", query_names[i].c_str());
               pub_req->publish(static_cast<const moveit_msgs::msg::MotionPlanRequest&>(*planning_queries[i]));
               executor.spin_once(0ns);
             }
@@ -195,7 +190,7 @@ int main(int argc, char** argv)
       moveit_warehouse::ConstraintsWithMetadata cwm;
       if (cs.getConstraints(cwm, cname))
       {
-        RCLCPP_INFO(node->get_logger(), "Publishing constraints '%s'",
+        RCLCPP_INFO(LOGGER, "Publishing constraints '%s'",
                     cwm->lookupString(moveit_warehouse::ConstraintsStorage::CONSTRAINTS_ID_NAME).c_str());
         pub_constr->publish(static_cast<const moveit_msgs::msg::Constraints&>(*cwm));
         executor.spin_once(0ns);
@@ -217,7 +212,7 @@ int main(int argc, char** argv)
       moveit_warehouse::RobotStateWithMetadata rswm;
       if (rs.getRobotState(rswm, rname))
       {
-        RCLCPP_INFO(node->get_logger(), "Publishing state '%s'",
+        RCLCPP_INFO(LOGGER, "Publishing state '%s'",
                     rswm->lookupString(moveit_warehouse::RobotStateStorage::STATE_NAME).c_str());
         pub_state->publish(static_cast<const moveit_msgs::msg::RobotState&>(*rswm));
         executor.spin_once(0ns);
@@ -227,7 +222,7 @@ int main(int argc, char** argv)
   }
 
   rclcpp::sleep_for(1s);
-  RCLCPP_INFO(node->get_logger(), "Done.");
+  RCLCPP_INFO(LOGGER, "Done.");
 
   return 0;
 }

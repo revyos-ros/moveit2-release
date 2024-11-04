@@ -174,7 +174,7 @@ void ConfigurationFilesWidget::onInit()
   layout->addLayout(hlayout3);
 
   // Finish Layout --------------------------------------------------
-  setLayout(layout);
+  this->setLayout(layout);
 }
 
 void ConfigurationFilesWidget::setCheckSelected(bool checked)
@@ -329,10 +329,8 @@ void ConfigurationFilesWidget::focusGiven()
                 "but we recommend you check the list and enable the checkbox next to files you would like to "
                 "overwrite. ");
     if (setup_step_.hasConflictingFiles())
-    {
       msg += "<br/><font color='red'>Attention:</font> Some files (<font color='red'>marked red</font>) are changed "
              "both, externally and in Setup Assistant.";
-    }
     QMessageBox::information(this, "Files Modified", msg);
   }
 }

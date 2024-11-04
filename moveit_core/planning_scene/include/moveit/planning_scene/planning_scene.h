@@ -53,10 +53,8 @@
 #include <octomap_msgs/msg/octomap_with_pose.hpp>
 #include <memory>
 #include <functional>
-#include <optional>
 #include <thread>
 #include <variant>
-#include <optional>
 #include <rclcpp/rclcpp.hpp>
 
 #include <moveit_planning_scene_export.h>
@@ -160,7 +158,7 @@ public:
   const moveit::core::RobotState& getCurrentState() const
   {
     // if we have an updated state, return it; otherwise, return the parent one
-    return robot_state_.has_value() ? robot_state_.value() : parent_->getCurrentState();
+    return robot_state_ ? *robot_state_ : parent_->getCurrentState();
   }
   /** \brief Get the state at which the robot is assumed to be. */
   moveit::core::RobotState& getCurrentStateNonConst();
@@ -177,15 +175,15 @@ public:
   const std::string& getPlanningFrame() const
   {
     // if we have an updated set of transforms, return it; otherwise, return the parent one
-    return scene_transforms_.has_value() ? scene_transforms_.value()->getTargetFrame() : parent_->getPlanningFrame();
+    return scene_transforms_ ? scene_transforms_->getTargetFrame() : parent_->getPlanningFrame();
   }
 
   /** \brief Get the set of fixed transforms from known frames to the planning frame */
   const moveit::core::Transforms& getTransforms() const
   {
-    if (scene_transforms_.has_value() || !parent_)
+    if (scene_transforms_ || !parent_)
     {
-      return *scene_transforms_.value();
+      return *scene_transforms_;
     }
 
     // if this planning scene is a child of another, and doesn't have its own custom transforms
@@ -291,14 +289,10 @@ public:
   /** \brief Get the allowed collision matrix */
   const collision_detection::AllowedCollisionMatrix& getAllowedCollisionMatrix() const
   {
-    return acm_.has_value() ? acm_.value() : parent_->getAllowedCollisionMatrix();
+    return acm_ ? *acm_ : parent_->getAllowedCollisionMatrix();
   }
-
   /** \brief Get the allowed collision matrix */
   collision_detection::AllowedCollisionMatrix& getAllowedCollisionMatrixNonConst();
-
-  /** \brief Set the allowed collision matrix */
-  void setAllowedCollisionMatrix(const collision_detection::AllowedCollisionMatrix& acm);
 
   /**@}*/
 
@@ -308,14 +302,13 @@ public:
   /**@{*/
 
   /** \brief Check if the current state is in collision (with the environment or self collision).
-      If a group name is specified, collision checking is done for that group only (plus descendent links).
+      If a group name is specified, collision checking is done for that group only.
       Since the function is non-const, the current state transforms are updated before the collision check. */
   bool isStateColliding(const std::string& group = "", bool verbose = false);
 
   /** \brief Check if the current state is in collision (with the environment or self collision).  If a group name is
      specified,
-      collision checking is done for that group only (plus descendent links). It is expected the current state
-     transforms are up to date. */
+      collision checking is done for that group only. It is expected the current state transforms are up to date. */
   bool isStateColliding(const std::string& group = "", bool verbose = false) const
   {
     return isStateColliding(getCurrentState(), group, verbose);
@@ -323,8 +316,8 @@ public:
 
   /** \brief Check if a given state is in collision (with the environment or self collision) If a group name is
      specified,
-      collision checking is done for that group only (plus descendent links). The link transforms for \e state are
-     updated before the collision check. */
+      collision checking is done for that group only. The link transforms for \e state are updated before the collision
+     check. */
   bool isStateColliding(moveit::core::RobotState& state, const std::string& group = "", bool verbose = false) const
   {
     state.updateCollisionBodyTransforms();
@@ -332,13 +325,13 @@ public:
   }
 
   /** \brief Check if a given state is in collision (with the environment or self collision)
-      If a group name is specified, collision checking is done for that group only (plus descendent links). It is
-     expected that the link transforms of \e state are up to date. */
+      If a group name is specified, collision checking is done for that group only. It is expected that the link
+      transforms of \e state are up to date. */
   bool isStateColliding(const moveit::core::RobotState& state, const std::string& group = "",
                         bool verbose = false) const;
 
   /** \brief Check if a given state is in collision (with the environment or self collision)
-      If a group name is specified, collision checking is done for that group only (plus descendent links). */
+      If a group name is specified, collision checking is done for that group only. */
   bool isStateColliding(const moveit_msgs::msg::RobotState& state, const std::string& group = "",
                         bool verbose = false) const;
 
@@ -529,7 +522,7 @@ public:
   }
 
   /** \brief Get the names of the links that are involved in collisions for the state \e robot_state.
-   *  Can be restricted to links part of or updated by \e group_name (plus descendent links) */
+   *  Can be restricted to links part of or updated by \e group_name */
   void getCollidingPairs(collision_detection::CollisionResult::ContactMap& contacts,
                          const moveit::core::RobotState& robot_state, const std::string& group_name = "") const
   {
@@ -538,7 +531,7 @@ public:
 
   /** \brief Get the names of the links that are involved in collisions for the state \e robot_state.
       Update the link transforms for \e robot_state if needed.
-      Can be restricted to links part of or updated by \e group_name (plus descendent links) */
+      Can be restricted to links part of or updated by \e group_name */
   void getCollidingPairs(collision_detection::CollisionResult::ContactMap& contacts,
                          moveit::core::RobotState& robot_state, const std::string& group_name = "") const
   {
@@ -549,7 +542,7 @@ public:
 
   /** \brief  Get the names of the links that are involved in collisions for the state \e robot_state given the
       allowed collision matrix (\e acm). Update the link transforms for \e robot_state if needed.
-      Can be restricted to links part of or updated by \e group_name (plus descendent links) */
+      Can be restricted to links part of or updated by \e group_name*/
   void getCollidingPairs(collision_detection::CollisionResult::ContactMap& contacts,
                          moveit::core::RobotState& robot_state, const collision_detection::AllowedCollisionMatrix& acm,
                          const std::string& group_name = "") const
@@ -559,7 +552,7 @@ public:
   }
 
   /** \brief  Get the names of the links that are involved in collisions for the state \e robot_state given the
-      allowed collision matrix (\e acm). Can be restricted to links part of or updated by \e group_name (plus descendent links) */
+      allowed collision matrix (\e acm). Can be restricted to links part of or updated by \e group_name */
   void getCollidingPairs(collision_detection::CollisionResult::ContactMap& contacts,
                          const moveit::core::RobotState& robot_state,
                          const collision_detection::AllowedCollisionMatrix& acm,
@@ -747,20 +740,7 @@ public:
 
   bool hasObjectColor(const std::string& id) const;
 
-  /**
-   * \brief Gets the current color of an object.
-   * \param id The string id of the target object.
-   * \return The current object color.
-   */
   const std_msgs::msg::ColorRGBA& getObjectColor(const std::string& id) const;
-
-  /**
-   * \brief Tries to get the original color of an object, if one has been set before.
-   * \param id The string id of the target object.
-   * \return The original object color, if available, otherwise std::nullopt.
-   */
-  std::optional<std_msgs::msg::ColorRGBA> getOriginalObjectColor(const std::string& id) const;
-
   void setObjectColor(const std::string& id, const std_msgs::msg::ColorRGBA& color);
   void removeObjectColor(const std::string& id);
   void getKnownObjectColors(ObjectColorMap& kc) const;
@@ -841,46 +821,43 @@ public:
   bool isStateConstrained(const moveit::core::RobotState& state,
                           const kinematic_constraints::KinematicConstraintSet& constr, bool verbose = false) const;
 
-  /** \brief Check if a given state is valid. This means checking for collisions and feasibility. Includes descendent
-   * links of \e group. */
+  /** \brief Check if a given state is valid. This means checking for collisions and feasibility */
   bool isStateValid(const moveit_msgs::msg::RobotState& state, const std::string& group = "",
                     bool verbose = false) const;
 
-  /** \brief Check if a given state is valid. This means checking for collisions and feasibility. Includes descendent
-   * links of \e group. */
+  /** \brief Check if a given state is valid. This means checking for collisions and feasibility */
   bool isStateValid(const moveit::core::RobotState& state, const std::string& group = "", bool verbose = false) const;
 
   /** \brief Check if a given state is valid. This means checking for collisions, feasibility  and whether the user
-   * specified validity conditions hold as well. Includes descendent links of \e group. */
+   * specified validity conditions hold as well */
   bool isStateValid(const moveit_msgs::msg::RobotState& state, const moveit_msgs::msg::Constraints& constr,
                     const std::string& group = "", bool verbose = false) const;
 
   /** \brief Check if a given state is valid. This means checking for collisions, feasibility  and whether the user
-   * specified validity conditions hold as well. Includes descendent links of \e group. */
+   * specified validity conditions hold as well */
   bool isStateValid(const moveit::core::RobotState& state, const moveit_msgs::msg::Constraints& constr,
                     const std::string& group = "", bool verbose = false) const;
 
   /** \brief Check if a given state is valid. This means checking for collisions, feasibility  and whether the user
-   * specified validity conditions hold as well. Includes descendent links of \e group. */
+   * specified validity conditions hold as well */
   bool isStateValid(const moveit::core::RobotState& state, const kinematic_constraints::KinematicConstraintSet& constr,
                     const std::string& group = "", bool verbose = false) const;
 
-  /** \brief Check if a given path is valid. Each state is checked for validity (collision avoidance and feasibility).
-   * Includes descendent links of \e group. */
+  /** \brief Check if a given path is valid. Each state is checked for validity (collision avoidance and feasibility) */
   bool isPathValid(const moveit_msgs::msg::RobotState& start_state, const moveit_msgs::msg::RobotTrajectory& trajectory,
                    const std::string& group = "", bool verbose = false,
                    std::vector<std::size_t>* invalid_index = nullptr) const;
 
   /** \brief Check if a given path is valid. Each state is checked for validity (collision avoidance, feasibility and
    * constraint satisfaction). It is also checked that the goal constraints are satisfied by the last state on the
-   * passed in trajectory.  Includes descendent links of \e group. */
+   * passed in trajectory. */
   bool isPathValid(const moveit_msgs::msg::RobotState& start_state, const moveit_msgs::msg::RobotTrajectory& trajectory,
                    const moveit_msgs::msg::Constraints& path_constraints, const std::string& group = "",
                    bool verbose = false, std::vector<std::size_t>* invalid_index = nullptr) const;
 
   /** \brief Check if a given path is valid. Each state is checked for validity (collision avoidance, feasibility and
    * constraint satisfaction). It is also checked that the goal constraints are satisfied by the last state on the
-   * passed in trajectory. Includes descendent links of \e group. */
+   * passed in trajectory. */
   bool isPathValid(const moveit_msgs::msg::RobotState& start_state, const moveit_msgs::msg::RobotTrajectory& trajectory,
                    const moveit_msgs::msg::Constraints& path_constraints,
                    const moveit_msgs::msg::Constraints& goal_constraints, const std::string& group = "",
@@ -888,7 +865,7 @@ public:
 
   /** \brief Check if a given path is valid. Each state is checked for validity (collision avoidance, feasibility and
    * constraint satisfaction). It is also checked that the goal constraints are satisfied by the last state on the
-   * passed in trajectory. Includes descendent links of \e group. */
+   * passed in trajectory. */
   bool isPathValid(const moveit_msgs::msg::RobotState& start_state, const moveit_msgs::msg::RobotTrajectory& trajectory,
                    const moveit_msgs::msg::Constraints& path_constraints,
                    const std::vector<moveit_msgs::msg::Constraints>& goal_constraints, const std::string& group = "",
@@ -896,7 +873,7 @@ public:
 
   /** \brief Check if a given path is valid. Each state is checked for validity (collision avoidance, feasibility and
    * constraint satisfaction). It is also checked that the goal constraints are satisfied by the last state on the
-   * passed in trajectory. Includes descendent links of \e group. */
+   * passed in trajectory. */
   bool isPathValid(const robot_trajectory::RobotTrajectory& trajectory,
                    const moveit_msgs::msg::Constraints& path_constraints,
                    const std::vector<moveit_msgs::msg::Constraints>& goal_constraints, const std::string& group = "",
@@ -904,20 +881,19 @@ public:
 
   /** \brief Check if a given path is valid. Each state is checked for validity (collision avoidance, feasibility and
    * constraint satisfaction). It is also checked that the goal constraints are satisfied by the last state on the
-   * passed in trajectory. Includes descendent links of \e group. */
+   * passed in trajectory. */
   bool isPathValid(const robot_trajectory::RobotTrajectory& trajectory,
                    const moveit_msgs::msg::Constraints& path_constraints,
                    const moveit_msgs::msg::Constraints& goal_constraints, const std::string& group = "",
                    bool verbose = false, std::vector<std::size_t>* invalid_index = nullptr) const;
 
   /** \brief Check if a given path is valid. Each state is checked for validity (collision avoidance, feasibility and
-   * constraint satisfaction). Includes descendent links of \e group. */
+   * constraint satisfaction). */
   bool isPathValid(const robot_trajectory::RobotTrajectory& trajectory,
                    const moveit_msgs::msg::Constraints& path_constraints, const std::string& group = "",
                    bool verbose = false, std::vector<std::size_t>* invalid_index = nullptr) const;
 
-  /** \brief Check if a given path is valid. Each state is checked for validity (collision avoidance and feasibility).
-   * Includes descendent links of \e group. */
+  /** \brief Check if a given path is valid. Each state is checked for validity (collision avoidance and feasibility) */
   bool isPathValid(const robot_trajectory::RobotTrajectory& trajectory, const std::string& group = "",
                    bool verbose = false, std::vector<std::size_t>* invalid_index = nullptr) const;
 
@@ -926,8 +902,8 @@ public:
   void getCostSources(const robot_trajectory::RobotTrajectory& trajectory, std::size_t max_costs,
                       std::set<collision_detection::CostSource>& costs, double overlap_fraction = 0.9) const;
 
-  /** \brief Get the top \e max_costs cost sources for a specified trajectory, but only for group \e group_name (plus
-   * descendent links). The resulting costs are stored in \e costs */
+  /** \brief Get the top \e max_costs cost sources for a specified trajectory, but only for group \e group_name. The
+   * resulting costs are stored in \e costs */
   void getCostSources(const robot_trajectory::RobotTrajectory& trajectory, std::size_t max_costs,
                       const std::string& group_name, std::set<collision_detection::CostSource>& costs,
                       double overlap_fraction = 0.9) const;
@@ -936,13 +912,27 @@ public:
   void getCostSources(const moveit::core::RobotState& state, std::size_t max_costs,
                       std::set<collision_detection::CostSource>& costs) const;
 
-  /** \brief Get the top \e max_costs cost sources for a specified state, but only for group \e group_name (plus
-   * descendent links). The resulting costs are stored in \e costs */
+  /** \brief Get the top \e max_costs cost sources for a specified state, but only for group \e group_name. The
+   * resulting costs are stored in \e costs */
   void getCostSources(const moveit::core::RobotState& state, std::size_t max_costs, const std::string& group_name,
                       std::set<collision_detection::CostSource>& costs) const;
 
   /** \brief Outputs debug information about the planning scene contents */
   void printKnownObjects(std::ostream& out = std::cout) const;
+
+  /** \brief Check if a message includes any information about a planning scene, or it is just a default, empty message.
+   */
+  [[deprecated("Use moveit/utils/message_checks.h instead")]] static bool
+  isEmpty(const moveit_msgs::msg::PlanningScene& msg);
+
+  /** \brief Check if a message includes any information about a planning scene world, or it is just a default, empty
+   * message. */
+  [[deprecated("Use moveit/utils/message_checks.h instead")]] static bool
+  isEmpty(const moveit_msgs::msg::PlanningSceneWorld& msg);
+
+  /** \brief Check if a message includes any information about a robot state, or it is just a default, empty message. */
+  [[deprecated("Use moveit/utils/message_checks.h instead")]] static bool
+  isEmpty(const moveit_msgs::msg::RobotState& msg);
 
   /** \brief Clone a planning scene. Even if the scene \e scene depends on a parent, the cloned scene will not. */
   static PlanningScenePtr clone(const PlanningSceneConstPtr& scene);
@@ -973,10 +963,21 @@ private:
    * Requires a valid robot_model_ */
   void initialize();
 
+  /* helper function to create a RobotModel from a urdf/srdf. */
+  static moveit::core::RobotModelPtr createRobotModel(const urdf::ModelInterfaceSharedPtr& urdf_model,
+                                                      const srdf::ModelConstSharedPtr& srdf_model);
+
   /* Helper functions for processing collision objects */
   bool processCollisionObjectAdd(const moveit_msgs::msg::CollisionObject& object);
   bool processCollisionObjectRemove(const moveit_msgs::msg::CollisionObject& object);
   bool processCollisionObjectMove(const moveit_msgs::msg::CollisionObject& object);
+
+  /* For exporting and importing the planning scene */
+  bool readPoseFromText(std::istream& in, Eigen::Isometry3d& pose) const;
+  void writePoseToText(std::ostream& out, const Eigen::Isometry3d& pose) const;
+
+  /** convert Pose msg to Eigen::Isometry, normalizing the quaternion part if necessary. */
+  static void poseMsgToEigen(const geometry_msgs::msg::Pose& msg, Eigen::Isometry3d& out);
 
   MOVEIT_STRUCT_FORWARD(CollisionDetector);
 
@@ -1012,14 +1013,14 @@ private:
 
   moveit::core::RobotModelConstPtr robot_model_;  // Never null (may point to same model as parent)
 
-  std::optional<moveit::core::RobotState> robot_state_;  // if there is no value use parent's
+  moveit::core::RobotStatePtr robot_state_;  // if nullptr use parent's
 
   // Called when changes are made to attached bodies
   moveit::core::AttachedBodyCallback current_state_attached_body_callback_;
 
   // This variable is not necessarily used by child planning scenes
   // This Transforms class is actually a SceneTransforms class
-  std::optional<moveit::core::TransformsPtr> scene_transforms_;  // if there is no value use parent's
+  moveit::core::TransformsPtr scene_transforms_;  // if nullptr use parent's
 
   collision_detection::WorldPtr world_;             // never nullptr, never shared with parent/child
   collision_detection::WorldConstPtr world_const_;  // copy of world_
@@ -1029,16 +1030,14 @@ private:
 
   CollisionDetectorPtr collision_detector_;  // Never nullptr.
 
-  std::optional<collision_detection::AllowedCollisionMatrix> acm_;  // if there is no value use parent's
+  collision_detection::AllowedCollisionMatrixPtr acm_;  // if nullptr use parent's
 
   StateFeasibilityFn state_feasibility_;
   MotionFeasibilityFn motion_feasibility_;
 
-  // Maps of current and original object colors (to manage attaching/detaching objects)
   std::unique_ptr<ObjectColorMap> object_colors_;
-  std::unique_ptr<ObjectColorMap> original_object_colors_;
 
   // a map of object types
-  std::optional<ObjectTypeMap> object_types_;
+  std::unique_ptr<ObjectTypeMap> object_types_;
 };
 }  // namespace planning_scene

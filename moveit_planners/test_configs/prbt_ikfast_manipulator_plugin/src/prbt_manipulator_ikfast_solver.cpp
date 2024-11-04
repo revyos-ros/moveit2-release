@@ -26,7 +26,8 @@
 using namespace ikfast;
 
 // check if the included ikfast version matches what this file was compiled with
-static_assert(IKFAST_VERSION==61); // version found in ikfast.h
+#define IKFAST_COMPILE_ASSERT(x) extern int __dummy[static_cast<int>(x)]
+IKFAST_COMPILE_ASSERT(IKFAST_VERSION==0x1000004a);
 
 #include <cmath>
 #include <vector>
@@ -49,7 +50,7 @@ static_assert(IKFAST_VERSION==61); // version found in ikfast.h
 #define __PRETTY_FUNCTION__ __func__
 #endif
 
-#define IKFAST_ASSERT(b) { if( !(b) ) { std::stringstream ss; ss << "ikfast exception: " << __FILE__ << ':' << __LINE__ << ": " <<__PRETTY_FUNCTION__ << ": Assertion '" << #b << "' failed"; throw std::runtime_error(ss.str()); } }
+#define IKFAST_ASSERT(b) { if( !(b) ) { std::stringstream ss; ss << "ikfast exception: " << __FILE__ << ":" << __LINE__ << ": " <<__PRETTY_FUNCTION__ << ": Assertion '" << #b << "' failed"; throw std::runtime_error(ss.str()); } }
 
 #endif
 
@@ -105,7 +106,7 @@ inline double IKlog(double f) { return log(f); }
 #define IKFAST_SOLUTION_THRESH ((IkReal)1e-6)
 #endif
 
-// there are checkpoints in ikfast that are evaluated to make sure they are 0. This threshold specifies by how much they can deviate
+// there are checkpoints in ikfast that are evaluated to make sure they are 0. This threshold speicfies by how much they can deviate
 #ifndef IKFAST_EVALCOND_THRESH
 #define IKFAST_EVALCOND_THRESH ((IkReal)0.00001)
 #endif

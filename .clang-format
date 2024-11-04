@@ -59,10 +59,6 @@ SpaceBeforeAssignmentOperators: true
 # Configure each individual brace in BraceWrapping
 BreakBeforeBraces: Custom
 
-# Qualifiers (const, volatile, static, etc)
-QualifierAlignment: Custom
-QualifierOrder: ['static', 'inline', 'constexpr', 'const', 'volatile', 'type']
-
 # Control of individual brace wrapping cases
 BraceWrapping:
     AfterCaseLabel: true

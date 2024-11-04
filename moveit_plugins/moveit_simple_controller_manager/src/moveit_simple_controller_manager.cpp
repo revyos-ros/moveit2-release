@@ -47,7 +47,6 @@
 #include <rclcpp/parameter_value.hpp>
 #include <algorithm>
 #include <map>
-#include <moveit/utils/logger.hpp>
 
 namespace
 {
@@ -83,13 +82,7 @@ std::string makeParameterName(T... strings)
 
 namespace moveit_simple_controller_manager
 {
-namespace
-{
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.plugins.simple_controller_manager");
-}
-}  // namespace
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.plugins.moveit_simple_controller_manager");
 static const std::string PARAM_BASE_NAME = "moveit_simple_controller_manager";
 class MoveItSimpleControllerManager : public moveit_controller_manager::MoveItControllerManager
 {
@@ -103,14 +96,14 @@ public:
     node_ = node;
     if (!node_->has_parameter(makeParameterName(PARAM_BASE_NAME, "controller_names")))
     {
-      RCLCPP_ERROR_STREAM(getLogger(), "No controller_names specified.");
+      RCLCPP_ERROR_STREAM(LOGGER, "No controller_names specified.");
       return;
     }
     rclcpp::Parameter controller_names_param;
     node_->get_parameter(makeParameterName(PARAM_BASE_NAME, "controller_names"), controller_names_param);
     if (controller_names_param.get_type() != rclcpp::ParameterType::PARAMETER_STRING_ARRAY)
     {
-      RCLCPP_ERROR(getLogger(), "Parameter controller_names should be specified as a string array");
+      RCLCPP_ERROR(LOGGER, "Parameter controller_names should be specified as a string array");
       return;
     }
     std::vector<std::string> controller_names = controller_names_param.as_string_array();
@@ -123,15 +116,15 @@ public:
         const std::string& action_ns_param = makeParameterName(PARAM_BASE_NAME, controller_name, "action_ns");
         if (!node_->get_parameter(action_ns_param, action_ns))
         {
-          RCLCPP_ERROR_STREAM(getLogger(), "No action namespace specified for controller `"
-                                               << controller_name << "` through parameter `" << action_ns_param << '`');
+          RCLCPP_ERROR_STREAM(LOGGER, "No action namespace specified for controller `"
+                                          << controller_name << "` through parameter `" << action_ns_param << "`");
           continue;
         }
 
         std::string type;
         if (!node_->get_parameter(makeParameterName(PARAM_BASE_NAME, controller_name, "type"), type))
         {
-          RCLCPP_ERROR_STREAM(getLogger(), "No type specified for controller " << controller_name);
+          RCLCPP_ERROR_STREAM(LOGGER, "No type specified for controller " << controller_name);
           continue;
         }
 
@@ -139,7 +132,7 @@ public:
         if (!node_->get_parameter(makeParameterName(PARAM_BASE_NAME, controller_name, "joints"), controller_joints) ||
             controller_joints.empty())
         {
-          RCLCPP_ERROR_STREAM(getLogger(), "No joints specified for controller " << controller_name);
+          RCLCPP_ERROR_STREAM(LOGGER, "No joints specified for controller " << controller_name);
           continue;
         }
 
@@ -150,7 +143,7 @@ public:
           const std::string& max_effort_param = makeParameterName(PARAM_BASE_NAME, controller_name, "max_effort");
           if (!node->get_parameter(max_effort_param, max_effort))
           {
-            RCLCPP_INFO_STREAM(getLogger(), "Max effort set to 0.0");
+            RCLCPP_INFO_STREAM(LOGGER, "Max effort set to 0.0");
             max_effort = 0.0;
           }
 
@@ -160,8 +153,8 @@ public:
           {
             if (controller_joints.size() != 2)
             {
-              RCLCPP_ERROR_STREAM(getLogger(), "Parallel Gripper requires exactly two joints, "
-                                                   << controller_joints.size() << " are specified");
+              RCLCPP_ERROR_STREAM(LOGGER, "Parallel Gripper requires exactly two joints, " << controller_joints.size()
+                                                                                           << " are specified");
               continue;
             }
             static_cast<GripperControllerHandle*>(new_handle.get())
@@ -180,18 +173,18 @@ public:
           node_->get_parameter_or(makeParameterName(PARAM_BASE_NAME, "allow_failure"), allow_failure, false);
           static_cast<GripperControllerHandle*>(new_handle.get())->allowFailure(allow_failure);
 
-          RCLCPP_INFO_STREAM(getLogger(), "Added GripperCommand controller for " << controller_name);
+          RCLCPP_INFO_STREAM(LOGGER, "Added GripperCommand controller for " << controller_name);
           controllers_[controller_name] = new_handle;
         }
         else if (type == "FollowJointTrajectory")
         {
           new_handle = std::make_shared<FollowJointTrajectoryControllerHandle>(node_, controller_name, action_ns);
-          RCLCPP_INFO_STREAM(getLogger(), "Added FollowJointTrajectory controller for " << controller_name);
+          RCLCPP_INFO_STREAM(LOGGER, "Added FollowJointTrajectory controller for " << controller_name);
           controllers_[controller_name] = new_handle;
         }
         else
         {
-          RCLCPP_ERROR_STREAM(getLogger(), "Unknown controller type: " << type);
+          RCLCPP_ERROR_STREAM(LOGGER, "Unknown controller type: " << type);
           continue;
         }
         if (!controllers_[controller_name])
@@ -212,7 +205,7 @@ public:
       }
       catch (...)
       {
-        RCLCPP_ERROR_STREAM(getLogger(), "Caught unknown exception while parsing controller information");
+        RCLCPP_ERROR_STREAM(LOGGER, "Caught unknown exception while parsing controller information");
       }
     }
   }
@@ -223,13 +216,9 @@ public:
   {
     std::map<std::string, ActionBasedControllerHandleBasePtr>::const_iterator it = controllers_.find(name);
     if (it != controllers_.end())
-    {
       return static_cast<moveit_controller_manager::MoveItControllerHandlePtr>(it->second);
-    }
     else
-    {
-      RCLCPP_FATAL_STREAM(getLogger(), "No such controller: " << name);
-    }
+      RCLCPP_FATAL_STREAM(LOGGER, "No such controller: " << name);
     return moveit_controller_manager::MoveItControllerHandlePtr();
   }
 
@@ -241,7 +230,7 @@ public:
     for (std::map<std::string, ActionBasedControllerHandleBasePtr>::const_iterator it = controllers_.begin();
          it != controllers_.end(); ++it)
       names.push_back(it->first);
-    RCLCPP_INFO_STREAM(getLogger(), "Returned " << names.size() << " controllers in list");
+    RCLCPP_INFO_STREAM(LOGGER, "Returned " << names.size() << " controllers in list");
   }
 
   /*
@@ -273,7 +262,7 @@ public:
     }
     else
     {
-      RCLCPP_WARN(getLogger(),
+      RCLCPP_WARN(LOGGER,
                   "The joints for controller '%s' are not known. Perhaps the controller configuration is "
                   "not loaded on the param server?",
                   name.c_str());

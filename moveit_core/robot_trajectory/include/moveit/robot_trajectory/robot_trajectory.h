@@ -46,6 +46,7 @@
 
 #include <rcl/error_handling.h>
 #include <rcl/time.h>
+#include <rclcpp/clock.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/time.hpp>
 #include <rclcpp/utilities.hpp>
@@ -155,16 +156,14 @@ public:
    */
   double getWayPointDurationFromStart(std::size_t index) const;
 
+  [[deprecated]] double getWaypointDurationFromStart(std::size_t index) const;
+
   double getWayPointDurationFromPrevious(std::size_t index) const
   {
     if (duration_from_previous_.size() > index)
-    {
       return duration_from_previous_[index];
-    }
     else
-    {
       return 0.0;
-    }
   }
 
   RobotTrajectory& setWayPointDurationFromPrevious(std::size_t index, double value)
@@ -242,7 +241,7 @@ public:
   RobotTrajectory& append(const RobotTrajectory& source, double dt, size_t start_index = 0,
                           size_t end_index = std::numeric_limits<std::size_t>::max());
 
-  void swap(robot_trajectory::RobotTrajectory& other) noexcept;
+  void swap(robot_trajectory::RobotTrajectory& other);
 
   RobotTrajectory& clear()
   {
@@ -290,8 +289,6 @@ public:
   RobotTrajectory& reverse();
 
   RobotTrajectory& unwind();
-
-  /** @brief Unwind, starting from an initial state **/
   RobotTrajectory& unwind(const moveit::core::RobotState& state);
 
   /** @brief Finds the waypoint indices before and after a duration from start.
@@ -300,7 +297,7 @@ public:
    *  @param The waypoint index after (or equal to) the supplied duration.
    *  @param The progress (0 to 1) between the two waypoints, based on time (not based on joint distances).
    */
-  void findWayPointIndicesForDurationAfterStart(double duration, int& before, int& after, double& blend) const;
+  void findWayPointIndicesForDurationAfterStart(const double& duration, int& before, int& after, double& blend) const;
 
   // TODO support visitor function for interpolation, or at least different types.
   /** @brief Gets a robot state corresponding to a supplied duration from start for the trajectory, using linear time
@@ -385,6 +382,7 @@ private:
   const moveit::core::JointModelGroup* group_;
   std::deque<moveit::core::RobotStatePtr> waypoints_;
   std::deque<double> duration_from_previous_;
+  rclcpp::Clock clock_ros_;
 };
 
 /** @brief Operator overload for printing trajectory to a stream */
@@ -396,27 +394,18 @@ std::ostream& operator<<(std::ostream& out, const RobotTrajectory& trajectory);
 /// active joint distances between the two states (L1 norm).
 /// \param[in] trajectory Given robot trajectory
 /// \return Length of the robot trajectory [rad]
-[[nodiscard]] double pathLength(const RobotTrajectory& trajectory);
+[[nodiscard]] double path_length(RobotTrajectory const& trajectory);
 
 /// \brief Calculate the smoothness of a given trajectory
 /// \param[in] trajectory Given robot trajectory
 /// \return Smoothness of the given trajectory
 /// or nullopt if it is not possible to calculate the smoothness
-[[nodiscard]] std::optional<double> smoothness(const RobotTrajectory& trajectory);
+[[nodiscard]] std::optional<double> smoothness(RobotTrajectory const& trajectory);
 
 /// \brief Calculate the waypoint density of a trajectory
 /// \param[in] trajectory Given robot trajectory
 /// \return Waypoint density of the given trajectory
 /// or nullopt if it is not possible to calculate the density
-[[nodiscard]] std::optional<double> waypointDensity(const RobotTrajectory& trajectory);
+[[nodiscard]] std::optional<double> waypoint_density(RobotTrajectory const& trajectory);
 
-/// \brief Converts a RobotTrajectory to a JointTrajectory message
-//  \param[in] trajectory Given robot trajectory
-//  \param[in] include_mdof_joints Treat Multi-DOF variables as joints, e.g. position/x position/y position/theta
-//  \param[in] joint_filter Exclude joints with the provided names
-//  \return JointTrajectory message including all waypoints
-//  or nullopt if the provided RobotTrajectory or RobotModel is empty
-[[nodiscard]] std::optional<trajectory_msgs::msg::JointTrajectory>
-toJointTrajectory(const RobotTrajectory& trajectory, bool include_mdof_joints = false,
-                  const std::vector<std::string>& joint_filter = {});
 }  // namespace robot_trajectory

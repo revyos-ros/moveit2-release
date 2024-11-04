@@ -130,19 +130,19 @@ void IntegrationTestCommandListManager::SetUp()
  */
 TEST_F(IntegrationTestCommandListManager, TestExceptionErrorCodeMapping)
 {
-  auto nbr_ex = std::make_shared<NegativeBlendRadiusException>("");
+  std::shared_ptr<NegativeBlendRadiusException> nbr_ex{ new NegativeBlendRadiusException("") };
   EXPECT_EQ(nbr_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_MOTION_PLAN);
 
-  auto lbrnz_ex = std::make_shared<LastBlendRadiusNotZeroException>("");
+  std::shared_ptr<LastBlendRadiusNotZeroException> lbrnz_ex{ new LastBlendRadiusNotZeroException("") };
   EXPECT_EQ(lbrnz_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_MOTION_PLAN);
 
-  auto sss_ex = std::make_shared<StartStateSetException>("");
+  std::shared_ptr<StartStateSetException> sss_ex{ new StartStateSetException("") };
   EXPECT_EQ(sss_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_ROBOT_STATE);
 
-  auto obr_ex = std::make_shared<OverlappingBlendRadiiException>("");
+  std::shared_ptr<OverlappingBlendRadiiException> obr_ex{ new OverlappingBlendRadiiException("") };
   EXPECT_EQ(obr_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::INVALID_MOTION_PLAN);
 
-  auto pp_ex = std::make_shared<PlanningPipelineException>("");
+  std::shared_ptr<PlanningPipelineException> pp_ex{ new PlanningPipelineException("") };
   EXPECT_EQ(pp_ex->getErrorCode(), moveit_msgs::msg::MoveItErrorCodes::FAILURE);
 }
 

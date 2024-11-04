@@ -72,6 +72,5 @@ private:
 
   MoveGroupState move_state_;
   bool preempt_requested_;
-  std::shared_ptr<MGActionGoal> goal_;
 };
 }  // namespace move_group

@@ -196,7 +196,7 @@ void PerceptionWidget::onInit()
   layout->setAlignment(Qt::AlignTop);
 
   // Finish Layout --------------------------------------------------
-  setLayout(layout);
+  this->setLayout(layout);
 }
 
 // ******************************************************************************************

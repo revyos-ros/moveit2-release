@@ -102,7 +102,7 @@ inline bool isAligned16(const void* pointer)
 #endif
 }  // namespace
 
-void mesh_filter::SensorModel::Parameters::transformModelDepthToMetricDepth(double* depth) const
+void mesh_filter::SensorModel::Parameters::transformModelDepthToMetricDepth(float* depth) const
 {
 #if HAVE_SSE_EXTENSIONS
   const __m128 mmNear = _mm_set1_ps(near_clipping_plane_distance_);
@@ -161,24 +161,20 @@ void mesh_filter::SensorModel::Parameters::transformModelDepthToMetricDepth(doub
   const float nf = near * far;
   const float f_n = far - near;
 
-  const double* depth_end = depth + width_ * height_;
+  const float* depth_end = depth + width_ * height_;
   while (depth < depth_end)
   {
     if (*depth != 0 && *depth != 1)
-    {
       *depth = nf / (far - *depth * f_n);
-    }
     else
-    {
       *depth = 0;
-    }
 
     ++depth;
   }
 #endif
 }
 
-void mesh_filter::SensorModel::Parameters::transformFilteredDepthToMetricDepth(double* depth) const
+void mesh_filter::SensorModel::Parameters::transformFilteredDepthToMetricDepth(float* depth) const
 {
 #if HAVE_SSE_EXTENSIONS
   //* SSE version
@@ -223,7 +219,7 @@ void mesh_filter::SensorModel::Parameters::transformFilteredDepthToMetricDepth(d
     ++mmDepth;
   }
 #else
-  const double* depth_end = depth + width_ * height_;
+  const float* depth_end = depth + width_ * height_;
   const float scale = far_clipping_plane_distance_ - near_clipping_plane_distance_;
   const float offset = near_clipping_plane_distance_;
   while (depth < depth_end)
@@ -231,13 +227,9 @@ void mesh_filter::SensorModel::Parameters::transformFilteredDepthToMetricDepth(d
     // 0 = on near clipping plane -> we used 0 to mark invalid points -> not visible
     // points on far clipping plane needs to be removed too
     if (*depth != 0 && *depth != 1.0)
-    {
       *depth = *depth * scale + offset;
-    }
     else
-    {
       *depth = 0;
-    }
 
     ++depth;
   }

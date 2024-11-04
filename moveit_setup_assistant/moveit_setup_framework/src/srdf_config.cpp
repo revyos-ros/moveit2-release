@@ -290,13 +290,9 @@ bool SRDFConfig::GeneratedJointLimits::writeYaml(YAML::Emitter& emitter)
     // Output property
     emitter << YAML::Key << "has_velocity_limits";
     if (b.velocity_bounded_)
-    {
       emitter << YAML::Value << "true";
-    }
     else
-    {
       emitter << YAML::Value << "false";
-    }
 
     // Output property
     emitter << YAML::Key << "max_velocity";
@@ -305,13 +301,9 @@ bool SRDFConfig::GeneratedJointLimits::writeYaml(YAML::Emitter& emitter)
     // Output property
     emitter << YAML::Key << "has_acceleration_limits";
     if (b.acceleration_bounded_)
-    {
       emitter << YAML::Value << "true";
-    }
     else
-    {
       emitter << YAML::Value << "false";
-    }
 
     // Output property
     emitter << YAML::Key << "max_acceleration";

@@ -86,7 +86,7 @@ public:
   QGroupBox* point_cloud_group_;
   QGroupBox* depth_map_group_;
 
-  // Point Cloud plugin fields
+  // Point Cloud plugin feilds
   QLineEdit* point_cloud_topic_field_;
   QLineEdit* max_range_field_;
   QLineEdit* point_subsample_field_;
@@ -95,7 +95,7 @@ public:
   QLineEdit* max_update_rate_field_;
   QLineEdit* filtered_cloud_topic_field_;
 
-  // Depth Map plugin fields
+  // Depth Map plugin feilds
   QLineEdit* image_topic_field_;
   QLineEdit* queue_size_field_;
   QLineEdit* near_clipping_field_;

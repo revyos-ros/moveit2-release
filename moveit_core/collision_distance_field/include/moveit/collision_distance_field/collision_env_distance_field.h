@@ -120,7 +120,7 @@ public:
   void distanceSelf(const DistanceRequest& /* req */, DistanceResult& /* res */,
                     const moveit::core::RobotState& /* state */) const override
   {
-    RCLCPP_ERROR(logger_, "Not implemented");
+    RCLCPP_ERROR(LOGGER, "Not implemented");
   }
 
   DistanceFieldCacheEntryConstPtr getLastDistanceFieldEntry() const
@@ -195,7 +195,7 @@ public:
   void distanceRobot(const DistanceRequest& /* req */, DistanceResult& /* res */,
                      const moveit::core::RobotState& /* state */) const override
   {
-    RCLCPP_ERROR(logger_, "Not implemented");
+    RCLCPP_ERROR(LOGGER, "Not implemented");
   }
 
   void setWorld(const WorldPtr& world) override;
@@ -283,7 +283,8 @@ protected:
 
   void notifyObjectChange(const ObjectConstPtr& obj, World::Action action);
 
-  rclcpp::Logger logger_;
+  // Logger
+  static const rclcpp::Logger LOGGER;
 
   Eigen::Vector3d size_;
   Eigen::Vector3d origin_;

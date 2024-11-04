@@ -81,12 +81,6 @@ public:
     return ros_name_;
   }
 
-  /** @brief Get the URDF string*/
-  const std::string& getURDFString() const
-  {
-    return urdf_string_;
-  }
-
   /** @brief Get the parsed URDF model*/
   const urdf::ModelInterfaceSharedPtr& getURDF() const
   {

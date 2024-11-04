@@ -108,7 +108,7 @@ public:
   virtual bool reset() = 0;
 
 protected:
-  // Reference trajectory to be processed
+  // Reference trajectory to be precessed
   robot_trajectory::RobotTrajectoryPtr reference_trajectory_;
   std::string group_;
 };

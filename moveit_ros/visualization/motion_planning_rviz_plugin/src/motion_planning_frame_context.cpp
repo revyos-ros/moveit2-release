@@ -49,6 +49,7 @@
 
 namespace moveit_rviz_plugin
 {
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit_ros_visualization.motion_planning_frame_context");
 
 void MotionPlanningFrame::databaseConnectButtonClicked()
 {
@@ -111,7 +112,7 @@ void MotionPlanningFrame::resetDbButtonClicked()
 
 void MotionPlanningFrame::computeDatabaseConnectButtonClicked()
 {
-  RCLCPP_INFO(logger_, "Connect to database: {host: %s, port: %d}", ui_->database_host->text().toStdString().c_str(),
+  RCLCPP_INFO(LOGGER, "Connect to database: {host: %s, port: %d}", ui_->database_host->text().toStdString().c_str(),
               ui_->database_port->value());
   if (planning_scene_storage_)
   {
@@ -142,7 +143,7 @@ void MotionPlanningFrame::computeDatabaseConnectButtonClicked()
     catch (std::exception& ex)
     {
       planning_display_->addMainLoopJob([this] { computeDatabaseConnectButtonClickedHelper(3); });
-      RCLCPP_ERROR(logger_, "%s", ex.what());
+      RCLCPP_ERROR(LOGGER, "%s", ex.what());
       return;
     }
     planning_display_->addMainLoopJob([this] { computeDatabaseConnectButtonClickedHelper(4); });
@@ -207,16 +208,10 @@ void MotionPlanningFrame::computeDatabaseConnectButtonClickedHelper(int mode)
 void MotionPlanningFrame::computeResetDbButtonClicked(const std::string& db)
 {
   if (db == "Constraints" && constraints_storage_)
-  {
     constraints_storage_->reset();
-  }
   else if (db == "Robot States" && robot_state_storage_)
-  {
     robot_state_storage_->reset();
-  }
   else if (db == "Planning Scenes")
-  {
     planning_scene_storage_->reset();
-  }
 }
 }  // namespace moveit_rviz_plugin

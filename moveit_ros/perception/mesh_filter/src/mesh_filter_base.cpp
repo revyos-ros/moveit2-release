@@ -179,13 +179,11 @@ mesh_filter::MeshHandle mesh_filter::MeshFilterBase::addMesh(const shapes::Mesh&
   mesh_filter::MeshHandle ret = next_handle_;
   const std::size_t sz = min_handle_ + meshes_.size() + 1;
   for (std::size_t i = min_handle_; i < sz; ++i)
-  {
     if (meshes_.find(i) == meshes_.end())
     {
       next_handle_ = i;
       break;
     }
-  }
   min_handle_ = next_handle_;
   return ret;
 }
@@ -221,13 +219,13 @@ void mesh_filter::MeshFilterBase::setShadowThreshold(float threshold)
 
 void mesh_filter::MeshFilterBase::getModelLabels(LabelType* labels) const
 {
-  JobPtr job(new FilterJob<void>(
-      [&renderer = *mesh_renderer_, labels] { renderer.getColorBuffer(reinterpret_cast<unsigned char*>(labels)); }));
+  JobPtr job(
+      new FilterJob<void>([&renderer = *mesh_renderer_, labels] { renderer.getColorBuffer((unsigned char*)labels); }));
   addJob(job);
   job->wait();
 }
 
-void mesh_filter::MeshFilterBase::getModelDepth(double* depth) const
+void mesh_filter::MeshFilterBase::getModelDepth(float* depth) const
 {
   JobPtr job1 =
       std::make_shared<FilterJob<void>>([&renderer = *mesh_renderer_, depth] { renderer.getDepthBuffer(depth); });
@@ -243,7 +241,7 @@ void mesh_filter::MeshFilterBase::getModelDepth(double* depth) const
   job2->wait();
 }
 
-void mesh_filter::MeshFilterBase::getFilteredDepth(double* depth) const
+void mesh_filter::MeshFilterBase::getFilteredDepth(float* depth) const
 {
   JobPtr job1 = std::make_shared<FilterJob<void>>([&filter = *depth_filter_, depth] { filter.getDepthBuffer(depth); });
   JobPtr job2 = std::make_shared<FilterJob<void>>(
@@ -261,7 +259,7 @@ void mesh_filter::MeshFilterBase::getFilteredDepth(double* depth) const
 void mesh_filter::MeshFilterBase::getFilteredLabels(LabelType* labels) const
 {
   JobPtr job = std::make_shared<FilterJob<void>>(
-      [&filter = *depth_filter_, labels] { filter.getColorBuffer(reinterpret_cast<unsigned char*>(labels)); });
+      [&filter = *depth_filter_, labels] { filter.getColorBuffer((unsigned char*)labels); });
   addJob(job);
   job->wait();
 }
@@ -329,10 +327,8 @@ void mesh_filter::MeshFilterBase::doFilter(const void* sensor_data, const int en
 
   Eigen::Isometry3d transform;
   for (const std::pair<const MeshHandle, GLMeshPtr>& mesh : meshes_)
-  {
     if (transform_callback_(mesh.first, transform))
       mesh.second->render(transform);
-  }
 
   mesh_renderer_->end();
 
@@ -363,18 +359,14 @@ void mesh_filter::MeshFilterBase::doFilter(const void* sensor_data, const int en
       1.0 / (sensor_parameters_->getFarClippingPlaneDistance() - sensor_parameters_->getNearClippingPlaneDistance());
 
   if (encoding == GL_UNSIGNED_SHORT)
-  {
     // unsigned shorts shorts will be mapped to the range 0-1 during transfer. Afterwards we can apply another scale +
     // offset to
     // map the values between near and far clipping plane to 0 - 1. -> scale = (65535 * depth - near ) / (far - near)
     // we have: [0 - 65535] -> [0 - 1]
     // we want: [near - far] -> [0 - 1]
     glPixelTransferf(GL_DEPTH_SCALE, scale * 65.535);
-  }
   else
-  {
     glPixelTransferf(GL_DEPTH_SCALE, scale);
-  }
   glPixelTransferf(GL_DEPTH_BIAS, -scale * sensor_parameters_->getNearClippingPlaneDistance());
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, sensor_parameters_->getWidth(), sensor_parameters_->getHeight(), 0,

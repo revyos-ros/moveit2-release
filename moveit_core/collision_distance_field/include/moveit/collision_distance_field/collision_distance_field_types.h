@@ -56,7 +56,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/time.hpp>
 #include <rclcpp/utilities.hpp>
-#include <moveit/utils/logger.hpp>
 
 namespace collision_detection
 {
@@ -374,7 +373,6 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   PosedBodySphereDecompositionVector()
-    : logger_(moveit::getLogger("moveit.core.posed_body_sphere_decomposition_vector"))
   {
   }
 
@@ -413,7 +411,7 @@ public:
   {
     if (i >= decomp_vector_.size())
     {
-      RCLCPP_INFO(logger_, "No body decomposition");
+      RCLCPP_INFO(LOGGER, "No body decomposition");
       return empty_ptr_;
     }
     return decomp_vector_[i];
@@ -423,7 +421,7 @@ public:
   {
     if (ind >= decomp_vector_.size())
     {
-      RCLCPP_WARN(logger_, "Can't update pose");
+      RCLCPP_WARN(LOGGER, "Can't update pose");
       return;
     }
     decomp_vector_[ind]->updatePose(pose);
@@ -434,7 +432,7 @@ public:
   }
 
 private:
-  rclcpp::Logger logger_;
+  static const rclcpp::Logger LOGGER;
   PosedBodySphereDecompositionConstPtr empty_ptr_;
   std::vector<PosedBodySphereDecompositionPtr> decomp_vector_;
   std::vector<CollisionSphere> collision_spheres_;
@@ -448,7 +446,7 @@ class PosedBodyPointDecompositionVector
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  PosedBodyPointDecompositionVector() : logger_(moveit::getLogger("moveit.core.posed_body_point_decomposition_vector"))
+  PosedBodyPointDecompositionVector()
   {
   }
 
@@ -476,7 +474,7 @@ public:
   {
     if (i >= decomp_vector_.size())
     {
-      RCLCPP_INFO(logger_, "No body decomposition");
+      RCLCPP_INFO(LOGGER, "No body decomposition");
       return empty_ptr_;
     }
     return decomp_vector_[i];
@@ -490,13 +488,13 @@ public:
     }
     else
     {
-      RCLCPP_WARN(logger_, "Can't update pose");
+      RCLCPP_WARN(LOGGER, "Can't update pose");
       return;
     }
   }
 
 protected:
-  rclcpp::Logger logger_;
+  static const rclcpp::Logger LOGGER;
 
 private:
   PosedBodyPointDecompositionPtr empty_ptr_;

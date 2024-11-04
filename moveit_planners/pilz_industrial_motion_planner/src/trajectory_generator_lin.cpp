@@ -34,8 +34,6 @@
 
 #include <pilz_industrial_motion_planner/trajectory_generator_lin.h>
 
-#include <pilz_industrial_motion_planner/tip_frame_getter.h>
-
 #include <cassert>
 #include <sstream>
 #include <time.h>
@@ -49,29 +47,27 @@
 #include <rclcpp/logging.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include <moveit/utils/logger.hpp>
 
 namespace pilz_industrial_motion_planner
 {
-namespace
-{
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.planners.pilz.trajectory_generator.lin");
-}
-}  // namespace
+static const rclcpp::Logger LOGGER =
+    rclcpp::get_logger("moveit.pilz_industrial_motion_planner.trajectory_generator_lin");
 TrajectoryGeneratorLIN::TrajectoryGeneratorLIN(const moveit::core::RobotModelConstPtr& robot_model,
                                                const LimitsContainer& planner_limits, const std::string& /*group_name*/)
   : TrajectoryGenerator::TrajectoryGenerator(robot_model, planner_limits)
 {
-  planner_limits_.printCartesianLimits();
+  if (!planner_limits_.hasFullCartesianLimits())
+  {
+    RCLCPP_ERROR(LOGGER, "Cartesian limits not set for LIN trajectory generator.");
+    throw TrajectoryGeneratorInvalidLimitsException("Cartesian limits are not fully set for LIN trajectory generator.");
+  }
 }
 
 void TrajectoryGeneratorLIN::extractMotionPlanInfo(const planning_scene::PlanningSceneConstPtr& scene,
                                                    const planning_interface::MotionPlanRequest& req,
                                                    TrajectoryGenerator::MotionPlanInfo& info) const
 {
-  RCLCPP_DEBUG(getLogger(), "Extract necessary information from motion plan request.");
+  RCLCPP_DEBUG(LOGGER, "Extract necessary information from motion plan request.");
 
   info.group_name = req.group_name;
   std::string frame_id{ robot_model_->getModelFrame() };
@@ -79,7 +75,7 @@ void TrajectoryGeneratorLIN::extractMotionPlanInfo(const planning_scene::Plannin
   // goal given in joint space
   if (!req.goal_constraints.front().joint_constraints.empty())
   {
-    info.link_name = getSolverTipFrame(robot_model_->getJointModelGroup(req.group_name));
+    info.link_name = robot_model_->getJointModelGroup(req.group_name)->getSolverInstance()->getTipFrame();
 
     if (req.goal_constraints.front().joint_constraints.size() !=
         robot_model_->getJointModelGroup(req.group_name)->getActiveJointModelNames().size())
@@ -88,7 +84,7 @@ void TrajectoryGeneratorLIN::extractMotionPlanInfo(const planning_scene::Plannin
       os << "Number of joints in goal does not match number of joints of group "
             "(Number joints goal: "
          << req.goal_constraints.front().joint_constraints.size() << " | Number of joints of group: "
-         << robot_model_->getJointModelGroup(req.group_name)->getActiveJointModelNames().size() << ')';
+         << robot_model_->getJointModelGroup(req.group_name)->getActiveJointModelNames().size() << ")";
       throw JointNumberMismatch(os.str());
     }
 
@@ -108,8 +104,8 @@ void TrajectoryGeneratorLIN::extractMotionPlanInfo(const planning_scene::Plannin
     if (req.goal_constraints.front().position_constraints.front().header.frame_id.empty() ||
         req.goal_constraints.front().orientation_constraints.front().header.frame_id.empty())
     {
-      RCLCPP_WARN(getLogger(), "Frame id is not set in position/orientation constraints of "
-                               "goal. Use model frame as default");
+      RCLCPP_WARN(LOGGER, "Frame id is not set in position/orientation constraints of "
+                          "goal. Use model frame as default");
       frame_id = robot_model_->getModelFrame();
     }
     else
@@ -151,7 +147,7 @@ void TrajectoryGeneratorLIN::extractMotionPlanInfo(const planning_scene::Plannin
 
 void TrajectoryGeneratorLIN::plan(const planning_scene::PlanningSceneConstPtr& scene,
                                   const planning_interface::MotionPlanRequest& req, const MotionPlanInfo& plan_info,
-                                  double sampling_time, trajectory_msgs::msg::JointTrajectory& joint_trajectory)
+                                  const double& sampling_time, trajectory_msgs::msg::JointTrajectory& joint_trajectory)
 {
   // create Cartesian path for lin
   std::unique_ptr<KDL::Path> path(setPathLIN(plan_info.start_pose, plan_info.goal_pose));
@@ -182,13 +178,13 @@ void TrajectoryGeneratorLIN::plan(const planning_scene::PlanningSceneConstPtr& s
 std::unique_ptr<KDL::Path> TrajectoryGeneratorLIN::setPathLIN(const Eigen::Affine3d& start_pose,
                                                               const Eigen::Affine3d& goal_pose) const
 {
-  RCLCPP_DEBUG(getLogger(), "Set Cartesian path for LIN command.");
+  RCLCPP_DEBUG(LOGGER, "Set Cartesian path for LIN command.");
 
   KDL::Frame kdl_start_pose, kdl_goal_pose;
   tf2::transformEigenToKDL(start_pose, kdl_start_pose);
   tf2::transformEigenToKDL(goal_pose, kdl_goal_pose);
-  double eqradius =
-      planner_limits_.getCartesianLimits().max_trans_vel / planner_limits_.getCartesianLimits().max_rot_vel;
+  double eqradius = planner_limits_.getCartesianLimits().getMaxTranslationalVelocity() /
+                    planner_limits_.getCartesianLimits().getMaxRotationalVelocity();
   KDL::RotationalInterpolation* rot_interpo = new KDL::RotationalInterpolation_SingleAxis();
 
   return std::unique_ptr<KDL::Path>(

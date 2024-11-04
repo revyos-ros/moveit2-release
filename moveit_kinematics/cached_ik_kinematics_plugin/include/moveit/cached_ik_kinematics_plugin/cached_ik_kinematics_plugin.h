@@ -46,11 +46,11 @@
 #include <unordered_map>
 #include <utility>
 #include <filesystem>
-#include <cached_ik_kinematics_parameters.hpp>
-#include <moveit/utils/logger.hpp>
 
 namespace cached_ik_kinematics_plugin
 {
+static const rclcpp::Logger LOGGER =
+    rclcpp::get_logger("moveit_cached_ik_kinematics_plugin.cached_ik_kinematics_plugin");
 
 /** \brief A cache of inverse kinematic solutions */
 class IKCache
@@ -229,11 +229,6 @@ public:
                   const std::vector<std::string>& tip_frames, double search_discretization) override
   {
     node_ = node;
-
-    std::string kinematics_param_prefix = "robot_description_kinematics." + group_name;
-    param_listener_ = std::make_shared<cached_ik_kinematics::ParamListener>(node, kinematics_param_prefix);
-    params_ = param_listener_->get_params();
-
     return initializeImpl(node, robot_model, group_name, base_frame, tip_frames, search_discretization);
   }
 
@@ -262,8 +257,6 @@ public:
 
 private:
   rclcpp::Node::SharedPtr node_;
-  std::shared_ptr<cached_ik_kinematics::ParamListener> param_listener_;
-  cached_ik_kinematics::Params params_;
 
   IKCache cache_;
 
@@ -280,8 +273,7 @@ private:
   {
     if (tip_frames.size() != 1)
     {
-      RCLCPP_ERROR(moveit::getLogger("moveit.core.cached_ik_kinematics_plugin"),
-                   "This solver does not support multiple tip frames");
+      RCLCPP_ERROR(LOGGER, "This solver does not support multiple tip frames");
       return false;
     }
 

@@ -39,8 +39,6 @@
 #include <moveit/macros/class_forward.h>
 #include <moveit/robot_model/robot_model.h>
 #include <moveit/kinematics_base/kinematics_base.h>
-#include <kinematics_parameters.hpp>
-#include <moveit/utils/logger.hpp>
 
 namespace kinematics_plugin_loader
 {
@@ -56,12 +54,33 @@ public:
       found. This is passed to the kinematics solver initialization as
       well as used to read the SRDF document when needed. */
   KinematicsPluginLoader(const rclcpp::Node::SharedPtr& node,
-                         const std::string& robot_description = "robot_description")
-    : node_(node)
-    , robot_description_(robot_description)
-    , logger_(moveit::getLogger("moveit.ros.kinematics_plugin_loader"))
+                         const std::string& robot_description = "robot_description",
+                         double default_search_resolution = 0.0)
+    : node_(node), robot_description_(robot_description), default_search_resolution_(default_search_resolution)
   {
   }
+
+  /** \brief Use a default kinematics solver (\e solver_plugin) for
+      all the groups in the robot model. The default timeout for the
+      solver is \e solve_timeout and the default number of IK attempts
+      is \e ik_attempts. Take node as an argument and as optional argument the name of the ROS
+      parameter under which the robot description can be found. This
+      is passed to the kinematics solver initialization as well as
+      used to read the SRDF document when needed. */
+  KinematicsPluginLoader(const rclcpp::Node::SharedPtr& node, const std::string& solver_plugin, double solve_timeout,
+                         const std::string& robot_description = "robot_description",
+                         double default_search_resolution = 0.0)
+    : node_(node)
+    , robot_description_(robot_description)
+    , default_search_resolution_(default_search_resolution)
+    , default_solver_plugin_(solver_plugin)
+    , default_solver_timeout_(solve_timeout)
+  {
+  }
+
+  /** \brief Get a function pointer that allocates and initializes a kinematics solver. If not previously called, this
+   * function reads the SRDF and calls the variant below. */
+  moveit::core::SolverAllocatorFn getLoaderFunction();
 
   /** \brief Get a function pointer that allocates and initializes a kinematics solver. If not previously called, this
    * function reads ROS parameters for the groups defined in the SRDF. */
@@ -83,15 +102,17 @@ public:
 
 private:
   const rclcpp::Node::SharedPtr node_;
-  std::unordered_map<std::string, std::shared_ptr<kinematics::ParamListener>> group_param_listener_;
-  std::unordered_map<std::string, kinematics::Params> group_params_;
   std::string robot_description_;
+  double default_search_resolution_;
 
   MOVEIT_CLASS_FORWARD(KinematicsLoaderImpl);  // Defines KinematicsLoaderImplPtr, ConstPtr, WeakPtr... etc
   KinematicsLoaderImplPtr loader_;
 
   std::vector<std::string> groups_;
   std::map<std::string, double> ik_timeout_;
-  rclcpp::Logger logger_;
+
+  // default configuration
+  std::string default_solver_plugin_;
+  double default_solver_timeout_;
 };
 }  // namespace kinematics_plugin_loader

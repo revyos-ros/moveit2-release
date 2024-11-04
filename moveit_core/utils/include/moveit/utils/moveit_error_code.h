@@ -47,18 +47,17 @@ namespace core
 class MoveItErrorCode : public moveit_msgs::msg::MoveItErrorCodes
 {
 public:
-  MoveItErrorCode(const int code = moveit_msgs::msg::MoveItErrorCodes::UNDEFINED, const std::string& error_message = "",
-                  const std::string& error_source = "")
+  MoveItErrorCode()
+  {
+    val = 0;
+  }
+  MoveItErrorCode(int code)
   {
     val = code;
-    message = error_message;
-    source = error_source;
   }
   MoveItErrorCode(const moveit_msgs::msg::MoveItErrorCodes& code)
   {
     val = code.val;
-    message = code.message;
-    source = code.source;
   }
   explicit operator bool() const
   {
@@ -79,14 +78,12 @@ public:
    @param error_code Error code to be translated to a string
    @return Error code string
  */
-inline std::string errorCodeToString(const MoveItErrorCode& error_code)
+inline std::string error_code_to_string(MoveItErrorCode error_code)
 {
   switch (error_code.val)
   {
     case moveit::core::MoveItErrorCode::SUCCESS:
       return std::string("SUCCESS");
-    case moveit::core::MoveItErrorCode::UNDEFINED:
-      return std::string("UNDEFINED");
     case moveit::core::MoveItErrorCode::FAILURE:
       return std::string("FAILURE");
     case moveit::core::MoveItErrorCode::PLANNING_FAILED:
@@ -107,18 +104,12 @@ inline std::string errorCodeToString(const MoveItErrorCode& error_code)
       return std::string("START_STATE_IN_COLLISION");
     case moveit::core::MoveItErrorCode::START_STATE_VIOLATES_PATH_CONSTRAINTS:
       return std::string("START_STATE_VIOLATES_PATH_CONSTRAINTS");
-    case moveit::core::MoveItErrorCode::START_STATE_INVALID:
-      return std::string("START_STATE_INVALID");
     case moveit::core::MoveItErrorCode::GOAL_IN_COLLISION:
       return std::string("GOAL_IN_COLLISION");
     case moveit::core::MoveItErrorCode::GOAL_VIOLATES_PATH_CONSTRAINTS:
       return std::string("GOAL_VIOLATES_PATH_CONSTRAINTS");
     case moveit::core::MoveItErrorCode::GOAL_CONSTRAINTS_VIOLATED:
       return std::string("GOAL_CONSTRAINTS_VIOLATED");
-    case moveit::core::MoveItErrorCode::GOAL_STATE_INVALID:
-      return std::string("GOAL_STATE_INVALID");
-    case moveit::core::MoveItErrorCode::UNRECOGNIZED_GOAL_TYPE:
-      return std::string("UNRECOGNIZED_GOAL_TYPE");
     case moveit::core::MoveItErrorCode::INVALID_GROUP_NAME:
       return std::string("INVALID_GROUP_NAME");
     case moveit::core::MoveItErrorCode::INVALID_GOAL_CONSTRAINTS:
@@ -139,14 +130,9 @@ inline std::string errorCodeToString(const MoveItErrorCode& error_code)
       return std::string("SENSOR_INFO_STALE");
     case moveit::core::MoveItErrorCode::COMMUNICATION_FAILURE:
       return std::string("COMMUNICATION_FAILURE");
-    case moveit::core::MoveItErrorCode::CRASH:
-      return std::string("CRASH");
-    case moveit::core::MoveItErrorCode::ABORT:
-      return std::string("ABORT");
     case moveit::core::MoveItErrorCode::NO_IK_SOLUTION:
       return std::string("NO_IK_SOLUTION");
   }
-  return std::string("Unrecognized MoveItErrorCode. This should never happen!");
 }
 
 }  // namespace core

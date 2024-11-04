@@ -40,17 +40,16 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <moveit_msgs/msg/move_it_error_codes.hpp>
-#include <moveit/utils/moveit_error_code.h>
 #include <moveit/hybrid_planning_manager/hybrid_planning_events.h>
+#include <moveit/hybrid_planning_manager/moveit_error_code_interface.h>
 
 namespace moveit::hybrid_planning
 {
 // Describes the outcome of a reaction to an event in the hybrid planning architecture
 struct ReactionResult
 {
-  ReactionResult(const HybridPlanningEvent& planning_event, const std::string& error_msg, const int error_code,
-                 const HybridPlanningAction& action = HybridPlanningAction::DO_NOTHING)
-    : error_message(error_msg), error_code(error_code), action(action)
+  ReactionResult(const HybridPlanningEvent& planning_event, const std::string& error_msg, int error_code)
+    : error_message(error_msg), error_code(error_code)
   {
     switch (planning_event)
     {
@@ -80,18 +79,10 @@ struct ReactionResult
         break;
       case HybridPlanningEvent::UNDEFINED:
         event = "Undefined event";
-        break;
-      case HybridPlanningEvent::GLOBAL_PLANNING_ACTION_REJECTED:
-        event = "Global planning action rejected";
-        break;
-      case HybridPlanningEvent::LOCAL_PLANNING_ACTION_REJECTED:
-        event = "Local planning action rejected";
-        break;
     }
   };
-  ReactionResult(const std::string& event, const std::string& error_msg, const int error_code,
-                 const HybridPlanningAction& action = HybridPlanningAction::DO_NOTHING)
-    : event(event), error_message(error_msg), error_code(error_code), action(action){};
+  ReactionResult(const std::string& event, const std::string& error_msg, int error_code)
+    : event(event), error_message(error_msg), error_code(error_code){};
 
   // Event that triggered the reaction
   std::string event;
@@ -100,11 +91,10 @@ struct ReactionResult
   std::string error_message;
 
   // Error code
-  moveit::core::MoveItErrorCode error_code;
-
-  // Action to that needs to be performed by the HP manager
-  HybridPlanningAction action;
+  MoveItErrorCode error_code;
 };
+
+class HybridPlanningManager;  // Forward declaration
 
 /**
  * Class PlannerLogicInterface - Base class for a planner logic. The logic defines how to react to different events that
@@ -123,12 +113,10 @@ public:
 
   /**
    * Initialize the planner logic
+   * @param hybrid_planning_manager The hybrid planning manager instance to initialize this logic with.
    * @return true if initialization was successful
    */
-  virtual bool initialize()
-  {
-    return true;
-  };
+  virtual bool initialize(const std::shared_ptr<HybridPlanningManager>& hybrid_planning_manager) = 0;
 
   /**
    * React to event defined in HybridPlanningEvent enum
@@ -143,5 +131,9 @@ public:
    * @return Reaction result that summarizes the outcome of the reaction
    */
   virtual ReactionResult react(const std::string& event) = 0;
+
+protected:
+  // The hybrid planning manager instance that runs this logic plugin
+  std::shared_ptr<HybridPlanningManager> hybrid_planning_manager_ = nullptr;
 };
 }  // namespace moveit::hybrid_planning

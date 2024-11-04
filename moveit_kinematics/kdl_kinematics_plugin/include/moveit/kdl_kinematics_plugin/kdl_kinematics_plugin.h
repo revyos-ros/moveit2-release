@@ -39,7 +39,6 @@
 // ROS
 #include <rclcpp/rclcpp.hpp>
 #include <random_numbers/random_numbers.h>
-#include <kdl_kinematics_parameters.hpp>
 
 // ROS msgs
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -160,6 +159,8 @@ private:
   /// clip q_delta such that joint limits will not be violated
   void clipToJointLimits(const KDL::JntArray& q, KDL::JntArray& q_delta, Eigen::ArrayXd& weighting) const;
 
+  static rclcpp::Clock steady_clock_;
+
   bool initialized_;  ///< Internal variable that indicates whether solver is configured and ready
 
   unsigned int dimension_;                             ///< Dimension of the group
@@ -173,7 +174,13 @@ private:
   std::vector<double> joint_weights_;
   Eigen::VectorXd joint_min_, joint_max_;  ///< joint limits
 
-  std::shared_ptr<kdl_kinematics::ParamListener> param_listener_;
-  kdl_kinematics::Params params_;
+  int max_solver_iterations_;
+  double epsilon_;
+  /** weight of orientation error vs position error
+   *
+   * < 1.0: orientation has less importance than position
+   * > 1.0: orientation has more importance than position
+   * = 0.0: perform position-only IK */
+  double orientation_vs_position_weight_;
 };
 }  // namespace kdl_kinematics_plugin
