@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2019, Hamburg University
+ *  Copyright (c) 2024, PickNik Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Hamburg University nor the names of its
+ *   * Neither the name of PickNik Inc. nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,28 +32,54 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Jonas Tietz */
+/* Author: Bilal Gill */
 
-#pragma once
+#include "save_geometry_to_file_service_capability.hpp"
 
-#include <moveit/move_group/move_group_capability.h>
-#include <thread>
+#include <moveit/moveit_cpp/moveit_cpp.hpp>
+#include <moveit/move_group/capability_names.hpp>
+#include <moveit/utils/logger.hpp>
+
+#include <fstream>
 
 namespace move_group
 {
-class TfPublisher : public MoveGroupCapability
+
+namespace
 {
-public:
-  TfPublisher();
-  ~TfPublisher() override;
+rclcpp::Logger getLogger()
+{
+  return moveit::getLogger("save_geometry_to_file_service");
+}
+}  // namespace
 
-  void initialize() override;
+SaveGeometryToFileService::SaveGeometryToFileService() : MoveGroupCapability(SAVE_GEOMETRY_TO_FILE_SERVICE_NAME)
+{
+}
 
-private:
-  void publishPlanningSceneFrames();
-  int rate_;
-  std::string prefix_;
-  std::thread thread_;
-  bool keep_running_;
-};
+void SaveGeometryToFileService::initialize()
+{
+  save_geometry_service_ = context_->moveit_cpp_->getNode()->create_service<moveit_msgs::srv::SaveGeometryToFile>(
+      SAVE_GEOMETRY_TO_FILE_SERVICE_NAME,
+      [this](const std::shared_ptr<moveit_msgs::srv::SaveGeometryToFile::Request>& req,
+             const std::shared_ptr<moveit_msgs::srv::SaveGeometryToFile::Response>& res) {
+        std::ofstream file(req->file_path_and_name);
+        if (!file.is_open())
+        {
+          RCLCPP_ERROR(getLogger(), "Unable to open file %s for saving CollisionObjects",
+                       req->file_path_and_name.c_str());
+          res->success = false;
+          return;
+        }
+        planning_scene_monitor::LockedPlanningSceneRO locked_ps(context_->planning_scene_monitor_);
+        locked_ps->saveGeometryToStream(file);
+        file.close();
+        res->success = true;
+      }  // End of callback function
+  );
+}
 }  // namespace move_group
+
+#include <pluginlib/class_list_macros.hpp>
+
+PLUGINLIB_EXPORT_CLASS(move_group::SaveGeometryToFileService, move_group::MoveGroupCapability)

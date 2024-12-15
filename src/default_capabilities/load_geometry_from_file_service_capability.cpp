@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2012, Willow Garage, Inc.
+ *  Copyright (c) 2024, PickNik Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage nor the names of its
+ *   * Neither the name of PickNik Inc. nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,24 +32,54 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Ioan Sucan */
+/* Author: Bilal Gill */
 
-#include "get_planning_scene_service_capability.hpp"
+#include "load_geometry_from_file_service_capability.hpp"
+
+#include <moveit/moveit_cpp/moveit_cpp.hpp>
 #include <moveit/move_group/capability_names.hpp>
+#include <moveit/utils/logger.hpp>
+
+#include <fstream>
 
 namespace move_group
 {
-MoveGroupGetPlanningSceneService::MoveGroupGetPlanningSceneService() : MoveGroupCapability("get_planning_scene_service")
+
+namespace
+{
+rclcpp::Logger getLogger()
+{
+  return moveit::getLogger("load_geometry_from_file_service");
+}
+}  // namespace
+
+LoadGeometryFromFileService::LoadGeometryFromFileService() : MoveGroupCapability(LOAD_GEOMETRY_FROM_FILE_SERVICE_NAME)
 {
 }
 
-void MoveGroupGetPlanningSceneService::initialize()
+void LoadGeometryFromFileService::initialize()
 {
-  context_->planning_scene_monitor_->providePlanningSceneService(GET_PLANNING_SCENE_SERVICE_NAME);
+  load_geometry_service_ = context_->moveit_cpp_->getNode()->create_service<moveit_msgs::srv::LoadGeometryFromFile>(
+      LOAD_GEOMETRY_FROM_FILE_SERVICE_NAME,
+      [this](const std::shared_ptr<moveit_msgs::srv::LoadGeometryFromFile::Request>& req,
+             const std::shared_ptr<moveit_msgs::srv::LoadGeometryFromFile::Response>& res) {
+        std::ifstream file(req->file_path_and_name);
+        if (!file.is_open())
+        {
+          RCLCPP_ERROR(getLogger(), "Unable to open file %s for loading CollisionObjects",
+                       req->file_path_and_name.c_str());
+          res->success = false;
+          return;
+        }
+        planning_scene_monitor::LockedPlanningSceneRW locked_ps(context_->planning_scene_monitor_);
+        locked_ps->loadGeometryFromStream(file);
+        file.close();
+        res->success = true;
+      }  // End of callback function
+  );
 }
-
 }  // namespace move_group
 
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(move_group::MoveGroupGetPlanningSceneService, move_group::MoveGroupCapability)
+PLUGINLIB_EXPORT_CLASS(move_group::LoadGeometryFromFileService, move_group::MoveGroupCapability)

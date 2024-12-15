@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2016, Kentaro Wada.
+ *  Copyright (c) 2012, Willow Garage, Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -32,40 +32,35 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/*
- * Capability of execute trajectory with a ROS action.
- *
- * Author: Kentaro Wada
- * */
+/* Author: Ioan Sucan, Robert Haschke */
 
 #pragma once
 
-#include <moveit/move_group/move_group_capability.h>
-#include <rclcpp_action/rclcpp_action.hpp>
-#include <moveit_msgs/action/execute_trajectory.hpp>
-
-#include <memory>
+#include <moveit/move_group/move_group_capability.hpp>
+#include <moveit_msgs/srv/query_planner_interfaces.hpp>
+#include <moveit_msgs/srv/get_planner_params.hpp>
+#include <moveit_msgs/srv/set_planner_params.hpp>
 
 namespace move_group
 {
-using ExecTrajectory = moveit_msgs::action::ExecuteTrajectory;
-using ExecTrajectoryGoal = rclcpp_action::ServerGoalHandle<ExecTrajectory>;
-
-class MoveGroupExecuteTrajectoryAction : public MoveGroupCapability
+class MoveGroupQueryPlannersService : public MoveGroupCapability
 {
 public:
-  MoveGroupExecuteTrajectoryAction();
+  MoveGroupQueryPlannersService();
 
   void initialize() override;
 
 private:
-  void executePathCallback(const std::shared_ptr<ExecTrajectoryGoal>& goal);
-  void executePath(const std::shared_ptr<ExecTrajectoryGoal>& goal, std::shared_ptr<ExecTrajectory::Result>& action_res);
+  void queryInterface(const std::shared_ptr<moveit_msgs::srv::QueryPlannerInterfaces::Request>& /*req*/,
+                      const std::shared_ptr<moveit_msgs::srv::QueryPlannerInterfaces::Response>& res);
 
-  void preemptExecuteTrajectoryCallback();
-  void setExecuteTrajectoryState(MoveGroupState state, const std::shared_ptr<ExecTrajectoryGoal>& goal);
+  void getParams(const std::shared_ptr<moveit_msgs::srv::GetPlannerParams::Request>& req,
+                 const std::shared_ptr<moveit_msgs::srv::GetPlannerParams::Response>& res);
+  void setParams(const std::shared_ptr<moveit_msgs::srv::SetPlannerParams::Request>& req,
+                 const std::shared_ptr<moveit_msgs::srv::SetPlannerParams::Response>& /*res*/);
 
-  std::shared_ptr<rclcpp_action::Server<ExecTrajectory>> execute_action_server_;
+  rclcpp::Service<moveit_msgs::srv::QueryPlannerInterfaces>::SharedPtr query_service_;
+  rclcpp::Service<moveit_msgs::srv::GetPlannerParams>::SharedPtr get_service_;
+  rclcpp::Service<moveit_msgs::srv::SetPlannerParams>::SharedPtr set_service_;
 };
-
 }  // namespace move_group

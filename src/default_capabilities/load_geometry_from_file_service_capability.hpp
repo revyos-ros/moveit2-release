@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2012, Willow Garage, Inc.
+ *  Copyright (c) 2024, PickNik Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage nor the names of its
+ *   * Neither the name of PickNik Inc. nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,27 +32,31 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Ioan Sucan */
+/* Author: Bilal Gill */
 
 #pragma once
 
-#include <moveit/move_group/move_group_capability.h>
-#include <moveit_msgs/srv/get_state_validity.hpp>
+#include <moveit/move_group/move_group_capability.hpp>
+#include <moveit_msgs/srv/load_geometry_from_file.hpp>
 
 namespace move_group
 {
-class MoveGroupStateValidationService : public MoveGroupCapability
+/**
+ * @brief Move group capability to save CollisionObjects in a PlanningScene to a .scene file
+ *
+ */
+class LoadGeometryFromFileService : public MoveGroupCapability
 {
 public:
-  MoveGroupStateValidationService();
+  LoadGeometryFromFileService();
 
+  /**
+   * @brief Initializes service when plugin is loaded
+   *
+   */
   void initialize() override;
 
 private:
-  bool computeService(const std::shared_ptr<rmw_request_id_t>& request_header,
-                      const std::shared_ptr<moveit_msgs::srv::GetStateValidity::Request>& req,
-                      const std::shared_ptr<moveit_msgs::srv::GetStateValidity::Response>& res);
-
-  rclcpp::Service<moveit_msgs::srv::GetStateValidity>::SharedPtr validity_service_;
+  rclcpp::Service<moveit_msgs::srv::LoadGeometryFromFile>::SharedPtr load_geometry_service_;
 };
 }  // namespace move_group
