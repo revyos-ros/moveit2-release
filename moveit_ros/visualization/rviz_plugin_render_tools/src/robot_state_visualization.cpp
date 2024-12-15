@@ -34,9 +34,9 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/rviz_plugin_render_tools/robot_state_visualization.h>
-#include <moveit/rviz_plugin_render_tools/planning_link_updater.h>
-#include <moveit/rviz_plugin_render_tools/render_shapes.h>
+#include <moveit/rviz_plugin_render_tools/robot_state_visualization.hpp>
+#include <moveit/rviz_plugin_render_tools/planning_link_updater.hpp>
+#include <moveit/rviz_plugin_render_tools/render_shapes.hpp>
 #include <rviz_common/properties/parse_color.hpp>
 #include <rviz_default_plugins/robot/robot_link.hpp>
 #include <QApplication>
@@ -145,7 +145,7 @@ void RobotStateVisualization::updateHelper(const moveit::core::RobotStateConstPt
       RCLCPP_ERROR_STREAM(getLogger(), "Link " << attached_body->getAttachedLinkName() << " not found in rviz::Robot");
       continue;
     }
-    Ogre::ColourValue rcolor(color.r, color.g, color.b);
+    Ogre::ColourValue rcolor(color.r, color.g, color.b, color.a);
     const EigenSTL::vector_Isometry3d& ab_t = attached_body->getShapePosesInLinkFrame();
     const std::vector<shapes::ShapeConstPtr>& ab_shapes = attached_body->getShapes();
     for (std::size_t j = 0; j < ab_shapes.size(); ++j)
