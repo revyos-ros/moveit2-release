@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2012, Willow Garage, Inc.
+ *  Copyright (c) 2016, Michael 'v4hn' Goerner
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -32,25 +32,31 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Ioan Sucan */
+/* Author: Michael 'v4hn' Goerner */
+
+#pragma once
 
 #include <moveit/move_group/move_group_capability.hpp>
-#include <pluginlib/class_loader.hpp>
-#include <fmt/format.h>
+#include <moveit_msgs/srv/apply_planning_scene.hpp>
 
-int main(int /*argc*/, char** /*argv*/)
+namespace move_group
 {
-  try
-  {
-    pluginlib::ClassLoader<move_group::MoveGroupCapability> capability_plugin_loader("moveit_ros_move_group",
-                                                                                     "move_group::MoveGroupCapability");
-    std::cout << "Available capabilities:\n"
-              << fmt::format("{}", fmt::join(capability_plugin_loader.getDeclaredClasses(), "\n")) << '\n';
-  }
-  catch (pluginlib::PluginlibException& ex)
-  {
-    std::cerr << "Exception while creating plugin loader for move_group capabilities: " << ex.what() << '\n';
-  }
+/**
+ * Provides the ability to update the shared planning scene
+ * with a remote blocking call using a ROS-Service
+ */
+class ApplyPlanningSceneService : public MoveGroupCapability
+{
+public:
+  ApplyPlanningSceneService();
 
-  return 0;
-}
+  void initialize() override;
+
+private:
+  bool applyScene(const std::shared_ptr<rmw_request_id_t>& request_header,
+                  const std::shared_ptr<moveit_msgs::srv::ApplyPlanningScene::Request>& req,
+                  const std::shared_ptr<moveit_msgs::srv::ApplyPlanningScene::Response>& res);
+
+  rclcpp::Service<moveit_msgs::srv::ApplyPlanningScene>::SharedPtr service_;
+};
+}  // namespace move_group

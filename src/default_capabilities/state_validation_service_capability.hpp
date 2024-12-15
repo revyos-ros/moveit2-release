@@ -36,42 +36,23 @@
 
 #pragma once
 
-#include <moveit/move_group/move_group_capability.h>
-#include <rclcpp_action/rclcpp_action.hpp>
-#include <moveit_msgs/action/move_group.hpp>
-#include <memory>
+#include <moveit/move_group/move_group_capability.hpp>
+#include <moveit_msgs/srv/get_state_validity.hpp>
 
 namespace move_group
 {
-using MGAction = moveit_msgs::action::MoveGroup;
-using MGActionGoal = rclcpp_action::ServerGoalHandle<MGAction>;
-
-class MoveGroupMoveAction : public MoveGroupCapability
+class MoveGroupStateValidationService : public MoveGroupCapability
 {
 public:
-  MoveGroupMoveAction();
+  MoveGroupStateValidationService();
 
   void initialize() override;
 
 private:
-  void executeMoveCallback(const std::shared_ptr<MGActionGoal>& goal);
-  void executeMoveCallbackPlanAndExecute(const std::shared_ptr<MGActionGoal>& goal,
-                                         std::shared_ptr<MGAction::Result>& action_res);
-  void executeMoveCallbackPlanOnly(const std::shared_ptr<MGActionGoal>& goal,
-                                   std::shared_ptr<MGAction::Result>& action_res);
+  bool computeService(const std::shared_ptr<rmw_request_id_t>& request_header,
+                      const std::shared_ptr<moveit_msgs::srv::GetStateValidity::Request>& req,
+                      const std::shared_ptr<moveit_msgs::srv::GetStateValidity::Response>& res);
 
-  void startMoveExecutionCallback();
-  void startMoveLookCallback();
-  void preemptMoveCallback();
-  void setMoveState(MoveGroupState state, const std::shared_ptr<MGActionGoal>& goal);
-
-  bool planUsingPlanningPipeline(const planning_interface::MotionPlanRequest& req,
-                                 plan_execution::ExecutableMotionPlan& plan);
-
-  std::shared_ptr<rclcpp_action::Server<MGAction>> execute_action_server_;
-
-  MoveGroupState move_state_;
-  bool preempt_requested_;
-  std::shared_ptr<MGActionGoal> goal_;
+  rclcpp::Service<moveit_msgs::srv::GetStateValidity>::SharedPtr validity_service_;
 };
 }  // namespace move_group
