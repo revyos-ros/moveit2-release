@@ -35,8 +35,8 @@
 /* Author: Jon Binney, Ioan Sucan */
 
 #include <cmath>
-#include <moveit/pointcloud_octomap_updater/pointcloud_octomap_updater.h>
-#include <moveit/occupancy_map_monitor/occupancy_map_monitor.h>
+#include <moveit/pointcloud_octomap_updater/pointcloud_octomap_updater.hpp>
+#include <moveit/occupancy_map_monitor/occupancy_map_monitor.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2/LinearMath/Vector3.h>
 #include <tf2/LinearMath/Transform.h>
@@ -44,6 +44,7 @@
 #include <tf2_ros/create_timer_interface.h>
 #include <tf2_ros/create_timer_ros.h>
 #include <moveit/utils/logger.hpp>
+#include <rclcpp/version.h>
 
 #include <memory>
 
@@ -96,7 +97,6 @@ void PointCloudOctomapUpdater::start()
   if (!ns_.empty())
     prefix = ns_ + "/";
 
-  rclcpp::QoS qos(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_sensor_data));
   if (!filtered_cloud_topic_.empty())
   {
     filtered_cloud_publisher_ =
@@ -107,7 +107,11 @@ void PointCloudOctomapUpdater::start()
     return;
   /* subscribe to point cloud topic using tf filter*/
   point_cloud_subscriber_ = new message_filters::Subscriber<sensor_msgs::msg::PointCloud2>(node_, point_cloud_topic_,
+#if RCLCPP_VERSION_GTE(28, 3, 0)
+                                                                                           rclcpp::SensorDataQoS());
+#else
                                                                                            rmw_qos_profile_sensor_data);
+#endif
   if (tf_listener_ && tf_buffer_ && !monitor_->getMapFrame().empty())
   {
     point_cloud_filter_ = new tf2_ros::MessageFilter<sensor_msgs::msg::PointCloud2>(
