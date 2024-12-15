@@ -12,7 +12,6 @@
  *********************************************************************/
 /*
  * Copyright (c) 2008, Willow Garage, Inc.
- * Copyright (c) 2019, Open Source Robotics Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +22,7 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of the copyright holder nor the names of its
+ *     * Neither the name of the Willow Garage, Inc. nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
  *
@@ -40,11 +39,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-// TODO(JafarAbdi): Remove this file once the lag issue is fixed upstream https://github.com/ros2/rviz/issues/548
-// This file is copied from https://github.com/ros2/rviz, the only difference is the addition of the private members
-// pnode_, private_executor_, and private_executor_thread_ to fix the lag in the motion planning display interactive
-// marker cause by Rviz having only a single thread executor
-
 #pragma once
 #pragma message(".h header is obsolete. Please use the .hpp header instead.")
-#include <moveit/motion_planning_rviz_plugin/interactive_marker_display.hpp>
+#include <ogre_helpers/mesh_shape.hpp>
