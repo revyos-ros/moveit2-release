@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2012, Willow Garage, Inc.
+ *  Copyright (c) 2011, Willow Garage, Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -32,18 +32,33 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+/* Author: Ioan Sucan */
+
 #pragma once
 
-/** \def MOVEIT_DEPRECATED
-    Deprecated macro that marks functions as deprecated (TODO: Remove for Noetic) */
+#include <moveit/constraint_samplers/constraint_sampler.hpp>
+#include <moveit/macros/class_forward.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-#warning "The usage of MOVEIT_DEPRECATED is deprecated. Use the CPP14 [[deprecated]] instead."
-#ifdef __GNUC__
-#define MOVEIT_DEPRECATED __attribute__((deprecated))
-#elif defined(_MSC_VER)
-#define MOVEIT_DEPRECATED __declspec(deprecated)
-#elif defined(__clang__)
-#define MOVEIT_DEPRECATED __attribute__((deprecated("MoveIt: Use of this method is deprecated")))
-#else
-#define MOVEIT_DEPRECATED /* Nothing */
-#endif
+namespace constraint_samplers
+{
+MOVEIT_CLASS_FORWARD(ConstraintSamplerAllocator);  // Defines ConstraintSamplerAllocatorPtr, ConstPtr, WeakPtr... etc
+
+class ConstraintSamplerAllocator
+{
+public:
+  ConstraintSamplerAllocator()
+  {
+  }
+
+  virtual ~ConstraintSamplerAllocator()
+  {
+  }
+
+  virtual ConstraintSamplerPtr alloc(const planning_scene::PlanningSceneConstPtr& scene, const std::string& group_name,
+                                     const moveit_msgs::msg::Constraints& constr) = 0;
+
+  virtual bool canService(const planning_scene::PlanningSceneConstPtr& scene, const std::string& group_name,
+                          const moveit_msgs::msg::Constraints& constr) const = 0;
+};
+}  // namespace constraint_samplers
