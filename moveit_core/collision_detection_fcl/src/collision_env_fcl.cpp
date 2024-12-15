@@ -34,11 +34,11 @@
 
 /* Author: Ioan Sucan, Jens Petit */
 
-#include <moveit/collision_detection_fcl/collision_env_fcl.h>
-#include <moveit/collision_detection_fcl/collision_detector_allocator_fcl.h>
-#include <moveit/collision_detection_fcl/collision_common.h>
+#include <moveit/collision_detection_fcl/collision_env_fcl.hpp>
+#include <moveit/collision_detection_fcl/collision_detector_allocator_fcl.hpp>
+#include <moveit/collision_detection_fcl/collision_common.hpp>
 
-#include <moveit/collision_detection_fcl/fcl_compat.h>
+#include <moveit/collision_detection_fcl/fcl_compat.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 #include <moveit/utils/logger.hpp>
@@ -449,6 +449,38 @@ void CollisionEnvFCL::notifyObjectChange(const ObjectConstPtr& obj, World::Actio
       fcl_objs_.erase(it);
     }
     cleanCollisionGeometryCache();
+  }
+  else if (action == World::MOVE_SHAPE)
+  {
+    auto it = fcl_objs_.find(obj->id_);
+    if (it == fcl_objs_.end())
+    {
+      RCLCPP_ERROR(getLogger(), "Cannot move shapes of unknown FCL object: '%s'", obj->id_.c_str());
+      return;
+    }
+
+    if (obj->global_shape_poses_.size() != it->second.collision_objects_.size())
+    {
+      RCLCPP_ERROR(getLogger(),
+                   "Cannot move shapes, shape size mismatch between FCL object and world object: '%s'. Respectively "
+                   "%zu and %zu.",
+                   obj->id_.c_str(), it->second.collision_objects_.size(), it->second.collision_objects_.size());
+      return;
+    }
+
+    for (std::size_t i = 0; i < it->second.collision_objects_.size(); ++i)
+    {
+      it->second.collision_objects_[i]->setTransform(transform2fcl(obj->global_shape_poses_[i]));
+
+      // compute AABB, order matters
+      it->second.collision_geometry_[i]->collision_geometry_->computeLocalAABB();
+      it->second.collision_objects_[i]->computeAABB();
+    }
+
+    // update AABB in the FCL broadphase manager tree
+    // see https://github.com/moveit/moveit/pull/3601 for benchmarks
+    it->second.unregisterFrom(manager_.get());
+    it->second.registerTo(manager_.get());
   }
   else
   {
