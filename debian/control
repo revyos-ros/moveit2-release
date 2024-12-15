@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-planners-stomp
+Section: misc
+Priority: optional
+Maintainer: Henning Kayser <henningkayser@picknik.ai>
+Build-Depends: debhelper (>= 9.0.0), ros-jazzy-ament-cmake, ros-jazzy-generate-parameter-library, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-rsl, ros-jazzy-std-msgs, ros-jazzy-stomp, ros-jazzy-tf2-eigen, ros-jazzy-visualization-msgs, ros-jazzy-ros-workspace
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-planners-stomp
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-jazzy-generate-parameter-library, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-rsl, ros-jazzy-std-msgs, ros-jazzy-stomp, ros-jazzy-tf2-eigen, ros-jazzy-visualization-msgs, ros-jazzy-ros-workspace
+Description: STOMP Motion Planner for MoveIt
