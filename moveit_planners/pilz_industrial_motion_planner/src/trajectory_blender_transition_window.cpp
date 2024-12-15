@@ -32,13 +32,13 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <pilz_industrial_motion_planner/trajectory_blender_transition_window.h>
+#include <pilz_industrial_motion_planner/trajectory_blender_transition_window.hpp>
 
 #include <algorithm>
 #include <memory>
 #include <math.h>
 #include <tf2_eigen/tf2_eigen.hpp>
-#include <moveit/planning_interface/planning_interface.h>
+#include <moveit/planning_interface/planning_interface.hpp>
 #include <moveit/utils/logger.hpp>
 
 namespace
@@ -70,7 +70,7 @@ bool pilz_industrial_motion_planner::TrajectoryBlenderTransitionWindow::blend(
   std::size_t second_intersection_index;
   if (!searchIntersectionPoints(req, first_intersection_index, second_intersection_index))
   {
-    RCLCPP_ERROR(getLogger(), "Blend radius to large.");
+    RCLCPP_ERROR(getLogger(), "Blend radius too large.");
     res.error_code.val = moveit_msgs::msg::MoveItErrorCodes::INVALID_MOTION_PLAN;
     return false;
   }
@@ -100,7 +100,7 @@ bool pilz_industrial_motion_planner::TrajectoryBlenderTransitionWindow::blend(
 
   if (!generateJointTrajectory(planning_scene, limits_.getJointLimitContainer(), blend_trajectory_cartesian,
                                req.group_name, req.link_name, initial_joint_position, initial_joint_velocity,
-                               blend_joint_trajectory, error_code, true))
+                               blend_joint_trajectory, error_code))
   {
     // LCOV_EXCL_START
     RCLCPP_INFO(getLogger(), "Failed to generate joint trajectory for blending trajectory.");
@@ -127,6 +127,7 @@ bool pilz_industrial_motion_planner::TrajectoryBlenderTransitionWindow::blend(
 
   // append the blend trajectory
   res.blend_trajectory->setRobotTrajectoryMsg(req.first_trajectory->getFirstWayPoint(), blend_joint_trajectory);
+
   // copy the points [second_intersection_index, len] from the second trajectory
   for (size_t i = second_intersection_index + 1; i < req.second_trajectory->getWayPointCount(); ++i)
   {
@@ -274,7 +275,7 @@ bool pilz_industrial_motion_planner::TrajectoryBlenderTransitionWindow::searchIn
   // (last point of the first trajectory, first point of the second trajectory)
   Eigen::Isometry3d circ_pose = req.first_trajectory->getLastWayPoint().getFrameTransform(req.link_name);
 
-  // Searh for intersection points according to distance
+  // Search for intersection points according to distance
   if (!linearSearchIntersectionPoint(req.link_name, circ_pose.translation(), req.blend_radius, req.first_trajectory,
                                      true, first_interse_index))
   {
