@@ -34,9 +34,9 @@
 
 /* Author: Suat Gedikli */
 
-#include <moveit/mesh_filter/mesh_filter_base.h>
-#include <moveit/mesh_filter/gl_mesh.h>
-#include <moveit/mesh_filter/filter_job.h>
+#include <moveit/mesh_filter/mesh_filter_base.hpp>
+#include <moveit/mesh_filter/gl_mesh.hpp>
+#include <moveit/mesh_filter/filter_job.hpp>
 
 #include <geometric_shapes/shapes.h>
 #include <geometric_shapes/shape_operations.h>
@@ -227,7 +227,7 @@ void mesh_filter::MeshFilterBase::getModelLabels(LabelType* labels) const
   job->wait();
 }
 
-void mesh_filter::MeshFilterBase::getModelDepth(double* depth) const
+void mesh_filter::MeshFilterBase::getModelDepth(float* depth) const
 {
   JobPtr job1 =
       std::make_shared<FilterJob<void>>([&renderer = *mesh_renderer_, depth] { renderer.getDepthBuffer(depth); });
@@ -243,7 +243,7 @@ void mesh_filter::MeshFilterBase::getModelDepth(double* depth) const
   job2->wait();
 }
 
-void mesh_filter::MeshFilterBase::getFilteredDepth(double* depth) const
+void mesh_filter::MeshFilterBase::getFilteredDepth(float* depth) const
 {
   JobPtr job1 = std::make_shared<FilterJob<void>>([&filter = *depth_filter_, depth] { filter.getDepthBuffer(depth); });
   JobPtr job2 = std::make_shared<FilterJob<void>>(
