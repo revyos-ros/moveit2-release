@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-ros-perception
+Section: misc
+Priority: optional
+Maintainer: Henning Kayser <henningkayser@picknik.ai>
+Build-Depends: debhelper (>= 9.0.0), freeglut3-dev, libeigen3-dev, libgl1-mesa-dev, libglew-dev, libglu1-mesa-dev, libomp-dev, ros-jazzy-ament-cmake, ros-jazzy-cv-bridge, ros-jazzy-image-transport, ros-jazzy-message-filters, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-moveit-msgs, ros-jazzy-moveit-ros-occupancy-map-monitor, ros-jazzy-moveit-ros-planning, ros-jazzy-object-recognition-msgs, ros-jazzy-pluginlib (>= 1.11.2), ros-jazzy-rclcpp, ros-jazzy-sensor-msgs, ros-jazzy-tf2, ros-jazzy-tf2-eigen, ros-jazzy-tf2-geometry-msgs, ros-jazzy-tf2-ros, ros-jazzy-urdf, ros-jazzy-ros-workspace
+Homepage: http://moveit.ros.org
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-ros-perception
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, freeglut3-dev, libgl1-mesa-dev, libglew-dev, libglu1-mesa-dev, libomp-dev, ros-jazzy-cv-bridge, ros-jazzy-image-transport, ros-jazzy-message-filters, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-moveit-msgs, ros-jazzy-moveit-ros-occupancy-map-monitor, ros-jazzy-moveit-ros-planning, ros-jazzy-object-recognition-msgs, ros-jazzy-pluginlib (>= 1.11.2), ros-jazzy-rclcpp, ros-jazzy-sensor-msgs, ros-jazzy-tf2, ros-jazzy-tf2-eigen, ros-jazzy-tf2-geometry-msgs, ros-jazzy-tf2-ros, ros-jazzy-urdf, ros-jazzy-ros-workspace
+Description: Components of MoveIt connecting to perception
