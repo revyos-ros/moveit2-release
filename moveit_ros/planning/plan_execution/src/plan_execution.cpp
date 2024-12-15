@@ -34,12 +34,12 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/plan_execution/plan_execution.h>
-#include <moveit/robot_state/conversions.h>
-#include <moveit/trajectory_processing/trajectory_tools.h>
-#include <moveit/collision_detection/collision_tools.h>
-#include <moveit/utils/message_checks.h>
-#include <moveit/utils/moveit_error_code.h>
+#include <moveit/plan_execution/plan_execution.hpp>
+#include <moveit/robot_state/conversions.hpp>
+#include <moveit/trajectory_processing/trajectory_tools.hpp>
+#include <moveit/collision_detection/collision_tools.hpp>
+#include <moveit/utils/message_checks.hpp>
+#include <moveit/utils/moveit_error_code.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
@@ -50,7 +50,7 @@
 #include <moveit/utils/logger.hpp>
 
 // #include <dynamic_reconfigure/server.h>
-// #include <moveit_ros_planning/PlanExecutionDynamicReconfigureConfig.h>
+// #include <moveit_ros_planning/PlanExecutionDynamicReconfigureConfig.hpp>
 
 namespace plan_execution
 {
@@ -282,16 +282,17 @@ bool plan_execution::PlanExecution::isRemainingPathValid(const ExecutableMotionP
     std::size_t wpc = t.getWayPointCount();
     collision_detection::CollisionRequest req;
     req.group_name = t.getGroupName();
+    req.pad_environment_collisions = false;
     for (std::size_t i = std::max(path_segment.second - 1, 0); i < wpc; ++i)
     {
       collision_detection::CollisionResult res;
       if (acm)
       {
-        plan.planning_scene->checkCollisionUnpadded(req, res, t.getWayPoint(i), *acm);
+        plan.planning_scene->checkCollision(req, res, t.getWayPoint(i), *acm);
       }
       else
       {
-        plan.planning_scene->checkCollisionUnpadded(req, res, t.getWayPoint(i));
+        plan.planning_scene->checkCollision(req, res, t.getWayPoint(i));
       }
 
       if (res.collision || !plan.planning_scene->isStateFeasible(t.getWayPoint(i), false))
@@ -306,11 +307,11 @@ bool plan_execution::PlanExecution::isRemainingPathValid(const ExecutableMotionP
         res.clear();
         if (acm)
         {
-          plan.planning_scene->checkCollisionUnpadded(req, res, t.getWayPoint(i), *acm);
+          plan.planning_scene->checkCollision(req, res, t.getWayPoint(i), *acm);
         }
         else
         {
-          plan.planning_scene->checkCollisionUnpadded(req, res, t.getWayPoint(i));
+          plan.planning_scene->checkCollision(req, res, t.getWayPoint(i));
         }
         return false;
       }
