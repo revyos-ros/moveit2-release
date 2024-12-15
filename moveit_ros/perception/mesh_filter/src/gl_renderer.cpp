@@ -42,7 +42,7 @@
 #include <GL/glut.h>
 #endif
 #include <GL/freeglut.h>
-#include <moveit/mesh_filter/gl_renderer.h>
+#include <moveit/mesh_filter/gl_renderer.hpp>
 #include <moveit/utils/logger.hpp>
 #include <sstream>
 #include <fstream>
@@ -213,7 +213,7 @@ void mesh_filter::GLRenderer::getColorBuffer(unsigned char* buffer) const
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void mesh_filter::GLRenderer::getDepthBuffer(double* buffer) const
+void mesh_filter::GLRenderer::getDepthBuffer(float* buffer) const
 {
   glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);
   glBindTexture(GL_TEXTURE_2D, depth_id_);
