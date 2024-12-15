@@ -34,7 +34,7 @@
 
 /* Author: Peter David Fagan */
 
-#include "planning_scene_monitor.h"
+#include "planning_scene_monitor.hpp"
 
 namespace moveit_py
 {
@@ -173,6 +173,15 @@ void initPlanningSceneMonitor(py::module& m)
 
 	      Args:
                attached_collision_object_msg (moveit_msgs.msg.AttachedCollisionObject): The attached collision object to apply to the planning scene.
+           )")
+
+      .def("new_planning_scene_message", &planning_scene_monitor::PlanningSceneMonitor::newPlanningSceneMessage,
+           py::arg("scene"),
+           R"(
+           Called to update the planning scene with a new message.
+
+	      Args:
+               scene (moveit_msgs.msg.PlanningScene): The new planning scene message.
            )")
 
       .def("read_only", &moveit_py::bind_planning_scene_monitor::readOnly,
