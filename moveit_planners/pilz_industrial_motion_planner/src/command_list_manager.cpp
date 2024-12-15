@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <pilz_industrial_motion_planner/command_list_manager.h>
+#include <pilz_industrial_motion_planner/command_list_manager.hpp>
 
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
@@ -40,15 +40,15 @@
 #include <functional>
 #include <sstream>
 
-#include <moveit/planning_pipeline/planning_pipeline.h>
-#include <moveit/robot_state/conversions.h>
+#include <moveit/planning_pipeline/planning_pipeline.hpp>
+#include <moveit/robot_state/conversions.hpp>
 #include <moveit/utils/logger.hpp>
 
 #include "cartesian_limits_parameters.hpp"
-#include <pilz_industrial_motion_planner/joint_limits_aggregator.h>
-#include <pilz_industrial_motion_planner/tip_frame_getter.h>
-#include <pilz_industrial_motion_planner/trajectory_blend_request.h>
-#include <pilz_industrial_motion_planner/trajectory_blender_transition_window.h>
+#include <pilz_industrial_motion_planner/joint_limits_aggregator.hpp>
+#include <pilz_industrial_motion_planner/tip_frame_getter.hpp>
+#include <pilz_industrial_motion_planner/trajectory_blend_request.hpp>
+#include <pilz_industrial_motion_planner/trajectory_blender_transition_window.hpp>
 
 namespace pilz_industrial_motion_planner
 {
@@ -112,6 +112,7 @@ RobotTrajCont CommandListManager::solve(const planning_scene::PlanningSceneConst
                               // therefore: "i-1".
                               (i > 0 ? radii.at(i - 1) : 0.));
   }
+
   return plan_comp_builder_.build();
 }
 
@@ -181,7 +182,8 @@ void CommandListManager::setStartState(const MotionResponseCont& motion_plan_res
   RobotState_OptRef rob_state_op{ getPreviousEndState(motion_plan_responses, group_name) };
   if (rob_state_op)
   {
-    moveit::core::robotStateToRobotStateMsg(rob_state_op.value(), start_state);
+    moveit::core::robotStateToRobotStateMsg(rob_state_op.value(), start_state, false);
+    start_state.is_diff = true;
   }
 }
 
