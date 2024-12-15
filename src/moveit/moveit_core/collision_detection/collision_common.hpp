@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2023, Jafar Uruç
+ *  Copyright (c) 2022, Peter David Fagan
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of the copyright holder nor the names of its
+ *   * Neither the name of PickNik Inc. nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,12 +32,14 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Jafar Uruç */
+/* Author: Peter David Fagan */
+
+#pragma once
 
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
 #include <pybind11/stl.h>
-#include <moveit/collision_detection/world.h>
+#include <moveit/collision_detection/collision_common.hpp>
 
 namespace py = pybind11;
 
@@ -45,6 +47,7 @@ namespace moveit_py
 {
 namespace bind_collision_detection
 {
-void initWorld(py::module& m);
+void initCollisionRequest(py::module& m);
+void initCollisionResult(py::module& m);
 }  // namespace bind_collision_detection
 }  // namespace moveit_py
