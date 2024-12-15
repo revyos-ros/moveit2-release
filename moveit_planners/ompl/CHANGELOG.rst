@@ -2,6 +2,17 @@
 Changelog for package moveit_planners_ompl
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.12.0 (2024-11-29)
+-------------------
+* Enhancement/use hpp for headers (`#3113 <https://github.com/ros-planning/moveit2/issues/3113>`_)
+* Port fixes for handling orientation constraints (`#3052 <https://github.com/ros-planning/moveit2/issues/3052>`_)
+* Contributors: Robert Haschke, Tom Noble
+
+2.11.0 (2024-09-16)
+-------------------
+* Fix constrained-based planning / PoseModelStateSpace (`#2910 <https://github.com/moveit/moveit2/issues/2910>`_)
+* Contributors: Robert Haschke
+
 2.10.0 (2024-06-13)
 -------------------
 * Migrate ros-planning org to moveit (`#2847 <https://github.com/moveit/moveit2/issues/2847>`_)
