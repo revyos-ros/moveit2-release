@@ -2,15 +2,106 @@
 Changelog for package moveit_planners_ompl
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.5.6 (2024-11-17)
-------------------
-* Invoke OMPL debug print only when debug logging is enabled (backport `#2608 <https://github.com/ros-planning/moveit2/issues/2608>`_) (`#2762 <https://github.com/ros-planning/moveit2/issues/2762>`_)
-* Map ompl's APPROXIMATE_SOLUTION -> TIMED_OUT / PLANNING_FAILED (`#2455 <https://github.com/ros-planning/moveit2/issues/2455>`_) (`#2459 <https://github.com/ros-planning/moveit2/issues/2459>`_)
-* Contributors: Igor Medvedev, Robert Hashcke, mergify[bot]
+2.12.0 (2024-11-29)
+-------------------
+* Enhancement/use hpp for headers (`#3113 <https://github.com/ros-planning/moveit2/issues/3113>`_)
+* Port fixes for handling orientation constraints (`#3052 <https://github.com/ros-planning/moveit2/issues/3052>`_)
+* Contributors: Robert Haschke, Tom Noble
 
-2.5.5 (2023-09-10)
+2.11.0 (2024-09-16)
+-------------------
+* Fix constrained-based planning / PoseModelStateSpace (`#2910 <https://github.com/moveit/moveit2/issues/2910>`_)
+* Contributors: Robert Haschke
+
+2.10.0 (2024-06-13)
+-------------------
+* Migrate ros-planning org to moveit (`#2847 <https://github.com/moveit/moveit2/issues/2847>`_)
+  * Rename github.com/ros-planning -> github.com/moveit
+  * Rename ros-planning.github.io -> moveit.github.io
+  * Rename ros-planning organization in docker and CI workflow files
+  - ghcr.io/ros-planning -> ghcr.io/moveit
+  - github.repository == 'moveit/*''
+* Unify log names (`#2720 <https://github.com/moveit/moveit2/issues/2720>`_)
+  Co-authored-by: Abishalini Sivaraman <abi.gpuram@gmail.com>
+* Do not overwrite the error code with OMPL interface (`#2725 <https://github.com/moveit/moveit2/issues/2725>`_)
+  In case of failure, set the error code to the one returned by the
+  planning pipeline's `solve` method rather than overwriting it with
+  `PLANNING_FAILED`.
+* Set `planner_id` in reponses with OMPL interface (`#2724 <https://github.com/moveit/moveit2/issues/2724>`_)
+  This avoids a warning `PlanningPipeline::generatePlan()`.
+  Co-authored-by: Gaël Écorchard <gael@km-robotics.cz>
+* CMake format and lint in pre-commit (`#2683 <https://github.com/moveit/moveit2/issues/2683>`_)
+* Contributors: Gaël Écorchard, Robert Haschke, Sebastian Jahr, Tyler Weaver
+
+2.9.0 (2024-01-09)
 ------------------
-* Fix Constraint Planning Segfault (`#2130 <https://github.com/ros-planning/moveit2/issues/2130>`_) (`#2173 <https://github.com/ros-planning/moveit2/issues/2173>`_)
+* Handle unsupported position constraints in OMPL (`#2417 <https://github.com/ros-planning/moveit2/issues/2417>`_)
+  * Handle unsupported position constraints in OMPL
+  OMPL constrained planning assumes that all position constraints have three
+  dimensions, meaning that they are represented by a BOX bounding volume.
+  If another shape is used (like a SPHERE from moveit_core/kinematic_constraints/utils.hpp),
+  the constraint adapter implementation will produce a segfault because of
+  the lack of dimensions. This fix prevents this by checking for the
+  required BOX type.
+  * Add warning if more than one position primitive is used
+  ---------
+  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
+* Invoke OMPL debug print only when debug logging is enabled (`#2608 <https://github.com/ros-planning/moveit2/issues/2608>`_)
+* Node logging for the rest of MoveIt (`#2599 <https://github.com/ros-planning/moveit2/issues/2599>`_)
+* [Planning Pipeline Refactoring] `#1 <https://github.com/ros-planning/moveit2/issues/1>`_ Simplify Adapter - Planner chain (`#2429 <https://github.com/ros-planning/moveit2/issues/2429>`_)
+* Add new clang-tidy style rules (`#2177 <https://github.com/ros-planning/moveit2/issues/2177>`_)
+* Do not pass and return simple types by const ref (`#2453 <https://github.com/ros-planning/moveit2/issues/2453>`_)
+  Co-authored-by: Nils <nilsmailiseke@gmail.com>
+* Update pre-commit and add to .codespell_words (`#2465 <https://github.com/ros-planning/moveit2/issues/2465>`_)
+* Map ompl's APPROXIMATE_SOLUTION -> TIMED_OUT / PLANNING_FAILED (`#2455 <https://github.com/ros-planning/moveit2/issues/2455>`_)
+  ompl's APPROXIMATE_SOLUTION is not suitable for actual execution. It just states that we got closer to the goal...
+  The most prominent reason for an approximate solution is a timeout. Thus, return TIMED_OUT and print the used timeouts for convenience.
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Update clang-format-14 with QualifierAlignment (`#2362 <https://github.com/ros-planning/moveit2/issues/2362>`_)
+  * Set qualifier order in .clang-format
+  * Ran pre-commit to update according to new style guide
+* Converts float to double (`#2343 <https://github.com/ros-planning/moveit2/issues/2343>`_)
+  * Limiting the scope of variables `#874 <https://github.com/ros-planning/moveit2/issues/874>`_
+  Limited the scope of variables in moveit_core/collision_detection
+  * Update moveit_core/collision_detection/src/collision_octomap_filter.cpp
+  Co-authored-by: AndyZe <andyz@utexas.edu>
+  * Update moveit_core/collision_detection/src/collision_octomap_filter.cpp
+  Co-authored-by: AndyZe <andyz@utexas.edu>
+  * Update moveit_core/collision_detection/src/collision_octomap_filter.cpp
+  Co-authored-by: AndyZe <andyz@utexas.edu>
+  * convert float to double
+  * change double to float
+  * Feedback fixes
+  * Introduced variables removed from previous merge commit
+  * Updated GL_Renderer function definitions with double instead of float
+  * Changed update() function arguments to float since it is a derived virtual function and needs to be overriden
+  * Fixed all override errors in visualization
+  * *Fixed override errors in perception
+  *Changed reinterpret_cast to double* from float*
+  * change variable types to fit function definition
+  * Fixed clang-tidy warnings
+  * Fixed scope of reusable variables
+  ---------
+  Co-authored-by: Salah Soliman <salahsoliman96@gmail.com>
+  Co-authored-by: AndyZe <andyz@utexas.edu>
+  Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Contributors: Henning Kayser, Igor Medvedev, Marq Rasmussen, Robert Haschke, Sebastian Jahr, Shobuj Paul, Tyler Weaver
+
+2.8.0 (2023-09-10)
+------------------
+* Fix typo in model_based_planning_context.h (`#2243 <https://github.com/ros-planning/moveit2/issues/2243>`_)
+* Warn if optimization objective does not match expected values (`#2213 <https://github.com/ros-planning/moveit2/issues/2213>`_)
+  * Warn if optimization objective does not match expected values
+  * Update moveit_planners/ompl/ompl_interface/src/model_based_planning_context.cpp
+  Co-authored-by: Sebastian Jahr <sebastian.jahr@tuta.io>
+  * Format
+  ---------
+* Contributors: Stephanie Eng
+
+2.7.4 (2023-05-18)
+------------------
+* Fix Constraint Planning Segfault (`#2130 <https://github.com/ros-planning/moveit2/issues/2130>`_)
   * Fix Constraint Planning Segfault
   * Reuse planner data
   * apply clang formatting
@@ -18,46 +109,97 @@ Changelog for package moveit_planners_ompl
   * add FIXME note and verbose output of planning graph size
   ---------
   Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
-  (cherry picked from commit 92a7951f74baaf26d07356612a2f5dca0bac5065)
-  Co-authored-by: Marq Rasmussen <marq.razz@gmail.com>
-* Cleanup msg includes: Use C++ instead of C header (backport `#1844 <https://github.com/ros-planning/moveit2/issues/1844>`_)
-  * Cleanup msg includes: Use C++ instead of C header
-  * Remove obsolete include: moveit_msgs/srv/execute_known_trajectory.hpp
-* Use <> for non-local headers (`#1765 <https://github.com/ros-planning/moveit2/issues/1765>`_)
+* Contributors: Marq Rasmussen
+
+2.7.3 (2023-04-24)
+------------------
+* Replace Variable PROJECT_NAME in CMakeLists.txt with the actual name (`#2020 <https://github.com/ros-planning/moveit2/issues/2020>`_)
+* Contributors: Shobuj Paul
+
+2.7.2 (2023-04-18)
+------------------
+* Update pre-commit (`#2094 <https://github.com/ros-planning/moveit2/issues/2094>`_)
+* Contributors: Shobuj Paul
+
+2.7.1 (2023-03-23)
+------------------
+* Fix include install destination (`#2008 <https://github.com/ros-planning/moveit2/issues/2008>`_)
+  Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
+  Co-authored-by: Tyler Weaver <maybe@tylerjw.dev>
+* Temporarily disable TestPathConstraints with the Panda robot (`#2016 <https://github.com/ros-planning/moveit2/issues/2016>`_)
+  This test has become flaky since it was modified to use the OMPL constrained state space (https://github.com/ros-planning/moveit2/issues/2015).
+* Increase priority for constrained planning state space (`#1300 <https://github.com/ros-planning/moveit2/issues/1300>`_)
+  * Change priority for the constrained planning state space
+  * Fix constrained planning tests
+  * Use PRM instead of RRTConnect
+  ---------
+  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
+* remove underscore from public member in MotionPlanResponse (`#1939 <https://github.com/ros-planning/moveit2/issues/1939>`_)
+  * remove underscore from private members
+  * fix more uses of the suffix notation
+* Contributors: Abhijeet Dasgupta, AlexWebb, Stephanie Eng
+
+2.7.0 (2023-01-29)
+------------------
+* converted characters from string format to character format (`#1881 <https://github.com/ros-planning/moveit2/issues/1881>`_)
+* Cleanup msg includes: Use C++ instead of C header (`#1844 <https://github.com/ros-planning/moveit2/issues/1844>`_)
+* Remove ancient OMPL version directives (`#1825 <https://github.com/ros-planning/moveit2/issues/1825>`_)
+* Fix BSD license in package.xml (`#1796 <https://github.com/ros-planning/moveit2/issues/1796>`_)
+  * fix BSD license in package.xml
+  * this must also be spdx compliant
+* Minimize use of `this->` (`#1784 <https://github.com/ros-planning/moveit2/issues/1784>`_)
+  It's often unnecessary. MoveIt already avoids this in most cases
+  so this PR better cements that existing pattern.
+* Enable `-Wold-style-cast` (`#1770 <https://github.com/ros-planning/moveit2/issues/1770>`_)
+* Remove `MOVEIT_LIB_NAME` (`#1751 <https://github.com/ros-planning/moveit2/issues/1751>`_)
+  It's more readable and searchable if we just spell out the target
+  name.
+* Add braces around blocks. (`#999 <https://github.com/ros-planning/moveit2/issues/999>`_)
+* Use <> for non-local headers (`#1734 <https://github.com/ros-planning/moveit2/issues/1734>`_)
   Unless a header lives in the same or a child directory of the file
   including it, it's recommended to use <> for the #include statement.
   For more information, see the C++ Core Guidelines item SF.12
   https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#sf12-prefer-the-quoted-form-of-include-for-files-relative-to-the-including-file-and-the-angle-bracket-form-everywhere-else
-  (cherry picked from commit 7a1f2a101f9aeb8557e8a31656bbe1a6d53b430e)
-* Re-enable clang-tidy check `performance-unnecessary-value-param` (backport `#1703 <https://github.com/ros-planning/moveit2/issues/1703>`_)
-  * Re-enable clang-tidy check performance-unnecessary-value-param (`#1703 <https://github.com/ros-planning/moveit2/issues/1703>`_)
-  * Fix clang-tidy issues (`#1706 <https://github.com/ros-planning/moveit2/issues/1706>`_)
+* Used C++ style cast instead of C style cast  (`#1628 <https://github.com/ros-planning/moveit2/issues/1628>`_)
   Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
-  Co-authored-by: Robert Haschke <rhaschke@users.noreply.github.com>
-* Contributors: Chris Thrasher, Robert Haschke, mergify[bot]
+* Fix clang-tidy issues (`#1706 <https://github.com/ros-planning/moveit2/issues/1706>`_)
+  * Blindly apply automatic clang-tidy fixes
+  * Exemplarily cleanup a few automatic clang-tidy fixes
+  * Clang-tidy fixups
+  * Missed const-ref fixups
+  * Fix unsupported non-const -> const
+  * More fixes
+  Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
+* Contributors: Abhijeet Das Gupta, Chris Thrasher, Christian Henkel, Cory Crean, Henning Kayser, Robert Haschke, Sameer Gupta
 
-2.5.4 (2022-11-04)
+2.6.0 (2022-11-10)
 ------------------
-* simplify_solution per planning context (`#1437 <https://github.com/ros-planning/moveit2/issues/1437>`_) (`#1646 <https://github.com/ros-planning/moveit2/issues/1646>`_)
-  (cherry picked from commit 048062cc8749a1e1e224ff99a3bfa12e8c3ae3ba)
-  Co-authored-by: Antoine Duplex <106062275+AntoineDevop@users.noreply.github.com>
-* Convert OMPL status to MoveItErrorCode in the OMPL interface (`#1606 <https://github.com/ros-planning/moveit2/issues/1606>`_) (`#1668 <https://github.com/ros-planning/moveit2/issues/1668>`_)
-  (cherry picked from commit baba9b041225ed5518d5235996afb9aa3c5a61f8)
-  Co-authored-by: AndyZe <zelenak@picknik.ai>
-* size_t bijection index type (`#1544 <https://github.com/ros-planning/moveit2/issues/1544>`_) (`#1659 <https://github.com/ros-planning/moveit2/issues/1659>`_)
-  (cherry picked from commit af7bd63a084d62de0821bb0e451008f2b1b11954)
-* Fix logic with enforcing constrained planning state space in OMPL (backport `#1589 <https://github.com/ros-planning/moveit2/issues/1589>`_) (`#1641 <https://github.com/ros-planning/moveit2/issues/1641>`_)
-  (cherry picked from commit 67e08b7999e252971907dab5cf17b789d1336863)
-  Co-authored-by: Stephanie Eng <stephanie-eng@users.noreply.github.com>
-* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_) (`#1555 <https://github.com/ros-planning/moveit2/issues/1555>`_)
-  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
-* Fixes for using generate_state_database (backport `#1412 <https://github.com/ros-planning/moveit2/issues/1412>`_) (`#1493 <https://github.com/ros-planning/moveit2/issues/1493>`_)
+* Fix logic with enforcing constrained planning state space in OMPL (`#1589 <https://github.com/ros-planning/moveit2/issues/1589>`_)
+* Convert OMPL status to MoveItErrorCode in the OMPL interface (`#1606 <https://github.com/ros-planning/moveit2/issues/1606>`_)
+* Factor of 2 in OMPL orientation constraints, to match kinematic_constraints (`#1592 <https://github.com/ros-planning/moveit2/issues/1592>`_)
+* Merge PR `#1553 <https://github.com/ros-planning/moveit2/issues/1553>`_: Improve cmake files
+* Use standard exported targets: export\_${PROJECT_NAME} -> ${PROJECT_NAME}Targets
+* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_)
+* size_t bijection index type (`#1544 <https://github.com/ros-planning/moveit2/issues/1544>`_)
+* Fixes for using generate_state_database (`#1412 <https://github.com/ros-planning/moveit2/issues/1412>`_)
+* simplify_solution per planning context (`#1437 <https://github.com/ros-planning/moveit2/issues/1437>`_)
+  * Allowing to dynamically change the parameter simplify_solutions
+  * Delete this configuration because it overrides the configuration loaded
+  The parameters simplify_solutions is passed to the context trough the configuration of each planner but this function overrides it and seems to be contradictory to rest of the implementation. simplify_solutions shouldn't be considered as the rest of the other parameters, like interpolate or hybridize ?
+  * Remove simplify_solutions\_ from OMPL interface and all its setter/getter
+  * Clean-up code without ConfigureContext and unneeded code related to simplify_solution
 * correctly initialize rmw_serialized_message_t
-  (cherry picked from commit cf714d5407d5100e4587e9ead740c665e5a70507)
 * automatically declare parameters from overrides
-  (cherry picked from commit b961e9c14d66a6a7abd91490a76ee2bef0fe08dc)
-* Remove __has_include statements (`#1481 <https://github.com/ros-planning/moveit2/issues/1481>`_) (`#1483 <https://github.com/ros-planning/moveit2/issues/1483>`_)
-* Contributors: Alaa, Henning Kayser, mergify[bot]
+* Remove __has_include statements (`#1481 <https://github.com/ros-planning/moveit2/issues/1481>`_)
+* Merge https://github.com/ros-planning/moveit/commit/a63580edd05b01d9480c333645036e5b2b222da9
+* Remove ConstraintSampler::project() (`#3170 <https://github.com/ros-planning/moveit2/issues/3170>`_)
+  * Remove unused ompl_interface::ValidConstrainedSampler
+  Last usage was removed in f2f6097ab7e272568d6ab258a53be3c7ca67cf3b.
+  * Remove ConstraintSampler::project()
+  sample() and project() only differ in whether they perform random sampling
+  of the reference joint pose or not. Both of them are sampling.
+  This was highly confusing, as from project() one wouldn't expect sampling.
+* Contributors: Alaa, AndyZe, Antoine Duplex, Henning Kayser, Robert Haschke, Sebastian Jahr, Stephanie Eng, Tyler Weaver, Vatan Aksoy Tezer, abishalini
 
 2.5.3 (2022-07-28)
 ------------------

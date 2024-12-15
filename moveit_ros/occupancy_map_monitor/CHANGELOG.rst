@@ -2,28 +2,110 @@
 Changelog for package moveit_ros_occupancy_map_monitor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.5.6 (2024-11-17)
+2.12.0 (2024-11-29)
+-------------------
+* Enhancement/use hpp for headers (`#3113 <https://github.com/ros-planning/moveit2/issues/3113>`_)
+* Contributors: Tom Noble
+
+2.11.0 (2024-09-16)
+-------------------
+* Switch to system version of octomap (`#2881 <https://github.com/moveit/moveit2/issues/2881>`_)
+* Contributors: Chris Lalancette
+
+2.10.0 (2024-06-13)
+-------------------
+* Enforce liboctomap-dev by using a cmake version range
+* Migrate ros-planning org to moveit (`#2847 <https://github.com/moveit/moveit2/issues/2847>`_)
+  * Rename github.com/ros-planning -> github.com/moveit
+  * Rename ros-planning.github.io -> moveit.github.io
+  * Rename ros-planning organization in docker and CI workflow files
+  - ghcr.io/ros-planning -> ghcr.io/moveit
+  - github.repository == 'moveit/*''
+* Unify log names (`#2720 <https://github.com/moveit/moveit2/issues/2720>`_)
+  Co-authored-by: Abishalini Sivaraman <abi.gpuram@gmail.com>
+* CMake format and lint in pre-commit (`#2683 <https://github.com/moveit/moveit2/issues/2683>`_)
+* Contributors: Henning Kayser, Robert Haschke, Sebastian Jahr, Tyler Weaver
+
+2.9.0 (2024-01-09)
+------------------
+* Node logging in moveit_core (`#2503 <https://github.com/ros-planning/moveit2/issues/2503>`_)
+* Use node logging in moveit_ros (`#2482 <https://github.com/ros-planning/moveit2/issues/2482>`_)
+* Add new clang-tidy style rules (`#2177 <https://github.com/ros-planning/moveit2/issues/2177>`_)
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Contributors: Sebastian Jahr, Tyler Weaver
+
+2.8.0 (2023-09-10)
 ------------------
 
-2.5.5 (2023-09-10)
+2.7.4 (2023-05-18)
 ------------------
-* Switch to clang-format-14 (`#1877 <https://github.com/ros-planning/moveit2/issues/1877>`_) (`#1880 <https://github.com/ros-planning/moveit2/issues/1880>`_)
+
+2.7.3 (2023-04-24)
+------------------
+* Replace check for the ROS_DISTRO env variable with a check for the rclcpp version (`#2135 <https://github.com/ros-planning/moveit2/issues/2135>`_)
+* Replace Variable PROJECT_NAME in CMakeLists.txt with the actual name (`#2020 <https://github.com/ros-planning/moveit2/issues/2020>`_)
+* Contributors: Jafar, Shobuj Paul
+
+2.7.2 (2023-04-18)
+------------------
+* Switch from qos_event.hpp to event_handler.hpp (`#2111 <https://github.com/ros-planning/moveit2/issues/2111>`_)
+  * Switch from qos_event.hpp to event_handler.hpp
+  * moveit_common: Add a cmake interface library to keep humble support on main
+  * Include qos_event.hpp or event_handler.hpp depending on the ROS 2 version
+  * Fix ament_lint_cmake
+  * Fix clang-tidy
+  * PRIVATE linking in some cases
+  * Update moveit_common/cmake/moveit_package.cmake
+  Co-authored-by: Chris Thrasher <chrisjthrasher@gmail.com>
+  * Fix servo and cleanup excessive CMake variable usage
+  * Cleanup & make compiling
+  * Small variable naming and const cleanup
+  * Restore OpenCV linking
+  * Public/private linking fixup
+  * Revert "Restore OpenCV linking"
+  This reverts commit 57a9efa806e59223e35a1f7e998d7b52f930c263.
+  ---------
+  Co-authored-by: JafarAbdi <jafar.uruc@gmail.com>
+  Co-authored-by: Jafar <cafer.abdi@gmail.com>
+  Co-authored-by: AndyZe <andyz@utexas.edu>
+  Co-authored-by: Chris Thrasher <chrisjthrasher@gmail.com>
+* Contributors: Sebastian Jahr
+
+2.7.1 (2023-03-23)
+------------------
+
+2.7.0 (2023-01-29)
+------------------
+* converted characters from string format to character format (`#1881 <https://github.com/ros-planning/moveit2/issues/1881>`_)
+* Switch to clang-format-14 (`#1877 <https://github.com/ros-planning/moveit2/issues/1877>`_)
   * Switch to clang-format-14
   * Fix clang-format-14
-  (cherry picked from commit 7fa5eaf1ac21ab8a99c5adae53bd0a2d4abf98f6)
+* Fix BSD license in package.xml (`#1796 <https://github.com/ros-planning/moveit2/issues/1796>`_)
+  * fix BSD license in package.xml
+  * this must also be spdx compliant
+* Enable `-Wold-style-cast` (`#1770 <https://github.com/ros-planning/moveit2/issues/1770>`_)
+* Remove `MOVEIT_LIB_NAME` (`#1751 <https://github.com/ros-planning/moveit2/issues/1751>`_)
+  It's more readable and searchable if we just spell out the target
+  name.
+* Add braces around blocks. (`#999 <https://github.com/ros-planning/moveit2/issues/999>`_)
+* Used C++ style cast instead of C style cast  (`#1628 <https://github.com/ros-planning/moveit2/issues/1628>`_)
   Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
-* Re-enable clang-tidy check `performance-unnecessary-value-param` (backport `#1703 <https://github.com/ros-planning/moveit2/issues/1703>`_)
-  * Re-enable clang-tidy check performance-unnecessary-value-param (`#1703 <https://github.com/ros-planning/moveit2/issues/1703>`_)
-  * Fix clang-tidy issues (`#1706 <https://github.com/ros-planning/moveit2/issues/1706>`_)
+* Fix clang-tidy issues (`#1706 <https://github.com/ros-planning/moveit2/issues/1706>`_)
+  * Blindly apply automatic clang-tidy fixes
+  * Exemplarily cleanup a few automatic clang-tidy fixes
+  * Clang-tidy fixups
+  * Missed const-ref fixups
+  * Fix unsupported non-const -> const
+  * More fixes
   Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
-  Co-authored-by: Robert Haschke <rhaschke@users.noreply.github.com>
-* Contributors: mergify[bot]
+* Contributors: Abhijeet Das Gupta, Chris Thrasher, Christian Henkel, Cory Crean, Henning Kayser, Robert Haschke, Sameer Gupta
 
-2.5.4 (2022-11-04)
+2.6.0 (2022-11-10)
 ------------------
-* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_) (`#1555 <https://github.com/ros-planning/moveit2/issues/1555>`_)
-  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
-* Contributors: mergify[bot]
+* Merge PR `#1553 <https://github.com/ros-planning/moveit2/issues/1553>`_: Improve cmake files
+* Use standard exported targets: export\_${PROJECT_NAME} -> ${PROJECT_NAME}Targets
+* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_)
+* Contributors: Robert Haschke, Sebastian Jahr
 
 2.5.3 (2022-07-28)
 ------------------

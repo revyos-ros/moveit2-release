@@ -37,9 +37,10 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 // MoveIt
-#include <moveit/semantic_world/semantic_world.h>
+#include <moveit/semantic_world/semantic_world.hpp>
 #include <geometric_shapes/shape_operations.h>
 #include <moveit_msgs/msg/planning_scene.hpp>
+#include <moveit/utils/logger.hpp>
 // OpenCV
 #include <opencv2/imgproc/imgproc.hpp>
 #include <rclcpp/experimental/buffers/intra_process_buffer.hpp>
@@ -47,7 +48,12 @@
 #include <rclcpp/logging.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/publisher.hpp>
+#include <rclcpp/version.h>
+#if RCLCPP_VERSION_GTE(20, 0, 0)
+#include <rclcpp/event_handler.hpp>
+#else
 #include <rclcpp/qos_event.hpp>
+#endif
 #include <rclcpp/subscription.hpp>
 
 // Eigen
@@ -58,11 +64,10 @@ namespace moveit
 {
 namespace semantic_world
 {
-static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.ros.perception.semantic_world");
 
 SemanticWorld::SemanticWorld(const rclcpp::Node::SharedPtr& node,
                              const planning_scene::PlanningSceneConstPtr& planning_scene)
-  : planning_scene_(planning_scene), node_handle_(node)
+  : planning_scene_(planning_scene), node_handle_(node), logger_(moveit::getLogger("moveit.ros.semantic_world"))
 
 {
   table_subscriber_ = node_handle_->create_subscription<object_recognition_msgs::msg::TableArray>(
@@ -78,7 +83,7 @@ SemanticWorld::SemanticWorld(const rclcpp::Node::SharedPtr& node,
 visualization_msgs::msg::MarkerArray
 SemanticWorld::getPlaceLocationsMarker(const std::vector<geometry_msgs::msg::PoseStamped>& poses) const
 {
-  RCLCPP_DEBUG(LOGGER, "Visualizing: %d place poses", static_cast<int>(poses.size()));
+  RCLCPP_DEBUG(logger_, "Visualizing: %d place poses", static_cast<int>(poses.size()));
   visualization_msgs::msg::MarkerArray marker;
   for (std::size_t i = 0; i < poses.size(); ++i)
   {
@@ -236,7 +241,7 @@ SemanticWorld::generatePlacePoses(const std::string& table_name, const shapes::S
   }
 
   std::vector<geometry_msgs::msg::PoseStamped> place_poses;
-  RCLCPP_ERROR(LOGGER, "Did not find table %s to place on", table_name.c_str());
+  RCLCPP_ERROR(logger_, "Did not find table %s to place on", table_name.c_str());
   return place_poses;
 }
 
@@ -248,7 +253,7 @@ SemanticWorld::generatePlacePoses(const object_recognition_msgs::msg::Table& cho
 {
   std::vector<geometry_msgs::msg::PoseStamped> place_poses;
   if (object_shape->type != shapes::MESH && object_shape->type != shapes::SPHERE && object_shape->type != shapes::BOX &&
-      object_shape->type != shapes::CONE)
+      object_shape->type != shapes::CYLINDER && object_shape->type != shapes::CONE)
   {
     return place_poses;
   }
@@ -331,13 +336,21 @@ SemanticWorld::generatePlacePoses(const object_recognition_msgs::msg::Table& tab
   for (std::size_t j = 1; j < table.convex_hull.size(); ++j)
   {
     if (table.convex_hull[j].x < x_min)
+    {
       x_min = table.convex_hull[j].x;
+    }
     else if (table.convex_hull[j].x > x_max)
+    {
       x_max = table.convex_hull[j].x;
+    }
     if (table.convex_hull[j].y < y_min)
+    {
       y_min = table.convex_hull[j].y;
+    }
     else if (table.convex_hull[j].y > y_max)
+    {
       y_max = table.convex_hull[j].y;
+    }
   }
   for (const geometry_msgs::msg::Point& vertex : table.convex_hull)
     table_contour.push_back(cv::Point((vertex.x - x_min) * scale_factor, (vertex.y - y_min) * scale_factor));
@@ -359,7 +372,7 @@ SemanticWorld::generatePlacePoses(const object_recognition_msgs::msg::Table& tab
   unsigned int num_x = fabs(x_max - x_min) / resolution + 1;
   unsigned int num_y = fabs(y_max - y_min) / resolution + 1;
 
-  RCLCPP_DEBUG(LOGGER, "Num points for possible place operations: %d %d", num_x, num_y);
+  RCLCPP_DEBUG(logger_, "Num points for possible place operations: %d %d", num_x, num_y);
 
   std::vector<std::vector<cv::Point> > contours;
   std::vector<cv::Vec4i> hierarchy;
@@ -377,7 +390,8 @@ SemanticWorld::generatePlacePoses(const object_recognition_msgs::msg::Table& tab
         double result = cv::pointPolygonTest(contours[0], point2f, true);
         if (static_cast<int>(result) >= static_cast<int>(min_distance_from_edge * scale_factor))
         {
-          Eigen::Vector3d point((double)(point_x) / scale_factor + x_min, (double)(point_y) / scale_factor + y_min,
+          Eigen::Vector3d point(static_cast<double>(point_x) / scale_factor + x_min,
+                                static_cast<double>(point_y) / scale_factor + y_min,
                                 height_above_table + mm * delta_height);
           Eigen::Isometry3d pose;
           tf2::fromMsg(table.pose, pose);
@@ -407,13 +421,21 @@ bool SemanticWorld::isInsideTableContour(const geometry_msgs::msg::Pose& pose,
   for (std::size_t j = 1; j < table.convex_hull.size(); ++j)
   {
     if (table.convex_hull[j].x < x_min)
+    {
       x_min = table.convex_hull[j].x;
+    }
     else if (table.convex_hull[j].x > x_max)
+    {
       x_max = table.convex_hull[j].x;
+    }
     if (table.convex_hull[j].y < y_min)
+    {
       y_min = table.convex_hull[j].y;
+    }
     else if (table.convex_hull[j].y > y_max)
+    {
       y_max = table.convex_hull[j].y;
+    }
   }
   const int scale_factor = 100;
   std::vector<cv::Point2f> table_contour;
@@ -447,7 +469,7 @@ bool SemanticWorld::isInsideTableContour(const geometry_msgs::msg::Pose& pose,
   // Assuming Z axis points upwards for the table
   if (point.z() < -fabs(min_vertical_offset))
   {
-    RCLCPP_ERROR(LOGGER, "Object is not above table");
+    RCLCPP_ERROR(logger_, "Object is not above table");
     return false;
   }
 
@@ -455,7 +477,7 @@ bool SemanticWorld::isInsideTableContour(const geometry_msgs::msg::Pose& pose,
   int point_y = (point.y() - y_min) * scale_factor;
   cv::Point2f point2f(point_x, point_y);
   double result = cv::pointPolygonTest(contours[0], point2f, true);
-  RCLCPP_DEBUG(LOGGER, "table distance: %f", result);
+  RCLCPP_DEBUG(logger_, "table distance: %f", result);
 
   return static_cast<int>(result) >= static_cast<int>(min_distance_from_edge * scale_factor);
 }
@@ -466,7 +488,7 @@ std::string SemanticWorld::findObjectTable(const geometry_msgs::msg::Pose& pose,
   std::map<std::string, object_recognition_msgs::msg::Table>::const_iterator it;
   for (it = current_tables_in_collision_world_.begin(); it != current_tables_in_collision_world_.end(); ++it)
   {
-    RCLCPP_DEBUG_STREAM(LOGGER, "Testing table: " << it->first);
+    RCLCPP_DEBUG_STREAM(logger_, "Testing table: " << it->first);
     if (isInsideTableContour(pose, it->second, min_distance_from_edge, min_vertical_offset))
       return it->first;
   }
@@ -476,12 +498,12 @@ std::string SemanticWorld::findObjectTable(const geometry_msgs::msg::Pose& pose,
 void SemanticWorld::tableCallback(const object_recognition_msgs::msg::TableArray::ConstSharedPtr& msg)
 {
   table_array_ = *msg;
-  RCLCPP_INFO(LOGGER, "Table callback with %d tables", static_cast<int>(table_array_.tables.size()));
+  RCLCPP_INFO(logger_, "Table callback with %d tables", static_cast<int>(table_array_.tables.size()));
   transformTableArray(table_array_);
   // Callback on an update
   if (table_callback_)
   {
-    RCLCPP_INFO(LOGGER, "Calling table callback");
+    RCLCPP_INFO(logger_, "Calling table callback");
     table_callback_();
   }
 }
@@ -493,8 +515,8 @@ void SemanticWorld::transformTableArray(object_recognition_msgs::msg::TableArray
     std::string original_frame = table.header.frame_id;
     if (table.convex_hull.empty())
       continue;
-    RCLCPP_INFO_STREAM(LOGGER, "Original pose: " << table.pose.position.x << "," << table.pose.position.y << ","
-                                                 << table.pose.position.z);
+    RCLCPP_INFO_STREAM(logger_, "Original pose: " << table.pose.position.x << ',' << table.pose.position.y << ','
+                                                  << table.pose.position.z);
     std::string error_text;
     const Eigen::Isometry3d& original_transform = planning_scene_->getFrameTransform(original_frame);
     Eigen::Isometry3d original_pose;
@@ -502,10 +524,10 @@ void SemanticWorld::transformTableArray(object_recognition_msgs::msg::TableArray
     original_pose = original_transform * original_pose;
     table.pose = tf2::toMsg(original_pose);
     table.header.frame_id = planning_scene_->getTransforms().getTargetFrame();
-    RCLCPP_INFO_STREAM(LOGGER, "Successfully transformed table array from " << original_frame << "to "
-                                                                            << table.header.frame_id);
-    RCLCPP_INFO_STREAM(LOGGER, "Transformed pose: " << table.pose.position.x << "," << table.pose.position.y << ","
-                                                    << table.pose.position.z);
+    RCLCPP_INFO_STREAM(logger_, "Successfully transformed table array from " << original_frame << "to "
+                                                                             << table.header.frame_id);
+    RCLCPP_INFO_STREAM(logger_, "Transformed pose: " << table.pose.position.x << ',' << table.pose.position.y << ','
+                                                     << table.pose.position.z);
   }
 }
 
@@ -626,10 +648,14 @@ shapes::Mesh* SemanticWorld::createSolidMeshFromPlanarPolygon(const shapes::Mesh
     Eigen::Vector3d triangle_normal = vec2.cross(vec1);
 
     if (triangle_normal.dot(normal) < 0.0)
+    {
       std::swap(solid->triangles[t_idx * 3 + 1], solid->triangles[t_idx * 3 + 2]);
+    }
     else
+    {
       std::swap(solid->triangles[(t_idx + polygon.triangle_count) * 3 + 1],
                 solid->triangles[(t_idx + polygon.triangle_count) * 3 + 2]);
+    }
   }
 
   for (unsigned v_idx = 0; v_idx < polygon.vertex_count; ++v_idx)

@@ -2,30 +2,76 @@
 Changelog for package moveit_resources_prbt_ikfast_manipulator_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.5.6 (2024-11-17)
-------------------
-* PRBT IkFast patch from robostack (`#2395 <https://github.com/ros-planning/moveit2/issues/2395>`_) (`#2397 <https://github.com/ros-planning/moveit2/issues/2397>`_)
-* Contributors: Tyler Weaver, mergify[bot]
+2.12.0 (2024-11-29)
+-------------------
+* Enhancement/use hpp for headers (`#3113 <https://github.com/ros-planning/moveit2/issues/3113>`_)
+* Contributors: Tom Noble
 
-2.5.5 (2023-09-10)
-------------------
-* Used C++ style casting for int type (backport `#1627 <https://github.com/ros-planning/moveit2/issues/1627>`_) (`#1819 <https://github.com/ros-planning/moveit2/issues/1819>`_)
-  (cherry picked from commit 1f32ab0e43f488e9c5bd1957c7677e302c406df0)
-  Co-authored-by: Abhijeet Das Gupta <75399048+abhijelly@users.noreply.github.com>
-* Add `-Wunused-parameter` (`#1756 <https://github.com/ros-planning/moveit2/issues/1756>`_) (`#1757 <https://github.com/ros-planning/moveit2/issues/1757>`_)
-  (cherry picked from commit be474ec5ba6d0210379d009d518bdd631cc46ad9)
-  Co-authored-by: Chris Thrasher <chrisjthrasher@gmail.com>
-* Contributors: mergify[bot]
+2.11.0 (2024-09-16)
+-------------------
 
-2.5.4 (2022-11-04)
+2.10.0 (2024-06-13)
+-------------------
+* Migrate ros-planning org to moveit (`#2847 <https://github.com/moveit/moveit2/issues/2847>`_)
+  * Rename github.com/ros-planning -> github.com/moveit
+  * Rename ros-planning.github.io -> moveit.github.io
+  * Rename ros-planning organization in docker and CI workflow files
+  - ghcr.io/ros-planning -> ghcr.io/moveit
+  - github.repository == 'moveit/*''
+* CMake format and lint in pre-commit (`#2683 <https://github.com/moveit/moveit2/issues/2683>`_)
+* Contributors: Robert Haschke, Tyler Weaver
+
+2.9.0 (2024-01-09)
 ------------------
-* Use pragma once as header include guard (`#1525 <https://github.com/ros-planning/moveit2/issues/1525>`_) (`#1652 <https://github.com/ros-planning/moveit2/issues/1652>`_)
-  (cherry picked from commit 7d758de1b2f2904b8c85520129fa8d48aad93713)
-  Co-authored-by: J. Javan <J-Javan@users.noreply.github.com>
-* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_) (`#1555 <https://github.com/ros-planning/moveit2/issues/1555>`_)
-  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
-* Remove __has_include statements (`#1481 <https://github.com/ros-planning/moveit2/issues/1481>`_) (`#1483 <https://github.com/ros-planning/moveit2/issues/1483>`_)
-* Contributors: mergify[bot]
+* Do not pass and return simple types by const ref (`#2453 <https://github.com/ros-planning/moveit2/issues/2453>`_)
+  Co-authored-by: Nils <nilsmailiseke@gmail.com>
+* Update pre-commit and add to .codespell_words (`#2465 <https://github.com/ros-planning/moveit2/issues/2465>`_)
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* PRBT IkFast patch from robostack (`#2395 <https://github.com/ros-planning/moveit2/issues/2395>`_)
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Contributors: Marq Rasmussen, Sebastian Jahr, Shobuj Paul, Tyler Weaver
+
+2.8.0 (2023-09-10)
+------------------
+
+2.7.4 (2023-05-18)
+------------------
+
+2.7.3 (2023-04-24)
+------------------
+* Replace Variable PROJECT_NAME in CMakeLists.txt with the actual name (`#2020 <https://github.com/ros-planning/moveit2/issues/2020>`_)
+* Contributors: Shobuj Paul
+
+2.7.2 (2023-04-18)
+------------------
+
+2.7.1 (2023-03-23)
+------------------
+* Fix include install destination (`#2008 <https://github.com/ros-planning/moveit2/issues/2008>`_)
+  Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
+  Co-authored-by: Tyler Weaver <maybe@tylerjw.dev>
+* Contributors: Abhijeet Dasgupta
+
+2.7.0 (2023-01-29)
+------------------
+* converted characters from string format to character format (`#1881 <https://github.com/ros-planning/moveit2/issues/1881>`_)
+* Used C++ style casting for int type (`#1627 <https://github.com/ros-planning/moveit2/issues/1627>`_)
+* Add `-Wunused-parameter` (`#1756 <https://github.com/ros-planning/moveit2/issues/1756>`_)
+* Add braces around blocks. (`#999 <https://github.com/ros-planning/moveit2/issues/999>`_)
+* Used C++ style cast instead of C style cast  (`#1628 <https://github.com/ros-planning/moveit2/issues/1628>`_)
+  Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
+* Contributors: Abhijeet Das Gupta, Chris Thrasher, Cory Crean, Sameer Gupta
+
+2.6.0 (2022-11-10)
+------------------
+* Add missing depend (`#1684 <https://github.com/ros-planning/moveit2/issues/1684>`_)
+* Use generate_parameter_library to load prbt ikfast kinematics parameters (`#1680 <https://github.com/ros-planning/moveit2/issues/1680>`_)
+* Merge PR `#1553 <https://github.com/ros-planning/moveit2/issues/1553>`_: Improve cmake files
+* Use standard exported targets: export\_${PROJECT_NAME} -> ${PROJECT_NAME}Targets
+* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_)
+* Use pragma once as header include guard (`#1525 <https://github.com/ros-planning/moveit2/issues/1525>`_)
+* Remove __has_include statements (`#1481 <https://github.com/ros-planning/moveit2/issues/1481>`_)
+* Contributors: Abishalini Sivaraman, J. Javan, Robert Haschke, Sebastian Jahr, Vatan Aksoy Tezer
 
 2.5.3 (2022-07-28)
 ------------------

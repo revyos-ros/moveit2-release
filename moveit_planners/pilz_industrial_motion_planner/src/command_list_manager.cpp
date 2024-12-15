@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <pilz_industrial_motion_planner/command_list_manager.h>
+#include <pilz_industrial_motion_planner/command_list_manager.hpp>
 
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
@@ -40,18 +40,26 @@
 #include <functional>
 #include <sstream>
 
-#include <moveit/planning_pipeline/planning_pipeline.h>
-#include <moveit/robot_state/conversions.h>
-#include <pilz_industrial_motion_planner/cartesian_limits_aggregator.h>
-#include <pilz_industrial_motion_planner/joint_limits_aggregator.h>
-#include <pilz_industrial_motion_planner/tip_frame_getter.h>
-#include <pilz_industrial_motion_planner/trajectory_blend_request.h>
-#include <pilz_industrial_motion_planner/trajectory_blender_transition_window.h>
+#include <moveit/planning_pipeline/planning_pipeline.hpp>
+#include <moveit/robot_state/conversions.hpp>
+#include <moveit/utils/logger.hpp>
+
+#include "cartesian_limits_parameters.hpp"
+#include <pilz_industrial_motion_planner/joint_limits_aggregator.hpp>
+#include <pilz_industrial_motion_planner/tip_frame_getter.hpp>
+#include <pilz_industrial_motion_planner/trajectory_blend_request.hpp>
+#include <pilz_industrial_motion_planner/trajectory_blender_transition_window.hpp>
 
 namespace pilz_industrial_motion_planner
 {
-static const std::string PARAM_NAMESPACE_LIMITS = "robot_description_planning";
-static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.pilz_industrial_motion_planner.command_list_manager");
+namespace
+{
+const std::string PARAM_NAMESPACE_LIMITS = "robot_description_planning";
+rclcpp::Logger getLogger()
+{
+  return moveit::getLogger("moveit.planners.pilz.command_list_manager");
+}
+}  // namespace
 
 CommandListManager::CommandListManager(const rclcpp::Node::SharedPtr& node,
                                        const moveit::core::RobotModelConstPtr& model)
@@ -63,13 +71,13 @@ CommandListManager::CommandListManager(const rclcpp::Node::SharedPtr& node,
   aggregated_limit_active_joints = pilz_industrial_motion_planner::JointLimitsAggregator::getAggregatedLimits(
       node_, PARAM_NAMESPACE_LIMITS, model_->getActiveJointModels());
 
-  // Obtain cartesian limits
-  pilz_industrial_motion_planner::CartesianLimit cartesian_limit =
-      pilz_industrial_motion_planner::CartesianLimitsAggregator::getAggregatedLimits(node_, PARAM_NAMESPACE_LIMITS);
+  param_listener_ =
+      std::make_shared<cartesian_limits::ParamListener>(node, PARAM_NAMESPACE_LIMITS + ".cartesian_limits");
+  params_ = param_listener_->get_params();
 
   pilz_industrial_motion_planner::LimitsContainer limits;
   limits.setJointLimits(aggregated_limit_active_joints);
-  limits.setCartesianLimits(cartesian_limit);
+  limits.setCartesianLimits(params_);
 
   plan_comp_builder_.setModel(model);
   plan_comp_builder_.setBlender(std::unique_ptr<pilz_industrial_motion_planner::TrajectoryBlender>(
@@ -98,12 +106,13 @@ RobotTrajCont CommandListManager::solve(const planning_scene::PlanningSceneConst
   plan_comp_builder_.reset();
   for (MotionResponseCont::size_type i = 0; i < resp_cont.size(); ++i)
   {
-    plan_comp_builder_.append(planning_scene, resp_cont.at(i).trajectory_,
+    plan_comp_builder_.append(planning_scene, resp_cont.at(i).trajectory,
                               // The blend radii has to be "attached" to
                               // the second part of a blend trajectory,
                               // therefore: "i-1".
                               (i > 0 ? radii.at(i - 1) : 0.));
   }
+
   return plan_comp_builder_.build();
 }
 
@@ -143,7 +152,7 @@ void CommandListManager::checkForOverlappingRadii(const MotionResponseCont& resp
 
   for (MotionResponseCont::size_type i = 0; i < resp_cont.size() - 2; ++i)
   {
-    if (checkRadiiForOverlap(*(resp_cont.at(i).trajectory_), radii.at(i), *(resp_cont.at(i + 1).trajectory_),
+    if (checkRadiiForOverlap(*(resp_cont.at(i).trajectory), radii.at(i), *(resp_cont.at(i + 1).trajectory),
                              radii.at(i + 1)))
     {
       std::ostringstream os;
@@ -159,9 +168,9 @@ CommandListManager::getPreviousEndState(const MotionResponseCont& motion_plan_re
   for (MotionResponseCont::const_reverse_iterator it = motion_plan_responses.crbegin();
        it != motion_plan_responses.crend(); ++it)
   {
-    if (it->trajectory_->getGroupName() == group_name)
+    if (it->trajectory->getGroupName() == group_name)
     {
-      return std::reference_wrapper(it->trajectory_->getLastWayPoint());
+      return std::reference_wrapper(it->trajectory->getLastWayPoint());
     }
   }
   return {};
@@ -173,7 +182,8 @@ void CommandListManager::setStartState(const MotionResponseCont& motion_plan_res
   RobotState_OptRef rob_state_op{ getPreviousEndState(motion_plan_responses, group_name) };
   if (rob_state_op)
   {
-    moveit::core::robotStateToRobotStateMsg(rob_state_op.value(), start_state);
+    moveit::core::robotStateToRobotStateMsg(rob_state_op.value(), start_state, false);
+    start_state.is_diff = true;
   }
 }
 
@@ -190,16 +200,16 @@ bool CommandListManager::isInvalidBlendRadii(const moveit::core::RobotModel& mod
   // No blending between different groups
   if (item_A.req.group_name != item_B.req.group_name)
   {
-    RCLCPP_WARN_STREAM(LOGGER, "Blending between different groups (in this case: \""
-                                   << item_A.req.group_name << "\" and \"" << item_B.req.group_name
-                                   << "\") not allowed");
+    RCLCPP_WARN_STREAM(getLogger(), "Blending between different groups (in this case: \""
+                                        << item_A.req.group_name << "\" and \"" << item_B.req.group_name
+                                        << "\") not allowed");
     return true;
   }
 
   // No blending for groups without solver
   if (!hasSolver(model.getJointModelGroup(item_A.req.group_name)))
   {
-    RCLCPP_WARN_STREAM(LOGGER, "Blending for groups without solver not allowed");
+    RCLCPP_WARN_STREAM(getLogger(), "Blending for groups without solver not allowed");
     return true;
   }
 
@@ -215,8 +225,8 @@ CommandListManager::extractBlendRadii(const moveit::core::RobotModel& model,
   {
     if (isInvalidBlendRadii(model, req_list.items.at(i), req_list.items.at(i + 1)))
     {
-      RCLCPP_WARN_STREAM(LOGGER, "Invalid blend radii between commands: [" << i << "] and [" << i + 1
-                                                                           << "] => Blend radii set to zero");
+      RCLCPP_WARN_STREAM(getLogger(), "Invalid blend radii between commands: [" << i << "] and [" << i + 1
+                                                                                << "] => Blend radii set to zero");
       continue;
     }
     radii.at(i) = req_list.items.at(i).blend_radius;
@@ -238,15 +248,19 @@ CommandListManager::solveSequenceItems(const planning_scene::PlanningSceneConstP
     setStartState(motion_plan_responses, req.group_name, req.start_state);
 
     planning_interface::MotionPlanResponse res;
-    planning_pipeline->generatePlan(planning_scene, req, res);
-    if (res.error_code_.val != res.error_code_.SUCCESS)
+    if (!planning_pipeline->generatePlan(planning_scene, req, res))
+    {
+      RCLCPP_ERROR(getLogger(), "Generating a plan with planning pipeline failed.");
+      res.error_code.val = moveit_msgs::msg::MoveItErrorCodes::FAILURE;
+    }
+    if (res.error_code.val != res.error_code.SUCCESS)
     {
       std::ostringstream os;
       os << "Could not solve request\n";  // TODO(henning): re-enable "---\n" << req << "\n---\n";
-      throw PlanningPipelineException(os.str(), res.error_code_.val);
+      throw PlanningPipelineException(os.str(), res.error_code.val);
     }
     motion_plan_responses.emplace_back(res);
-    RCLCPP_DEBUG_STREAM(LOGGER, "Solved [" << ++curr_req_index << "/" << num_req << "]");
+    RCLCPP_DEBUG_STREAM(getLogger(), "Solved [" << ++curr_req_index << '/' << num_req << ']');
   }
   return motion_plan_responses;
 }

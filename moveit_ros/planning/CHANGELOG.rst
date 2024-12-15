@@ -2,68 +2,477 @@
 Changelog for package moveit_ros_planning
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.5.6 (2024-11-17)
-------------------
-* PSM: keep references to scene\_ valid upon receiving full scenes (`#2850 <https://github.com/ros-planning/moveit2/issues/2850>`_)
-* Protect against zero frequency in TrajectoryMonitorMiddlewareHandler (`#2423 <https://github.com/ros-planning/moveit2/issues/2423>`_) (`#2424 <https://github.com/ros-planning/moveit2/issues/2424>`_)
-* Re-enable waiting for current state in MoveItCpp (`#2419 <https://github.com/ros-planning/moveit2/issues/2419>`_) (`#2426 <https://github.com/ros-planning/moveit2/issues/2426>`_)
-* Contributors: Robert Haschke, Sebastian Castro, Henning Kayser, mergify[bot]
+2.12.0 (2024-11-29)
+-------------------
+* Enhancement/use hpp for headers (`#3113 <https://github.com/ros-planning/moveit2/issues/3113>`_)
+* Re-enable flaky PSM test (`#3124 <https://github.com/ros-planning/moveit2/issues/3124>`_)
+* Add use_padding flag + deprecate checkCollisionUnpadded() functions (`#3088 <https://github.com/ros-planning/moveit2/issues/3088>`_)
+* Remove plugins from export set (`#3024 <https://github.com/ros-planning/moveit2/issues/3024>`_)
+* Update urdf/model.h -> urdf/model.hpp (`#3003 <https://github.com/ros-planning/moveit2/issues/3003>`_)
+* Contributors: Paul Gesel, Robert Haschke, Sebastian Castro, Sebastian Jahr, Tom Noble
 
-2.5.5 (2023-09-10)
+2.11.0 (2024-09-16)
+-------------------
+
+2.10.0 (2024-06-13)
+-------------------
+* Apply clang-tidy fixes
+* Migrate ros-planning org to moveit (`#2847 <https://github.com/moveit/moveit2/issues/2847>`_)
+  * Rename github.com/ros-planning -> github.com/moveit
+  * Rename ros-planning.github.io -> moveit.github.io
+  * Rename ros-planning organization in docker and CI workflow files
+  - ghcr.io/ros-planning -> ghcr.io/moveit
+  - github.repository == 'moveit/*''
+* Enable mdof trajectory execution (`#2740 <https://github.com/moveit/moveit2/issues/2740>`_)
+  * Add RobotTrajectory conversion from MDOF to joints
+  * Convert MDOF trajectories to joint trajectories in planning interfaces
+  * Treat mdof joint variables as common joints in
+  TrajectoryExecutionManager
+  * Convert multi-DOF trajectories to joints in TEM
+  * Revert "Convert MDOF trajectories to joint trajectories in planning interfaces"
+  This reverts commit 885ee2718594859555b73dc341311a859d31216e.
+  * Handle multi-DOF variables in TEM's bound checking
+  * Add parameter to optionally enable multi-dof conversion
+  * Improve error message about unknown controllers
+  * Fix name ordering in JointTrajectory conversion
+  * Improve DEBUG output in TEM
+  * Comment RobotTrajectory test
+  * add acceleration to avoid out of bounds read
+  ---------
+  Co-authored-by: Paul Gesel <paulgesel@gmail.com>
+  Co-authored-by: Abishalini Sivaraman <abi.gpuram@gmail.com>
+  Co-authored-by: Ezra Brooks <ezra@brooks.cx>
+* Skip flaky PSM launch test (`#2822 <https://github.com/moveit/moveit2/issues/2822>`_)
+* change default to 1e308 (`#2801 <https://github.com/moveit/moveit2/issues/2801>`_)
+* PSM: keep references to scene\_ valid upon receiving full scenes (`#2745 <https://github.com/moveit/moveit2/issues/2745>`_)
+  plan_execution-related modules rely on `plan.planning_scene\_` in many places
+  to point to the currently monitored scene (or a diff on top of it).
+  Before this patch, if the PSM would receive full scenes during execution,
+  `plan.planning_scene\_` would not include later incremental updates anymore
+  because the monitor created a new diff scene.
+  ---------
+  Co-authored-by: v4hn <me@v4hn.de>
+* Unify log names (`#2720 <https://github.com/moveit/moveit2/issues/2720>`_)
+  Co-authored-by: Abishalini Sivaraman <abi.gpuram@gmail.com>
+* Print links in collision (`#2727 <https://github.com/moveit/moveit2/issues/2727>`_)
+* Do not overwrite the error code in planWithSinglePipeline (`#2723 <https://github.com/moveit/moveit2/issues/2723>`_)
+  * Do not overwrite the error code in planWithSinglePipeline
+  Return the `MotionPlanResponse` as-is.
+  * Do not rely on generatePlan() to set error code
+  Do not rely on generatePlan() to set the error code in all cases and
+  ensure that the error code is set to FAILURE if `generatePlan()` returns
+  false.
+  ---------
+  Co-authored-by: Gaël Écorchard <gael@km-robotics.cz>
+* Get configuration values of traj_exec_man (`#2702 <https://github.com/moveit/moveit2/issues/2702>`_)
+  * (ros_planning) get configuration values of traj_exec_man
+  * (py) get configuration values of traj_exec_man
+  ---------
+  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
+* Exit earlier on failure in `generatePlan` (`#2726 <https://github.com/moveit/moveit2/issues/2726>`_)
+  With this change, the `PlanningPipeline::generatePlan()` exits as soon
+  as a failure is detected. Before this, `break` was used to exit the
+  current loop of request adapters, planners, or response adapters, but
+  the function continued to the next loop. For example, if a planner would
+  fail, the response adapters would still be executed.
+  Co-authored-by: Gaël Écorchard <gael@km-robotics.cz>
+* srdf publisher node (`#2682 <https://github.com/moveit/moveit2/issues/2682>`_)
+* CMake format and lint in pre-commit (`#2683 <https://github.com/moveit/moveit2/issues/2683>`_)
+* Get robot description from topic in GetUrdfService (`#2681 <https://github.com/moveit/moveit2/issues/2681>`_)
+* Shut down PSM publishing before starting to publish on a potentially new topic (`#2680 <https://github.com/moveit/moveit2/issues/2680>`_)
+* Contributors: Abishalini Sivaraman, Ezra Brooks, Gaël Écorchard, Henning Kayser, Matthijs van der Burgh, Paul Gesel, Robert Haschke, Sebastian Castro, Sebastian Jahr, Tyler Weaver
+
+2.9.0 (2024-01-09)
 ------------------
-* Replaced numbers with SystemDefaultsQos() (`#2271 <https://github.com/ros-planning/moveit2/issues/2271>`_) (`#2277 <https://github.com/ros-planning/moveit2/issues/2277>`_)
-  (cherry picked from commit 5506dd516a91bc145e462b493668ef8623d43521)
-  Co-authored-by: Shobuj Paul <72087882+Shobuj-Paul@users.noreply.github.com>
-* Update default planning configs to use AddTimeOptimalParameterization (`#2167 <https://github.com/ros-planning/moveit2/issues/2167>`_) (`#2170 <https://github.com/ros-planning/moveit2/issues/2170>`_)
-  (cherry picked from commit 895e9268bd5d9337bebdede07a7f68a99055a1df)
-  Co-authored-by: Anthony Baker <abake48@users.noreply.github.com>
-* Fix timeout in waitForCurrentState (backport `#1899 <https://github.com/ros-planning/moveit2/issues/1899>`_) (`#1938 <https://github.com/ros-planning/moveit2/issues/1938>`_)
-  (cherry picked from commit 2c48478ac9b4ccfa6784f0e3a9cbf92ef1ecd363)
-  Co-authored-by: Carlo Rizzardo <c-rizz@users.noreply.github.com>
+* [PSM] Process collision object color when adding object trough the planning scene monitor (`#2567 <https://github.com/ros-planning/moveit2/issues/2567>`_)
+  * Added an optional Collision Object color object to set the coller of the collision object when adding the collision object trough the PSM.
+  * Fixes for clang-tidy warnings
+  * fix pre-commit
+  * Pass by reference
+* [Servo] Make listening to octomap updates optional (`#2627 <https://github.com/ros-planning/moveit2/issues/2627>`_)
+  * [Servo] Make listening to octomap updates optional
+  * Update moveit_ros/moveit_servo/config/panda_simulated_config.yaml
+* Node logging for the rest of MoveIt (`#2599 <https://github.com/ros-planning/moveit2/issues/2599>`_)
+* [Planning Pipeline Refactoring] `#2 <https://github.com/ros-planning/moveit2/issues/2>`_ Enable chaining planners (`#2457 <https://github.com/ros-planning/moveit2/issues/2457>`_)
+  * Enable chaining multiple planners
+* Node logging in moveit_core (`#2503 <https://github.com/ros-planning/moveit2/issues/2503>`_)
+* Fix trajectory execution manager comments for docs builds (`#2563 <https://github.com/ros-planning/moveit2/issues/2563>`_)
+* Change default topic name for display contacts (`#2561 <https://github.com/ros-planning/moveit2/issues/2561>`_)
+* [PSM] Add proccess Collision Object to PSM and request planning scene to moveit py to allow syncing of mutliple PSM (`#2536 <https://github.com/ros-planning/moveit2/issues/2536>`_)
+  * PlanningSceneMonitor and request planning scene to moveit py to allow syncing of multiple planning scene monitors
+  * pre-commit fixes
+  * Update moveit_ros/planning/planning_scene_monitor/src/planning_scene_monitor.cpp
+  First catch empty scene to not have a unneeded indents.
+  Co-authored-by: Sebastian Jahr <sebastian.jahr@tuta.io>
+  * Removed unneeded callback functions
+  ---------
+  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
+* [Planning Pipeline Refactoring] `#1 <https://github.com/ros-planning/moveit2/issues/1>`_ Simplify Adapter - Planner chain (`#2429 <https://github.com/ros-planning/moveit2/issues/2429>`_)
+* Use node logging in moveit_ros (`#2482 <https://github.com/ros-planning/moveit2/issues/2482>`_)
+* Add new clang-tidy style rules (`#2177 <https://github.com/ros-planning/moveit2/issues/2177>`_)
+* Re-enable waiting for current state in MoveItCpp (`#2419 <https://github.com/ros-planning/moveit2/issues/2419>`_)
+* Protect against zero frequency in TrajectoryMonitorMiddlewareHandler (`#2423 <https://github.com/ros-planning/moveit2/issues/2423>`_)
+* Small planning pipeline class fixes (`#2416 <https://github.com/ros-planning/moveit2/issues/2416>`_)
+* Use generate parameters library in PlanningPipelineClass + general cleanups (`#2288 <https://github.com/ros-planning/moveit2/issues/2288>`_)
+  * Don't discard stuff
+  * Move constants into source file
+  * Move static consts into header
+  * Don't ignore pipeline result
+  * Use generate parameter library for planning pipeline parameters
+  * Fix CI
+  * More CI fixes
+  * Remove more state from planning pipeline
+  * Small cleanups
+  * Assert planner_instance\_ is not a nullptr
+  * Remove valid variable
+  * Simplify logic for trajectory printing
+  * More helpful comments
+  * Small logic simplification by using break
+  * Fix clang-tidy
+  * Pre-commit + Deprecate functions instead of removing them
+  * Fix CI
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Remove old deprecated functions (`#2384 <https://github.com/ros-planning/moveit2/issues/2384>`_)
+* [PSM] Get the parameter values of the main node when declaring them in the private node. (`#2392 <https://github.com/ros-planning/moveit2/issues/2392>`_)
+  * Get the values of the main node when declaring them in the private node.
+  * [chore] linting
+  * Removed logging
+  * Update formatting
+  * Removed whitespace
+  ---------
+* Update clang-format-14 with QualifierAlignment (`#2362 <https://github.com/ros-planning/moveit2/issues/2362>`_)
+  * Set qualifier order in .clang-format
+  * Ran pre-commit to update according to new style guide
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Contributors: Abishalini Sivaraman, Henning Kayser, Jens Vanhooydonck, Marq Rasmussen, Rayene Messaoud, Sebastian Castro, Sebastian Jahr, Shobuj Paul, Tyler Weaver
+
+2.8.0 (2023-09-10)
+------------------
+* Remove added path index from planner adapter function signature (`#2285 <https://github.com/ros-planning/moveit2/issues/2285>`_)
+* Replaced boost::algorithm::join with fmt::join (`#2273 <https://github.com/ros-planning/moveit2/issues/2273>`_)
+  * Replaced boost::algorithm::join with fmt::join
+  * Made changes in CMakeLists.txt to accomodate fmt
+  * Updated package.xml files
+  * removed redundant boost dependencies
+  * Rename variables -> variable
+  ---------
+  Co-authored-by: Sebastian Castro <4603398+sea-bass@users.noreply.github.com>
+  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
+* Replaced numbers with SystemDefaultsQos() (`#2271 <https://github.com/ros-planning/moveit2/issues/2271>`_)
+* Cleanup planning request adapter interface (`#2266 <https://github.com/ros-planning/moveit2/issues/2266>`_)
+  * Use default arguments instead of additional functions
+  * Use generate param lib for default plan request adapters
+  * Small cleanup of ResolveConstraintFrames
+  * Remove dublicate yaml file entry
+  * Move list_planning_adapter_plugins into own directory
+  * Apply suggestions from code review
+  Co-authored-by: Sebastian Castro <4603398+sea-bass@users.noreply.github.com>
+  * Fix copy& paste error
+  * Update parameter descriptions
+  Co-authored-by: Sebastian Castro <4603398+sea-bass@users.noreply.github.com>
+  * Apply suggestions from code review
+  Co-authored-by: Kyle Cesare <kcesare@gmail.com>
+  * EMPTY_PATH_INDEX_VECTOR -> empty_path_index_vector
+  * Update parameter yaml
+  * Make param listener unique
+  * Fix build error
+  * Use gt_eq instead of deprecated lower_bounds
+  ---------
+  Co-authored-by: Sebastian Castro <4603398+sea-bass@users.noreply.github.com>
+  Co-authored-by: Kyle Cesare <kcesare@gmail.com>
+* Prefer to use the active controller if multiple controllers apply (`#2251 <https://github.com/ros-planning/moveit2/issues/2251>`_)
+* Don't default to random algorithm if no plugin is defined (`#2228 <https://github.com/ros-planning/moveit2/issues/2228>`_)
+  * Don't default to random algorithm if no plugin is defined
+  * Simplify selection logic & initialize default values in constructor
+  * Increase message severity
+* Always set response planner id and warn if it is not set (`#2236 <https://github.com/ros-planning/moveit2/issues/2236>`_)
+* Suppress redundant error message in CSM (`#2222 <https://github.com/ros-planning/moveit2/issues/2222>`_)
+  The CSM would spam the log if /joint_states messages
+  includes unkonwn joints. RobotModel::hasJointModel()
+  allows for verifying joint names in a safe way without
+  the error message.
+* Minor cleanup to ros_control_interface and trajectory execution (`#2208 <https://github.com/ros-planning/moveit2/issues/2208>`_)
+* Ensure that planning pipeline id is set (`#2202 <https://github.com/ros-planning/moveit2/issues/2202>`_)
+* Add @brief descriptions for plan_request_adapters (`#2185 <https://github.com/ros-planning/moveit2/issues/2185>`_)
+* Make loggers static or move into anonymous namespace (`#2184 <https://github.com/ros-planning/moveit2/issues/2184>`_)
+  * Make loggers static or move into anonymous namespace
+  * Update moveit_ros/planning_interface/move_group_interface/src/move_group_interface.cpp
+  * Update moveit_ros/planning_interface/move_group_interface/src/move_group_interface.cpp
+  * Move LOGGER out of class template
+* Contributors: Henning Kayser, Sebastian Jahr, Shobuj Paul, Stephanie Eng
+
+2.7.4 (2023-05-18)
+------------------
+* Update default planning configs to use AddTimeOptimalParameterization (`#2167 <https://github.com/ros-planning/moveit2/issues/2167>`_)
+* Deprecate MoveItCpp::execute() use of blocking flag (`#1984 <https://github.com/ros-planning/moveit2/issues/1984>`_)
+* Contributors: Anthony Baker, Lucas Wendland
+
+2.7.3 (2023-04-24)
+------------------
+* Replace check for the ROS_DISTRO env variable with a check for the rclcpp version (`#2135 <https://github.com/ros-planning/moveit2/issues/2135>`_)
+* Replace Variable PROJECT_NAME in CMakeLists.txt with the actual name (`#2020 <https://github.com/ros-planning/moveit2/issues/2020>`_)
+* Contributors: Jafar, Shobuj Paul
+
+2.7.2 (2023-04-18)
+------------------
+* Switch from qos_event.hpp to event_handler.hpp (`#2111 <https://github.com/ros-planning/moveit2/issues/2111>`_)
+  * Switch from qos_event.hpp to event_handler.hpp
+  * moveit_common: Add a cmake interface library to keep humble support on main
+  * Include qos_event.hpp or event_handler.hpp depending on the ROS 2 version
+  * Fix ament_lint_cmake
+  * Fix clang-tidy
+  * PRIVATE linking in some cases
+  * Update moveit_common/cmake/moveit_package.cmake
+  Co-authored-by: Chris Thrasher <chrisjthrasher@gmail.com>
+  * Fix servo and cleanup excessive CMake variable usage
+  * Cleanup & make compiling
+  * Small variable naming and const cleanup
+  * Restore OpenCV linking
+  * Public/private linking fixup
+  * Revert "Restore OpenCV linking"
+  This reverts commit 57a9efa806e59223e35a1f7e998d7b52f930c263.
+  ---------
+  Co-authored-by: JafarAbdi <jafar.uruc@gmail.com>
+  Co-authored-by: Jafar <cafer.abdi@gmail.com>
+  Co-authored-by: AndyZe <andyz@utexas.edu>
+  Co-authored-by: Chris Thrasher <chrisjthrasher@gmail.com>
+* Fix MoveItCpp issues (port from MoveIt1) (`#2001 <https://github.com/ros-planning/moveit2/issues/2001>`_)
+  * Fix MoveitCpp's const member accessors
+  They should return a ConstPtr instead of a const Ptr&!
+  * Fix SEVERE ClassLoader warning when releasing MoveItCpp
+  - PSM was released before copy of its RobotModel -> removed extra RobotModel copy
+  - clearContents() was broken:
+  - resets in wrong order: psm\_ should be last
+  - trajectory_execution_manager\_ was missing
+  I suggest to omit clearContents() and rely on the (correct) ordering of member variables.
+  While this is not explicit, we ensure that we don't miss any newly added member variable.
+  Fix: https://github.com/ros-planning/moveit2/issues/1597
+  ---------
+  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
+  Co-authored-by: Jafar <cafer.abdi@gmail.com>
+  Co-authored-by: Sebastian Jahr <sebastian.jahr@tuta.io>
+  Co-authored-by: JafarAbdi <jafar.uruc@gmail.com>
+* Extract parallel planning from moveit cpp (`#2043 <https://github.com/ros-planning/moveit2/issues/2043>`_)
+  * Add parallel_planning_interface
+  * Add parallel planning interface
+  * Rename package to pipeline_planning_interface
+  * Move plan_responses_container into own header + source file
+  * Add plan_responses_contrainer source file
+  * Add solution selection and stopping criterion function files
+  * Remove parallel planning from moveit_cpp
+  * Move parallel planning into planning package
+  * Update moveit_cpp
+  * Drop planning_interface changes
+  * Add documentation
+  * Update other moveit packages
+  * Remove removed header
+  * Address CI complains
+  * Address clang-tidy complains
+  * Address clang-tidy complains 2
+  * Address clang-tidy complains 3
+  * Extract planning pipeline map creation function from moveit_cpp
+  * Cleanup comment
+  * Use const moveit::core::RobotModelConstPtr&
+  * Formatting
+  * Add header descriptions
+  * Remove superfluous TODOs
+  * Cleanup
+* Move displaced launch file into planning_component_tools (`#2044 <https://github.com/ros-planning/moveit2/issues/2044>`_)
+* Contributors: Robert Haschke, Sebastian Jahr
+
+2.7.1 (2023-03-23)
+------------------
+* Fix member naming (`#1949 <https://github.com/ros-planning/moveit2/issues/1949>`_)
+  * Update clang-tidy rules for readability-identifier-naming
+  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
+* Benchmark parallel planning pipelines (`#1539 <https://github.com/ros-planning/moveit2/issues/1539>`_)
+  * Remove launch and config files (moved to moveit_resources)
+* Merge pull request `#1546 <https://github.com/ros-planning/moveit2/issues/1546>`_ from peterdavidfagan/moveit_py
+  Python Bindings - moveit_py
+* add new python bindings
   Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
-* Switch to clang-format-14 (`#1877 <https://github.com/ros-planning/moveit2/issues/1877>`_) (`#1880 <https://github.com/ros-planning/moveit2/issues/1880>`_)
+  Co-authored-by: Michael Gorner <me@v4hn.de>
+  Co-authored-by: Robert Haschke <rhaschke@techfak.uni-bielefeld.de>
+  Co-authored-by: AndyZe <zelenak@picknik.ai>
+  Co-authored-by: Peter Mitrano <mitranopeter@gmail.com>
+  Co-authored-by: Sebastian Castro <4603398+sea-bass@users.noreply.github.com>
+  Co-authored-by: Jafar <jafar.uruc@gmail.com>
+  Co-authored-by: Shahwas Khan <shahwazk@usc.edu>
+* moveit_cpp: handle the case where blocking==false (`#1834 <https://github.com/ros-planning/moveit2/issues/1834>`_)
+* remove underscore from public member in MotionPlanResponse (`#1939 <https://github.com/ros-planning/moveit2/issues/1939>`_)
+  * remove underscore from private members
+  * fix more uses of the suffix notation
+* Contributors: AlexWebb, AndyZe, Jafar, Robert Haschke, Sebastian Jahr, peterdavidfagan
+
+2.7.0 (2023-01-29)
+------------------
+* converted characters from string format to character format (`#1881 <https://github.com/ros-planning/moveit2/issues/1881>`_)
+* Add a default stopping criterion for parallel planning (`#1876 <https://github.com/ros-planning/moveit2/issues/1876>`_)
+  * Add a default callback for parallel planning termination
+  * Delete long-deprecated "using"
+  * A new translation unit for the new callback
+  * inline
+* Switch to clang-format-14 (`#1877 <https://github.com/ros-planning/moveit2/issues/1877>`_)
   * Switch to clang-format-14
   * Fix clang-format-14
-  (cherry picked from commit 7fa5eaf1ac21ab8a99c5adae53bd0a2d4abf98f6)
-  Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
-* Cleanup msg includes: Use C++ instead of C header (backport `#1844 <https://github.com/ros-planning/moveit2/issues/1844>`_)
-  * Cleanup msg includes: Use C++ instead of C header
-  * Remove obsolete include: moveit_msgs/srv/execute_known_trajectory.hpp
-* Use <> for non-local headers (`#1765 <https://github.com/ros-planning/moveit2/issues/1765>`_)
+* Do not allow traj execution from PlanningComponent (`#1835 <https://github.com/ros-planning/moveit2/issues/1835>`_)
+  * Do not allow traj execution from PlanningComponent
+  * Deprecate, don't delete
+  * Get the group_name from RobotTrajectory
+  * Rebase
+* Add optional list of controllers to MoveItCpp::execute() (`#1838 <https://github.com/ros-planning/moveit2/issues/1838>`_)
+  * Add optional list of controllers
+  * The default is an empty vector
+* Cleanup msg includes: Use C++ instead of C header (`#1844 <https://github.com/ros-planning/moveit2/issues/1844>`_)
+* Fix trajectory unwind bug (`#1772 <https://github.com/ros-planning/moveit2/issues/1772>`_)
+  * ensure trajectory starting point's position is enforced
+  * fix angle jump bug
+  * handle bounds enforcement edge case
+  * clang tidy
+  * Minor renaming, better comment, use .at() over []
+  * First shot at a unit test
+  * fix other unwind bugs
+  * test should succeed now
+  * unwind test needs a model with a continuous joint
+  * clang tidy
+  * add test for unwinding from wound up robot state
+  * clang tidy
+  * tweak test for special case to show that it will fail without these changes
+  Co-authored-by: Michael Wiznitzer <michael.wiznitzer@resquared.com>
+  Co-authored-by: AndyZe <zelenak@picknik.ai>
+* No default IK solver (`#1816 <https://github.com/ros-planning/moveit2/issues/1816>`_)
+* Fix BSD license in package.xml (`#1796 <https://github.com/ros-planning/moveit2/issues/1796>`_)
+  * fix BSD license in package.xml
+  * this must also be spdx compliant
+* Remove Iterative Spline and Iterative Parabola time-param algorithms (v2) (`#1780 <https://github.com/ros-planning/moveit2/issues/1780>`_)
+  * Iterative parabolic parameterization fails for nonzero initial/final conditions
+  * Iterative spline parameterization fails, too
+  * Delete Iterative Spline & Iterative Parabola algorithms
+* Enable `-Wold-style-cast` (`#1770 <https://github.com/ros-planning/moveit2/issues/1770>`_)
+* Remove `MOVEIT_LIB_NAME` (`#1751 <https://github.com/ros-planning/moveit2/issues/1751>`_)
+  It's more readable and searchable if we just spell out the target
+  name.
+* Add braces around blocks. (`#999 <https://github.com/ros-planning/moveit2/issues/999>`_)
+* Use <> for non-local headers (`#1734 <https://github.com/ros-planning/moveit2/issues/1734>`_)
   Unless a header lives in the same or a child directory of the file
   including it, it's recommended to use <> for the #include statement.
   For more information, see the C++ Core Guidelines item SF.12
   https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#sf12-prefer-the-quoted-form-of-include-for-files-relative-to-the-including-file-and-the-angle-bracket-form-everywhere-else
-  (cherry picked from commit 7a1f2a101f9aeb8557e8a31656bbe1a6d53b430e)
-* Re-enable clang-tidy check `performance-unnecessary-value-param` (backport `#1703 <https://github.com/ros-planning/moveit2/issues/1703>`_)
-  * Re-enable clang-tidy check performance-unnecessary-value-param (`#1703 <https://github.com/ros-planning/moveit2/issues/1703>`_)
-  * Fix clang-tidy issues (`#1706 <https://github.com/ros-planning/moveit2/issues/1706>`_)
+* Used C++ style cast instead of C style cast  (`#1628 <https://github.com/ros-planning/moveit2/issues/1628>`_)
   Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
-  Co-authored-by: Robert Haschke <rhaschke@users.noreply.github.com>
-* Contributors: Chris Thrasher, Robert Haschke, mergify[bot]
+* Cleanup lookup of planning pipelines in MoveItCpp (`#1710 <https://github.com/ros-planning/moveit2/issues/1710>`_)
+  * Revert "Add planner configurations to CHOMP and PILZ (`#1522 <https://github.com/ros-planning/moveit2/issues/1522>`_)"
+  * Cleanup lookup of planning pipelines
+  Remove MoveItCpp::getPlanningPipelineNames(), which was obviously intended initially to provide a planning-group-based filter for all available planning pipelines: A pipeline was discarded for a group, if there were no `planner_configs` defined for that group on the parameter server.
+  As pointed out in `#1522 <https://github.com/ros-planning/moveit2/issues/1522>`_, only OMPL actually explicitly declares planner_configs on the parameter server.
+  To enable all other pipelines as well (and thus circumventing the original filter mechanism), `#1522 <https://github.com/ros-planning/moveit2/issues/1522>`_ introduced empty dummy planner_configs for all other planners as well (CHOMP + Pilz).
+  This, obviously, renders the whole filter mechanism useless. Thus, here we just remove the function getPlanningPipelineNames() and the corresponding member groups_pipelines_map\_.
+* Fix clang-tidy issues (`#1706 <https://github.com/ros-planning/moveit2/issues/1706>`_)
+  * Blindly apply automatic clang-tidy fixes
+  * Exemplarily cleanup a few automatic clang-tidy fixes
+  * Clang-tidy fixups
+  * Missed const-ref fixups
+  * Fix unsupported non-const -> const
+  * More fixes
+  Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
+* Contributors: Abhijeet Das Gupta, AndyZe, Chris Thrasher, Christian Henkel, Cory Crean, Henning Kayser, Michael Wiznitzer, Robert Haschke, Sameer Gupta, Tyler Weaver
 
-2.5.4 (2022-11-04)
+2.6.0 (2022-11-10)
 ------------------
-* Backport to Humble (`#1642 <https://github.com/ros-planning/moveit2/issues/1642>`_)
-  Co-authored-by: Robert Haschke <rhaschke@techfak.uni-bielefeld.de>
-  Co-authored-by: Michael Görner <me@v4hn.de>
-  Co-authored-by: Jochen Sprickerhof <git@jochen.sprickerhof.de>
-* Rename MoveItControllerManager. Add deprecation warning (`#1601 <https://github.com/ros-planning/moveit2/issues/1601>`_) (`#1666 <https://github.com/ros-planning/moveit2/issues/1666>`_)
-  (cherry picked from commit b050890a2632a723dd95c08542ef6ed57d77fb06)
-  Co-authored-by: AndyZe <zelenak@picknik.ai>
-* Disable flaky test_servo_singularity + test_rdf_integration (`#1530 <https://github.com/ros-planning/moveit2/issues/1530>`_) (`#1654 <https://github.com/ros-planning/moveit2/issues/1654>`_)
-  (cherry picked from commit f7655df7a439069565efa0de73c08e9d1dd45dde)
-  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
-* Removed plan_with_sensing (`#1142 <https://github.com/ros-planning/moveit2/issues/1142>`_) (`#1647 <https://github.com/ros-planning/moveit2/issues/1647>`_)
-  (cherry picked from commit ad9fb465776c68d53431ec477ff89d7e4e25f3b3)
-  Co-authored-by: Stephanie Eng <stephanie-eng@users.noreply.github.com>
-* Default destructor for PlanningComponent (`#1470 <https://github.com/ros-planning/moveit2/issues/1470>`_) (`#1645 <https://github.com/ros-planning/moveit2/issues/1645>`_)
-  (cherry picked from commit f95e110085d7d5a9ac7b1cfa903d1a885ff519cb)
-  Co-authored-by: Tyler Weaver <tyler@picknik.ai>
-* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_) (`#1555 <https://github.com/ros-planning/moveit2/issues/1555>`_)
-  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
-* Remove __has_include statements (`#1481 <https://github.com/ros-planning/moveit2/issues/1481>`_) (`#1483 <https://github.com/ros-planning/moveit2/issues/1483>`_)
-* Contributors: Tyler Weaver, mergify[bot]
+* Short-circuit planning adapters (`#1694 <https://github.com/ros-planning/moveit2/issues/1694>`_)
+  * Revert "Planning request adapters: short-circuit if failure, return code rather than bool (`#1605 <https://github.com/ros-planning/moveit2/issues/1605>`_)"
+  This reverts commit 66a64b4a72b6ddef1af2329f20ed8162554d5bcb.
+  * Add debug message in call stack of planning_request_adapters
+  * Short-circuit planning request adapters
+  * Replace if-elseif cascade with switch
+  * Cleanup translation of MoveItErrorCode to string
+  - Move default code to moveit_core/utils
+  - Override defaults in existing getActionResultString()
+  - Provide translations for all error codes defined in moveit_msgs
+  * Fix comment according to review
+  * Add braces
+  Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
+  * Add braces
+  Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
+  Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
+  Co-authored-by: AndyZe <andyz@utexas.edu>
+* Fixup for `#1420 <https://github.com/ros-planning/moveit2/issues/1420>`_: Restore constness of generatePlan() (`#1699 <https://github.com/ros-planning/moveit2/issues/1699>`_)
+* Parallel planning pipelines (`#1420 <https://github.com/ros-planning/moveit2/issues/1420>`_)
+  * Add setTrajectoryConstraints() to PlanningComponent
+  * Add planning time to PlanningComponent::PlanSolution
+  * Replace PlanSolution with MotionPlanResponse
+  * Address review
+  * Add MultiPipelinePlanRequestParameters
+  Add plan(const MultiPipelinePlanRequestParameters& parameters)
+  Add mutex to avoid segfaults
+  Add optional stop_criterion_callback and solution_selection_callback
+  Remove stop_criterion_callback
+  Make default solution_selection_callback = nullptr
+  Remove parameter handling copy&paste code in favor of a template
+  Add TODO to refactor pushBack() method into insert()
+  Fix selection criteria and add RCLCPP_INFO output
+  Changes due to rebase and formatting
+  Fix race condition and segfault when no solution is found
+  Satisfy clang tidy
+  Remove mutex and thread safety TODOs
+  Add stopping functionality to parallel planning
+  Remove unnecessary TODOs
+  * Fix unused plan solution with failure
+  * Add sanity check for number of parallel planning problems
+  * Check stopping criterion when new solution is generated + make thread safe
+  * Add terminatePlanningPipeline() to MoveItCpp interface
+  * Format!
+  * Bug fixes
+  * Move getShortestSolution callback into own function
+  * No east const
+  * Remove PlanSolutions and make planner_id accessible
+  * Make solution executable
+  * Rename update_last_solution to store_solution
+  * Alphabetize includes and include plan_solutions.hpp instead of .h
+  * Address review
+  * Add missing header
+  * Apply suggestions from code review
+  Co-authored-by: AndyZe <andyz@utexas.edu>
+  Co-authored-by: AndyZe <andyz@utexas.edu>
+* Fixed typo in deprecation warning in ControllerManager (`#1688 <https://github.com/ros-planning/moveit2/issues/1688>`_)
+  * fixed typo as suggested by  @AndyZe
+  * Update naming
+  Co-authored-by: AndyZe <andyz@utexas.edu>
+* Planning request adapters: short-circuit if failure, return code rather than bool (`#1605 <https://github.com/ros-planning/moveit2/issues/1605>`_)
+  * Return code rather than bool
+  * Remove all debug prints
+  * Small fixup
+  * Minor cleanup of comment and error handling
+  * void return from PlannerFn
+  * Control reaches end of non-void function
+  * Use a MoveItErrorCode cast
+  * More efficient callAdapter()
+  * More MoveItErrorCode
+  * CI fixup attempt
+* Rename MoveItControllerManager. Add deprecation warning (`#1601 <https://github.com/ros-planning/moveit2/issues/1601>`_)
+  * Rename MoveItControllerManager->Ros2ControlManager. Add deprecation warning.
+  * Do not rename base class
+  * Still allow users to load plugins by the old names
+  Co-authored-by: Jafar <jafar.uruc@gmail.com>
+* Use generate_parameter_library to load kinematics parameters (`#1568 <https://github.com/ros-planning/moveit2/issues/1568>`_)
+* Merge PR `#1553 <https://github.com/ros-planning/moveit2/issues/1553>`_: Improve cmake files
+* Use standard exported targets: export\_${PROJECT_NAME} -> ${PROJECT_NAME}Targets
+* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_)
+* Disable flaky test_servo_singularity + test_rdf_integration (`#1530 <https://github.com/ros-planning/moveit2/issues/1530>`_)
+* Remove sensor manager (`#1172 <https://github.com/ros-planning/moveit2/issues/1172>`_)
+* Removed plan_with_sensing (`#1142 <https://github.com/ros-planning/moveit2/issues/1142>`_)
+* Remove __has_include statements (`#1481 <https://github.com/ros-planning/moveit2/issues/1481>`_)
+* Merge https://github.com/ros-planning/moveit/commit/a63580edd05b01d9480c333645036e5b2b222da9
+* Default destructor for PlanningComponent (`#1470 <https://github.com/ros-planning/moveit2/issues/1470>`_)
+* trajectory execution manager: reactivate tests (`#3177 <https://github.com/ros-planning/moveit2/issues/3177>`_)
+* Clean up TrajectoryExecutionManager API: remove unused code (`#3178 <https://github.com/ros-planning/moveit2/issues/3178>`_)
+  * Clean up unused code
+  * Add a comment to MIGRATION.md
+  Co-authored-by: Cristian Beltran <cristianbehe@gmail.com>
+* Merge PR `#3172 <https://github.com/ros-planning/moveit2/issues/3172>`_: Fix CI
+* Load robot_description via planning_context.launch
+* TrajectoryExecutionManager: Use local LOGNAME instead of member name\_ (`#3168 <https://github.com/ros-planning/moveit2/issues/3168>`_)
+* Contributors: Abhijeet Das Gupta, Abishalini Sivaraman, AndyZe, Robert Haschke, Sebastian Jahr, Stephanie Eng, Tyler Weaver, Vatan Aksoy Tezer, abishalini, cambel
 
 2.5.3 (2022-07-28)
 ------------------

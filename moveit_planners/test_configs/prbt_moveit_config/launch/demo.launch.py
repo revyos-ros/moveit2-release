@@ -17,7 +17,9 @@ def load_file(package_name, file_path):
     try:
         with open(absolute_file_path, "r") as file:
             return file.read()
-    except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
+    except (
+        EnvironmentError
+    ):  # parent of IOError, OSError *and* WindowsError where available
         return None
 
 
@@ -28,12 +30,13 @@ def load_yaml(package_name, file_path):
     try:
         with open(absolute_file_path, "r") as file:
             return yaml.safe_load(file)
-    except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
+    except (
+        EnvironmentError
+    ):  # parent of IOError, OSError *and* WindowsError where available
         return None
 
 
 def generate_launch_description():
-
     # planning_context
     robot_description_config = xacro.process_file(
         os.path.join(
@@ -78,14 +81,20 @@ def generate_launch_description():
         "default_planning_pipeline": "ompl",
         "planning_pipelines": ["pilz", "ompl"],
         "pilz": {
-            "planning_plugin": "pilz_industrial_motion_planner/CommandPlanner",
-            "request_adapters": "",
-            "start_state_max_bounds_error": 0.1,
+            "planning_plugins": ["pilz_industrial_motion_planner/CommandPlanner"],
         },
         "ompl": {
-            "planning_plugin": "ompl_interface/OMPLPlanner",
-            "request_adapters": """default_planner_request_adapters/AddTimeOptimalParameterization default_planner_request_adapters/FixWorkspaceBounds default_planner_request_adapters/FixStartStateBounds default_planner_request_adapters/FixStartStateCollision default_planner_request_adapters/FixStartStatePathConstraints""",
-            "start_state_max_bounds_error": 0.1,
+            "planning_plugins": ["ompl_interface/OMPLPlanner"],
+            "request_adapters": [
+                "default_planning_request_adapters/ResolveConstraintFrames",
+                "default_planning_request_adapters/ValidateWorkspaceBounds",
+                "default_planning_request_adapters/CheckStartStateBounds",
+                "default_planning_request_adapters/CheckStartStateCollision",
+            ],
+            "response_adapters": [
+                "default_planning_response_adapters/AddTimeOptimalParameterization",
+                "default_planning_response_adapters/ValidateSolution",
+            ],
         },
     }
     ompl_planning_yaml = load_yaml(
@@ -180,7 +189,10 @@ def generate_launch_description():
     ros2_control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
-        parameters=[robot_description, ros2_controllers_path],
+        parameters=[ros2_controllers_path],
+        remappings=[
+            ("/controller_manager/robot_description", "/robot_description"),
+        ],
         output="screen",
     )
 

@@ -2,42 +2,88 @@
 Changelog for package pilz_industrial_motion_planner_testutils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.5.6 (2024-11-17)
+2.12.0 (2024-11-29)
+-------------------
+* Enhancement/use hpp for headers (`#3113 <https://github.com/ros-planning/moveit2/issues/3113>`_)
+* Contributors: Tom Noble
+
+2.11.0 (2024-09-16)
+-------------------
+
+2.10.0 (2024-06-13)
+-------------------
+* Migrate ros-planning org to moveit (`#2847 <https://github.com/moveit/moveit2/issues/2847>`_)
+  * Rename github.com/ros-planning -> github.com/moveit
+  * Rename ros-planning.github.io -> moveit.github.io
+  * Rename ros-planning organization in docker and CI workflow files
+  - ghcr.io/ros-planning -> ghcr.io/moveit
+  - github.repository == 'moveit/*''
+* CMake format and lint in pre-commit (`#2683 <https://github.com/moveit/moveit2/issues/2683>`_)
+* Contributors: Robert Haschke, Tyler Weaver
+
+2.9.0 (2024-01-09)
+------------------
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Update clang-format-14 with QualifierAlignment (`#2362 <https://github.com/ros-planning/moveit2/issues/2362>`_)
+  * Set qualifier order in .clang-format
+  * Ran pre-commit to update according to new style guide
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Contributors: Marq Rasmussen, Sebastian Jahr, Shobuj Paul
+
+2.8.0 (2023-09-10)
+------------------
+* Make loggers static or move into anonymous namespace (`#2184 <https://github.com/ros-planning/moveit2/issues/2184>`_)
+  * Make loggers static or move into anonymous namespace
+  * Update moveit_ros/planning_interface/move_group_interface/src/move_group_interface.cpp
+  * Update moveit_ros/planning_interface/move_group_interface/src/move_group_interface.cpp
+  * Move LOGGER out of class template
+* Contributors: Sebastian Jahr
+
+2.7.4 (2023-05-18)
 ------------------
 
-2.5.5 (2023-09-10)
+2.7.3 (2023-04-24)
 ------------------
-* Fix clang compiler warnings (backport of `#1712 <https://github.com/ros-planning/moveit2/issues/1712>`_) (`#1896 <https://github.com/ros-planning/moveit2/issues/1896>`_)
-  - Fix warning: definition of implicit copy assignment operator is deprecated
-  - Fix warning: expression with side effects will be evaluated
-  - Fix warning: passing by value
-  - Enable -Werror
-  - Fix -Wdelete-non-abstract-non-virtual-dtor
-  - Fix more clang warnings
-  - Modernize gtest: TYPED_TEST_CASE -> TYPED_TEST_SUITE
-  - Fix GoogleTestVerification.UninstantiatedTypeParameterizedTestSuite
-  - Add default copy/move constructors/assignment operators
+* Replace Variable PROJECT_NAME in CMakeLists.txt with the actual name (`#2020 <https://github.com/ros-planning/moveit2/issues/2020>`_)
+* Contributors: Shobuj Paul
+
+2.7.2 (2023-04-18)
+------------------
+
+2.7.1 (2023-03-23)
+------------------
+
+2.7.0 (2023-01-29)
+------------------
+* Merge PR `#1712 <https://github.com/ros-planning/moveit2/issues/1712>`_: fix clang compiler warnings + stricter CI
+* converted characters from string format to character format (`#1881 <https://github.com/ros-planning/moveit2/issues/1881>`_)
+* Add noexcept specifier to constructors
+* Add default constructors
+  ... as they are not implicitly declared anymore
+* Add default copy/move constructors/assignment operators
   As a user-declared destructor deletes any implicitly-defined move constructor/assignment operator,
   we need to declared them manually. This in turn requires to declare the copy constructor/assignment as well.
-  - Explicitly declare overrides
-  - Add default constructors as they are not implicitly declared anymore
-  - Declare selected classes as final
-  - Add noexcept specifier to constructors
-  - Fixup gmock/gtest warnings
-* Use <> for non-local headers (`#1765 <https://github.com/ros-planning/moveit2/issues/1765>`_)
+* Fix -Wdelete-non-abstract-non-virtual-dtor
+* Fix BSD license in package.xml (`#1796 <https://github.com/ros-planning/moveit2/issues/1796>`_)
+  * fix BSD license in package.xml
+  * this must also be spdx compliant
+* Minimize use of `this->` (`#1784 <https://github.com/ros-planning/moveit2/issues/1784>`_)
+  It's often unnecessary. MoveIt already avoids this in most cases
+  so this PR better cements that existing pattern.
+* Use <> for non-local headers (`#1734 <https://github.com/ros-planning/moveit2/issues/1734>`_)
   Unless a header lives in the same or a child directory of the file
   including it, it's recommended to use <> for the #include statement.
   For more information, see the C++ Core Guidelines item SF.12
   https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#sf12-prefer-the-quoted-form-of-include-for-files-relative-to-the-including-file-and-the-angle-bracket-form-everywhere-else
-  (cherry picked from commit 7a1f2a101f9aeb8557e8a31656bbe1a6d53b430e)
-* Contributors: Chris Thrasher, Robert Haschke
+* Contributors: Chris Thrasher, Christian Henkel, Robert Haschke, Sameer Gupta
 
-2.5.4 (2022-11-04)
+2.6.0 (2022-11-10)
 ------------------
-* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_) (`#1555 <https://github.com/ros-planning/moveit2/issues/1555>`_)
-  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
-* Remove __has_include statements (`#1481 <https://github.com/ros-planning/moveit2/issues/1481>`_) (`#1483 <https://github.com/ros-planning/moveit2/issues/1483>`_)
-* Contributors: mergify[bot]
+* Merge PR `#1553 <https://github.com/ros-planning/moveit2/issues/1553>`_: Improve cmake files
+* Use standard exported targets: export\_${PROJECT_NAME} -> ${PROJECT_NAME}Targets
+* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_)
+* Remove __has_include statements (`#1481 <https://github.com/ros-planning/moveit2/issues/1481>`_)
+* Contributors: Robert Haschke, Sebastian Jahr, Vatan Aksoy Tezer
 
 2.5.3 (2022-07-28)
 ------------------

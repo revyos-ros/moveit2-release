@@ -2,20 +2,49 @@
 Changelog for package moveit_runtime
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.5.6 (2024-11-17)
+2.12.0 (2024-11-29)
+-------------------
+
+2.11.0 (2024-09-16)
+-------------------
+
+2.10.0 (2024-06-13)
+-------------------
+* CMake format and lint in pre-commit (`#2683 <https://github.com/moveit/moveit2/issues/2683>`_)
+* Contributors: Tyler Weaver
+
+2.9.0 (2024-01-09)
+------------------
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Contributors: Sebastian Jahr
+
+2.8.0 (2023-09-10)
 ------------------
 
-2.5.5 (2023-09-10)
+2.7.4 (2023-05-18)
 ------------------
 
-2.5.4 (2022-11-04)
+2.7.3 (2023-04-24)
 ------------------
-* Uncomment moveit_ros_perception dependency (`#1463 <https://github.com/ros-planning/moveit2/issues/1463>`_) (`#1644 <https://github.com/ros-planning/moveit2/issues/1644>`_)
-  (cherry picked from commit 450323cee2c74f09952a95ff1cae9951583cdce9)
-  Co-authored-by: AndyZe <zelenak@picknik.ai>
-* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_) (`#1555 <https://github.com/ros-planning/moveit2/issues/1555>`_)
-  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
-* Contributors: mergify[bot]
+
+2.7.2 (2023-04-18)
+------------------
+
+2.7.1 (2023-03-23)
+------------------
+
+2.7.0 (2023-01-29)
+------------------
+* Fix BSD license in package.xml (`#1796 <https://github.com/ros-planning/moveit2/issues/1796>`_)
+  * fix BSD license in package.xml
+  * this must also be spdx compliant
+* Contributors: Christian Henkel
+
+2.6.0 (2022-11-10)
+------------------
+* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_)
+* Uncomment moveit_ros_perception dependency (`#1463 <https://github.com/ros-planning/moveit2/issues/1463>`_)
+* Contributors: AndyZe, Sebastian Jahr
 
 2.5.3 (2022-07-28)
 ------------------

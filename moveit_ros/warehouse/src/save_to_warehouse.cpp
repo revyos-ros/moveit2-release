@@ -34,15 +34,16 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/warehouse/planning_scene_storage.h>
-#include <moveit/warehouse/constraints_storage.h>
-#include <moveit/warehouse/state_storage.h>
-#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
-#include <boost/algorithm/string/join.hpp>
+#include <moveit/warehouse/planning_scene_storage.hpp>
+#include <moveit/warehouse/constraints_storage.hpp>
+#include <moveit/warehouse/state_storage.hpp>
+#include <moveit/planning_scene_monitor/planning_scene_monitor.hpp>
+#include <moveit/utils/logger.hpp>
 #include <boost/program_options/cmdline.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/variables_map.hpp>
+#include <fmt/format.h>
 #include <tf2_ros/transform_listener.h>
 #include <rclcpp/executors.hpp>
 #include <rclcpp/experimental/buffers/intra_process_buffer.hpp>
@@ -50,17 +51,25 @@
 #include <rclcpp/logging.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/node_options.hpp>
+#include <rclcpp/version.h>
+#if RCLCPP_VERSION_GTE(20, 0, 0)
+#include <rclcpp/event_handler.hpp>
+#else
 #include <rclcpp/qos_event.hpp>
+#endif
 #include <rclcpp/subscription.hpp>
 #include <rclcpp/utilities.hpp>
 
-static const std::string ROBOT_DESCRIPTION = "robot_description";
+rclcpp::Logger getLogger()
+{
+  return moveit::getLogger("moveit.ros.save_to_warehouse");
+}
 
-static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.ros.warehouse.save_to_warehouse");
+static const std::string ROBOT_DESCRIPTION = "robot_description";
 
 void onSceneUpdate(planning_scene_monitor::PlanningSceneMonitor& psm, moveit_warehouse::PlanningSceneStorage& pss)
 {
-  RCLCPP_INFO(LOGGER, "Received an update to the planning scene...");
+  RCLCPP_INFO(getLogger(), "Received an update to the planning scene...");
 
   if (!psm.getPlanningScene()->getName().empty())
   {
@@ -71,11 +80,13 @@ void onSceneUpdate(planning_scene_monitor::PlanningSceneMonitor& psm, moveit_war
       pss.addPlanningScene(psmsg);
     }
     else
-      RCLCPP_INFO(LOGGER, "Scene '%s' was previously added. Not adding again.",
+    {
+      RCLCPP_INFO(getLogger(), "Scene '%s' was previously added. Not adding again.",
                   psm.getPlanningScene()->getName().c_str());
+    }
   }
   else
-    RCLCPP_INFO(LOGGER, "Scene name is empty. Not saving.");
+    RCLCPP_INFO(getLogger(), "Scene name is empty. Not saving.");
 }
 
 void onMotionPlanRequest(const moveit_msgs::msg::MotionPlanRequest& req,
@@ -83,7 +94,7 @@ void onMotionPlanRequest(const moveit_msgs::msg::MotionPlanRequest& req,
 {
   if (psm.getPlanningScene()->getName().empty())
   {
-    RCLCPP_INFO(LOGGER, "Scene name is empty. Not saving planning request.");
+    RCLCPP_INFO(getLogger(), "Scene name is empty. Not saving planning request.");
     return;
   }
   pss.addPlanningQuery(req, psm.getPlanningScene()->getName());
@@ -93,19 +104,19 @@ void onConstraints(const moveit_msgs::msg::Constraints& msg, moveit_warehouse::C
 {
   if (msg.name.empty())
   {
-    RCLCPP_INFO(LOGGER, "No name specified for constraints. Not saving.");
+    RCLCPP_INFO(getLogger(), "No name specified for constraints. Not saving.");
     return;
   }
 
   if (cs.hasConstraints(msg.name))
   {
-    RCLCPP_INFO(LOGGER, "Replacing constraints '%s'", msg.name.c_str());
+    RCLCPP_INFO(getLogger(), "Replacing constraints '%s'", msg.name.c_str());
     cs.removeConstraints(msg.name);
     cs.addConstraints(msg);
   }
   else
   {
-    RCLCPP_INFO(LOGGER, "Adding constraints '%s'", msg.name.c_str());
+    RCLCPP_INFO(getLogger(), "Adding constraints '%s'", msg.name.c_str());
     cs.addConstraints(msg);
   }
 }
@@ -119,7 +130,7 @@ void onRobotState(const moveit_msgs::msg::RobotState& msg, moveit_warehouse::Rob
   while (names_set.find("S" + std::to_string(n)) != names_set.end())
     n++;
   std::string name = "S" + std::to_string(n);
-  RCLCPP_INFO(LOGGER, "Adding robot state '%s'", name.c_str());
+  RCLCPP_INFO(getLogger(), "Adding robot state '%s'", name.c_str());
   rs.addRobotState(msg, name);
 }
 
@@ -130,6 +141,7 @@ int main(int argc, char** argv)
   node_options.allow_undeclared_parameters(true);
   node_options.automatically_declare_parameters_from_overrides(true);
   rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared("save_to_warehouse", node_options);
+  moveit::setNodeLoggerName(node->get_name());
 
   boost::program_options::options_description desc;
   desc.add_options()("help", "Show help message")("host", boost::program_options::value<std::string>(),
@@ -156,7 +168,7 @@ int main(int argc, char** argv)
   planning_scene_monitor::PlanningSceneMonitor psm(node, ROBOT_DESCRIPTION);
   if (!psm.getPlanningScene())
   {
-    RCLCPP_ERROR(LOGGER, "Unable to initialize PlanningSceneMonitor");
+    RCLCPP_ERROR(node->get_logger(), "Unable to initialize PlanningSceneMonitor");
     return 1;
   }
 
@@ -168,30 +180,36 @@ int main(int argc, char** argv)
   std::vector<std::string> names;
   pss.getPlanningSceneNames(names);
   if (names.empty())
-    RCLCPP_INFO(LOGGER, "There are no previously stored scenes");
+  {
+    RCLCPP_INFO(node->get_logger(), "There are no previously stored scenes");
+  }
   else
   {
-    RCLCPP_INFO(LOGGER, "Previously stored scenes:");
+    RCLCPP_INFO(node->get_logger(), "Previously stored scenes:");
     for (const std::string& name : names)
-      RCLCPP_INFO(LOGGER, " * %s", name.c_str());
+      RCLCPP_INFO(node->get_logger(), " * %s", name.c_str());
   }
   cs.getKnownConstraints(names);
   if (names.empty())
-    RCLCPP_INFO(LOGGER, "There are no previously stored constraints");
+  {
+    RCLCPP_INFO(node->get_logger(), "There are no previously stored constraints");
+  }
   else
   {
-    RCLCPP_INFO(LOGGER, "Previously stored constraints:");
+    RCLCPP_INFO(node->get_logger(), "Previously stored constraints:");
     for (const std::string& name : names)
-      RCLCPP_INFO(LOGGER, " * %s", name.c_str());
+      RCLCPP_INFO(node->get_logger(), " * %s", name.c_str());
   }
   rs.getKnownRobotStates(names);
   if (names.empty())
-    RCLCPP_INFO(LOGGER, "There are no previously stored robot states");
+  {
+    RCLCPP_INFO(node->get_logger(), "There are no previously stored robot states");
+  }
   else
   {
-    RCLCPP_INFO(LOGGER, "Previously stored robot states:");
+    RCLCPP_INFO(node->get_logger(), "Previously stored robot states:");
     for (const std::string& name : names)
-      RCLCPP_INFO(LOGGER, " * %s", name.c_str());
+      RCLCPP_INFO(node->get_logger(), " * %s", name.c_str());
   }
 
   psm.addUpdateCallback([&](auto&&) { return onSceneUpdate(psm, pss); });
@@ -208,10 +226,11 @@ int main(int argc, char** argv)
 
   std::vector<std::string> topics;
   psm.getMonitoredTopics(topics);
-  RCLCPP_INFO_STREAM(LOGGER, "Listening for scene updates on topics " << boost::algorithm::join(topics, ", "));
-  RCLCPP_INFO_STREAM(LOGGER, "Listening for planning requests on topic " << mplan_req_sub->get_topic_name());
-  RCLCPP_INFO_STREAM(LOGGER, "Listening for named constraints on topic " << constr_sub->get_topic_name());
-  RCLCPP_INFO_STREAM(LOGGER, "Listening for states on topic " << state_sub->get_topic_name());
+  RCLCPP_INFO_STREAM(node->get_logger(),
+                     "Listening for scene updates on topics " << fmt::format("{}", fmt::join(topics, ", ")));
+  RCLCPP_INFO_STREAM(node->get_logger(), "Listening for planning requests on topic " << mplan_req_sub->get_topic_name());
+  RCLCPP_INFO_STREAM(node->get_logger(), "Listening for named constraints on topic " << constr_sub->get_topic_name());
+  RCLCPP_INFO_STREAM(node->get_logger(), "Listening for states on topic " << state_sub->get_topic_name());
 
   rclcpp::spin(node);
   return 0;

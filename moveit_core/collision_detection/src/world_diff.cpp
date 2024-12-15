@@ -34,7 +34,7 @@
 
 /* Author: Acorn Pooley, Ioan Sucan */
 
-#include <moveit/collision_detection/world_diff.h>
+#include <moveit/collision_detection/world_diff.hpp>
 #include <functional>
 
 namespace collision_detection
@@ -118,9 +118,13 @@ void WorldDiff::notify(const World::ObjectConstPtr& obj, World::Action action)
 {
   World::Action& a = changes_[obj->id_];
   if (action == World::DESTROY)
+  {
     a = World::DESTROY;
+  }
   else
+  {
     a = a | action;
+  }
 }
 
 }  // end of namespace collision_detection

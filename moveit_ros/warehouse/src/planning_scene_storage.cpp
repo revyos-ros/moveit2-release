@@ -34,10 +34,11 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/warehouse/planning_scene_storage.h>
+#include <moveit/warehouse/planning_scene_storage.hpp>
 #include <utility>
 #include <rclcpp/serialization.hpp>
 #include <regex>
+#include <moveit/utils/logger.hpp>
 
 const std::string moveit_warehouse::PlanningSceneStorage::DATABASE_NAME = "moveit_planning_scenes";
 
@@ -47,10 +48,8 @@ const std::string moveit_warehouse::PlanningSceneStorage::MOTION_PLAN_REQUEST_ID
 using warehouse_ros::Metadata;
 using warehouse_ros::Query;
 
-static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.ros.warehouse.planning_scene_storage");
-
 moveit_warehouse::PlanningSceneStorage::PlanningSceneStorage(warehouse_ros::DatabaseConnection::Ptr conn)
-  : MoveItMessageStorage(std::move(conn))
+  : MoveItMessageStorage(std::move(conn)), logger_(moveit::getLogger("moveit.ros.warehouse_planning_scene_storage"))
 {
   createCollections();
 }
@@ -85,7 +84,7 @@ void moveit_warehouse::PlanningSceneStorage::addPlanningScene(const moveit_msgs:
   Metadata::Ptr metadata = planning_scene_collection_->createMetadata();
   metadata->append(PLANNING_SCENE_ID_NAME, scene.name);
   planning_scene_collection_->insert(scene, metadata);
-  RCLCPP_DEBUG(LOGGER, "%s scene '%s'", replace ? "Replaced" : "Added", scene.name.c_str());
+  RCLCPP_DEBUG(logger_, "%s scene '%s'", replace ? "Replaced" : "Added", scene.name.c_str());
 }
 
 bool moveit_warehouse::PlanningSceneStorage::hasPlanningScene(const std::string& name) const
@@ -126,8 +125,10 @@ std::string moveit_warehouse::PlanningSceneStorage::getMotionPlanRequestName(
     if (serial_size != serial_size_arg)
       continue;
     if (memcmp(data_arg, data, serial_size) == 0)
+    {
       // we found the same message twice
       return existing_request->lookupString(MOTION_PLAN_REQUEST_ID_NAME);
+    }
   }
   return "";
 }
@@ -171,7 +172,7 @@ moveit_warehouse::PlanningSceneStorage::addNewPlanningRequest(const moveit_msgs:
   metadata->append(PLANNING_SCENE_ID_NAME, scene_name);
   metadata->append(MOTION_PLAN_REQUEST_ID_NAME, id);
   motion_plan_request_collection_->insert(planning_query, metadata);
-  RCLCPP_DEBUG(LOGGER, "Saved planning query '%s' for scene '%s'", id.c_str(), scene_name.c_str());
+  RCLCPP_DEBUG(logger_, "Saved planning query '%s' for scene '%s'", id.c_str(), scene_name.c_str());
   return id;
 }
 
@@ -195,8 +196,10 @@ void moveit_warehouse::PlanningSceneStorage::getPlanningSceneNames(std::vector<s
   std::vector<PlanningSceneWithMetadata> planning_scenes =
       planning_scene_collection_->queryList(q, true, PLANNING_SCENE_ID_NAME, true);
   for (PlanningSceneWithMetadata& planning_scene : planning_scenes)
+  {
     if (planning_scene->lookupField(PLANNING_SCENE_ID_NAME))
       names.push_back(planning_scene->lookupString(PLANNING_SCENE_ID_NAME));
+  }
 }
 
 void moveit_warehouse::PlanningSceneStorage::getPlanningSceneNames(const std::string& regex,
@@ -227,7 +230,7 @@ bool moveit_warehouse::PlanningSceneStorage::getPlanningScene(PlanningSceneWithM
   std::vector<PlanningSceneWithMetadata> planning_scenes = planning_scene_collection_->queryList(q, false);
   if (planning_scenes.empty())
   {
-    RCLCPP_WARN(LOGGER, "Planning scene '%s' was not found in the database", scene_name.c_str());
+    RCLCPP_WARN(logger_, "Planning scene '%s' was not found in the database", scene_name.c_str());
     return false;
   }
   scene_m = planning_scenes.back();
@@ -247,7 +250,7 @@ bool moveit_warehouse::PlanningSceneStorage::getPlanningQuery(MotionPlanRequestW
   std::vector<MotionPlanRequestWithMetadata> planning_queries = motion_plan_request_collection_->queryList(q, false);
   if (planning_queries.empty())
   {
-    RCLCPP_ERROR(LOGGER, "Planning query '%s' not found for scene '%s'", query_name.c_str(), scene_name.c_str());
+    RCLCPP_ERROR(logger_, "Planning query '%s' not found for scene '%s'", query_name.c_str(), scene_name.c_str());
     return false;
   }
   else
@@ -273,8 +276,10 @@ void moveit_warehouse::PlanningSceneStorage::getPlanningQueriesNames(std::vector
   std::vector<MotionPlanRequestWithMetadata> planning_queries = motion_plan_request_collection_->queryList(q, true);
   query_names.clear();
   for (MotionPlanRequestWithMetadata& planning_query : planning_queries)
+  {
     if (planning_query->lookupField(MOTION_PLAN_REQUEST_ID_NAME))
       query_names.push_back(planning_query->lookupString(MOTION_PLAN_REQUEST_ID_NAME));
+  }
 }
 
 void moveit_warehouse::PlanningSceneStorage::getPlanningQueriesNames(const std::string& regex,
@@ -308,10 +313,16 @@ void moveit_warehouse::PlanningSceneStorage::getPlanningQueries(
   planning_queries = motion_plan_request_collection_->queryList(q, false);
   query_names.resize(planning_queries.size());
   for (std::size_t i = 0; i < planning_queries.size(); ++i)
+  {
     if (planning_queries[i]->lookupField(MOTION_PLAN_REQUEST_ID_NAME))
+    {
       query_names[i] = planning_queries[i]->lookupString(MOTION_PLAN_REQUEST_ID_NAME);
+    }
     else
+    {
       query_names[i].clear();
+    }
+  }
 }
 
 void moveit_warehouse::PlanningSceneStorage::getPlanningResults(
@@ -320,9 +331,13 @@ void moveit_warehouse::PlanningSceneStorage::getPlanningResults(
 {
   std::string id = getMotionPlanRequestName(planning_query, scene_name);
   if (id.empty())
+  {
     planning_results.clear();
+  }
   else
+  {
     getPlanningResults(planning_results, id, scene_name);
+  }
 }
 
 void moveit_warehouse::PlanningSceneStorage::getPlanningResults(
@@ -353,7 +368,7 @@ void moveit_warehouse::PlanningSceneStorage::renamePlanningScene(const std::stri
   Metadata::Ptr m = planning_scene_collection_->createMetadata();
   m->append(PLANNING_SCENE_ID_NAME, new_scene_name);
   planning_scene_collection_->modifyMetadata(q, m);
-  RCLCPP_DEBUG(LOGGER, "Renamed planning scene from '%s' to '%s'", old_scene_name.c_str(), new_scene_name.c_str());
+  RCLCPP_DEBUG(logger_, "Renamed planning scene from '%s' to '%s'", old_scene_name.c_str(), new_scene_name.c_str());
 }
 
 void moveit_warehouse::PlanningSceneStorage::renamePlanningQuery(const std::string& scene_name,
@@ -366,7 +381,7 @@ void moveit_warehouse::PlanningSceneStorage::renamePlanningQuery(const std::stri
   Metadata::Ptr m = motion_plan_request_collection_->createMetadata();
   m->append(MOTION_PLAN_REQUEST_ID_NAME, new_query_name);
   motion_plan_request_collection_->modifyMetadata(q, m);
-  RCLCPP_DEBUG(LOGGER, "Renamed planning query for scene '%s' from '%s' to '%s'", scene_name.c_str(),
+  RCLCPP_DEBUG(logger_, "Renamed planning query for scene '%s' from '%s' to '%s'", scene_name.c_str(),
                old_query_name.c_str(), new_query_name.c_str());
 }
 
@@ -376,7 +391,7 @@ void moveit_warehouse::PlanningSceneStorage::removePlanningScene(const std::stri
   Query::Ptr q = planning_scene_collection_->createQuery();
   q->append(PLANNING_SCENE_ID_NAME, scene_name);
   unsigned int rem = planning_scene_collection_->removeMessages(q);
-  RCLCPP_DEBUG(LOGGER, "Removed %u PlanningScene messages (named '%s')", rem, scene_name.c_str());
+  RCLCPP_DEBUG(logger_, "Removed %u PlanningScene messages (named '%s')", rem, scene_name.c_str());
 }
 
 void moveit_warehouse::PlanningSceneStorage::removePlanningQueries(const std::string& scene_name)
@@ -385,7 +400,7 @@ void moveit_warehouse::PlanningSceneStorage::removePlanningQueries(const std::st
   Query::Ptr q = motion_plan_request_collection_->createQuery();
   q->append(PLANNING_SCENE_ID_NAME, scene_name);
   unsigned int rem = motion_plan_request_collection_->removeMessages(q);
-  RCLCPP_DEBUG(LOGGER, "Removed %u MotionPlanRequest messages for scene '%s'", rem, scene_name.c_str());
+  RCLCPP_DEBUG(logger_, "Removed %u MotionPlanRequest messages for scene '%s'", rem, scene_name.c_str());
 }
 
 void moveit_warehouse::PlanningSceneStorage::removePlanningQuery(const std::string& scene_name,
@@ -396,7 +411,7 @@ void moveit_warehouse::PlanningSceneStorage::removePlanningQuery(const std::stri
   q->append(PLANNING_SCENE_ID_NAME, scene_name);
   q->append(MOTION_PLAN_REQUEST_ID_NAME, query_name);
   unsigned int rem = motion_plan_request_collection_->removeMessages(q);
-  RCLCPP_DEBUG(LOGGER, "Removed %u MotionPlanRequest messages for scene '%s', query '%s'", rem, scene_name.c_str(),
+  RCLCPP_DEBUG(logger_, "Removed %u MotionPlanRequest messages for scene '%s', query '%s'", rem, scene_name.c_str(),
                query_name.c_str());
 }
 
@@ -405,7 +420,7 @@ void moveit_warehouse::PlanningSceneStorage::removePlanningResults(const std::st
   Query::Ptr q = robot_trajectory_collection_->createQuery();
   q->append(PLANNING_SCENE_ID_NAME, scene_name);
   unsigned int rem = robot_trajectory_collection_->removeMessages(q);
-  RCLCPP_DEBUG(LOGGER, "Removed %u RobotTrajectory messages for scene '%s'", rem, scene_name.c_str());
+  RCLCPP_DEBUG(logger_, "Removed %u RobotTrajectory messages for scene '%s'", rem, scene_name.c_str());
 }
 
 void moveit_warehouse::PlanningSceneStorage::removePlanningResults(const std::string& scene_name,
@@ -415,6 +430,6 @@ void moveit_warehouse::PlanningSceneStorage::removePlanningResults(const std::st
   q->append(PLANNING_SCENE_ID_NAME, scene_name);
   q->append(MOTION_PLAN_REQUEST_ID_NAME, query_name);
   unsigned int rem = robot_trajectory_collection_->removeMessages(q);
-  RCLCPP_DEBUG(LOGGER, "Removed %u RobotTrajectory messages for scene '%s', query '%s'", rem, scene_name.c_str(),
+  RCLCPP_DEBUG(logger_, "Removed %u RobotTrajectory messages for scene '%s', query '%s'", rem, scene_name.c_str(),
                query_name.c_str());
 }

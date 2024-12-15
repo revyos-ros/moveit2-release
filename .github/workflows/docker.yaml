@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - humble
+      - main
   pull_request:
     paths:
       - .docker/**
@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ROS_DISTRO: [humble]
+        ROS_DISTRO: [rolling, jazzy]
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -72,7 +72,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ROS_DISTRO: [humble]
+        ROS_DISTRO: [rolling, jazzy]
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -128,7 +128,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ROS_DISTRO: [humble]
+        ROS_DISTRO: [rolling, jazzy]
     runs-on: ubuntu-latest
     permissions:
       packages: write

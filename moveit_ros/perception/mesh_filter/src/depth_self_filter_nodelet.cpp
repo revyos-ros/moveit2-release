@@ -34,14 +34,14 @@
 
 /* Author: Suat Gedikli */
 
-#include <moveit/mesh_filter/depth_self_filter_nodelet.h>
-#include <moveit/mesh_filter/stereo_camera_model.h>
-#include <moveit/mesh_filter/mesh_filter.h>
+#include <moveit/mesh_filter/depth_self_filter_nodelet.hpp>
+#include <moveit/mesh_filter/stereo_camera_model.hpp>
+#include <moveit/mesh_filter/mesh_filter.hpp>
 #include <ros/ros.h>
 #include <image_transport/subscriber_filter.h>
 #include <sensor_msgs/image_encodings.h>
-#include <moveit/robot_model_loader/robot_model_loader.h>
-#include <moveit/robot_model/robot_model.h>
+#include <moveit/robot_model_loader/robot_model_loader.hpp>
+#include <moveit/robot_model/robot_model.hpp>
 #include <cv_bridge/cv_bridge.h>
 
 namespace enc = sensor_msgs::image_encodings;
@@ -61,7 +61,7 @@ void mesh_filter::DepthSelfFiltering::onInit()
   model_label_transport_ = std::make_shared<image_transport::ImageTransport>(nh);
 
   // Read parameters
-  private_nh.param("queue_size", queue_size_, 1);
+  private_nh.param("queue_size", rmw_qos_profile_sensor_data.depth, 1);
   private_nh.param("near_clipping_plane_distance", near_clipping_plane_distance_, 0.4);
   private_nh.param("far_clipping_plane_distance", far_clipping_plane_distance_, 5.0);
   ;
@@ -76,14 +76,14 @@ void mesh_filter::DepthSelfFiltering::onInit()
   ros::SubscriberStatusCallback rssc = [this](auto&&) { connectCb(); };
 
   std::lock_guard<std::mutex> lock(connect_mutex_);
-  pub_filtered_depth_image_ =
-      filtered_depth_transport_->advertiseCamera("/filtered/depth", queue_size_, itssc, itssc, rssc, rssc);
-  pub_filtered_label_image_ =
-      filtered_label_transport_->advertiseCamera("/filtered/labels", queue_size_, itssc, itssc, rssc, rssc);
-  pub_model_depth_image_ =
-      model_depth_transport_->advertiseCamera("/model/depth", queue_size_, itssc, itssc, rssc, rssc);
-  pub_model_label_image_ =
-      model_depth_transport_->advertiseCamera("/model/label", queue_size_, itssc, itssc, rssc, rssc);
+  pub_filtered_depth_image_ = filtered_depth_transport_->advertiseCamera(
+      "/filtered/depth", rmw_qos_profile_sensor_data.depth, itssc, itssc, rssc, rssc, rmw_qos_profile_sensor_data);
+  pub_filtered_label_image_ = filtered_label_transport_->advertiseCamera(
+      "/filtered/labels", rmw_qos_profile_sensor_data.depth, itssc, itssc, rssc, rssc, rmw_qos_profile_sensor_data);
+  pub_model_depth_image_ = model_depth_transport_->advertiseCamera(
+      "/model/depth", rmw_qos_profile_sensor_data.depth, itssc, itssc, rssc, rssc, rmw_qos_profile_sensor_data);
+  pub_model_label_image_ = model_depth_transport_->advertiseCamera(
+      "/model/label", rmw_qos_profile_sensor_data.depth, itssc, itssc, rssc, rssc, rmw_qos_profile_sensor_data);
 
   filtered_depth_ptr_ = std::make_shared<cv_bridge::CvImage>();
   filtered_label_ptr_ = std::make_shared<cv_bridge::CvImage>();
@@ -113,7 +113,7 @@ void mesh_filter::DepthSelfFiltering::filter(const sensor_msgs::ImageConstPtr& d
   params.setCameraParameters(info_msg->K[0], info_msg->K[4], info_msg->K[2], info_msg->K[5]);
   params.setImageSize(depth_msg->width, depth_msg->height);
 
-  const float* src = (const float*)&depth_msg->data[0];
+  const double* src = (const double*)&depth_msg->data[0];
   //*
   static unsigned data_size = 0;
   static unsigned short* data = nullptr;
@@ -135,7 +135,7 @@ void mesh_filter::DepthSelfFiltering::filter(const sensor_msgs::ImageConstPtr& d
     if (static_cast<uint32_t>(filtered_depth_ptr_->image.cols) != depth_msg->width ||
         static_cast<uint32_t>(filtered_depth_ptr_->image.rows) != depth_msg->height)
       filtered_depth_ptr_->image = cv::Mat(depth_msg->height, depth_msg->width, CV_32FC1);
-    mesh_filter_->getFilteredDepth((float*)filtered_depth_ptr_->image.data);
+    mesh_filter_->getFilteredDepth((double*)filtered_depth_ptr_->image.data);
     pub_filtered_depth_image_.publish(filtered_depth_ptr_->toImageMsg(), info_msg);
   }
 
@@ -148,7 +148,7 @@ void mesh_filter::DepthSelfFiltering::filter(const sensor_msgs::ImageConstPtr& d
     if (static_cast<uint32_t>(model_depth_ptr_->image.cols) != depth_msg->width ||
         static_cast<uint32_t>(model_depth_ptr_->image.rows) != depth_msg->height)
       model_depth_ptr_->image = cv::Mat(depth_msg->height, depth_msg->width, CV_32FC1);
-    mesh_filter_->getModelDepth((float*)model_depth_ptr_->image.data);
+    mesh_filter_->getModelDepth((double*)model_depth_ptr_->image.data);
     pub_model_depth_image_.publish(model_depth_ptr_->toImageMsg(), info_msg);
   }
 
@@ -209,7 +209,8 @@ void mesh_filter::DepthSelfFiltering::connectCb()
   {
     image_transport::TransportHints hints("raw", ros::TransportHints(), getPrivateNodeHandle());
     sub_depth_image_ =
-        input_depth_transport_->subscribeCamera("depth", queue_size_, &DepthSelfFiltering::depthCb, this, hints);
+        input_depth_transport_->subscribeCamera("depth", rmw_qos_profile_sensor_data.depth,
+                                                &DepthSelfFiltering::depthCb, this, hints, rmw_qos_profile_sensor_data);
   }
 }
 

@@ -2,24 +2,84 @@
 Changelog for package moveit_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.5.6 (2024-11-17)
+2.12.0 (2024-11-29)
+-------------------
+
+2.11.0 (2024-09-16)
+-------------------
+
+2.10.0 (2024-06-13)
+-------------------
+* Migrate ros-planning org to moveit (`#2847 <https://github.com/moveit/moveit2/issues/2847>`_)
+  * Rename github.com/ros-planning -> github.com/moveit
+  * Rename ros-planning.github.io -> moveit.github.io
+  * Rename ros-planning organization in docker and CI workflow files
+  - ghcr.io/ros-planning -> ghcr.io/moveit
+  - github.repository == 'moveit/*''
+* CMake format and lint in pre-commit (`#2683 <https://github.com/moveit/moveit2/issues/2683>`_)
+* Contributors: Robert Haschke, Tyler Weaver
+
+2.9.0 (2024-01-09)
+------------------
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Contributors: Sebastian Jahr
+
+2.8.0 (2023-09-10)
 ------------------
 
-2.5.5 (2023-09-10)
+2.7.4 (2023-05-18)
 ------------------
-* Add `-Wunused-parameter` (`#1756 <https://github.com/ros-planning/moveit2/issues/1756>`_) (`#1757 <https://github.com/ros-planning/moveit2/issues/1757>`_)
-  (cherry picked from commit be474ec5ba6d0210379d009d518bdd631cc46ad9)
-  Co-authored-by: Chris Thrasher <chrisjthrasher@gmail.com>
-* Add `-Wunused-function` (`#1754 <https://github.com/ros-planning/moveit2/issues/1754>`_) (`#1755 <https://github.com/ros-planning/moveit2/issues/1755>`_)
-  (cherry picked from commit ed9c3317bc1335b66afb0b2e7478b95ddb5c4b33)
-  Co-authored-by: Chris Thrasher <chrisjthrasher@gmail.com>
-* Contributors: mergify[bot]
 
-2.5.4 (2022-11-04)
+2.7.3 (2023-04-24)
 ------------------
-* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_) (`#1555 <https://github.com/ros-planning/moveit2/issues/1555>`_)
+* Replace check for the ROS_DISTRO env variable with a check for the rclcpp version (`#2135 <https://github.com/ros-planning/moveit2/issues/2135>`_)
+* Replace Variable PROJECT_NAME in CMakeLists.txt with the actual name (`#2020 <https://github.com/ros-planning/moveit2/issues/2020>`_)
+* Contributors: Jafar, Shobuj Paul
+
+2.7.2 (2023-04-18)
+------------------
+* Switch from qos_event.hpp to event_handler.hpp (`#2111 <https://github.com/ros-planning/moveit2/issues/2111>`_)
+  * Switch from qos_event.hpp to event_handler.hpp
+  * moveit_common: Add a cmake interface library to keep humble support on main
+  * Include qos_event.hpp or event_handler.hpp depending on the ROS 2 version
+  * Fix ament_lint_cmake
+  * Fix clang-tidy
+  * PRIVATE linking in some cases
+  * Update moveit_common/cmake/moveit_package.cmake
+  Co-authored-by: Chris Thrasher <chrisjthrasher@gmail.com>
+  * Fix servo and cleanup excessive CMake variable usage
+  * Cleanup & make compiling
+  * Small variable naming and const cleanup
+  * Restore OpenCV linking
+  * Public/private linking fixup
+  * Revert "Restore OpenCV linking"
+  This reverts commit 57a9efa806e59223e35a1f7e998d7b52f930c263.
+  ---------
+  Co-authored-by: JafarAbdi <jafar.uruc@gmail.com>
+  Co-authored-by: Jafar <cafer.abdi@gmail.com>
+  Co-authored-by: AndyZe <andyz@utexas.edu>
+  Co-authored-by: Chris Thrasher <chrisjthrasher@gmail.com>
+* enabled -wformat (`#2065 <https://github.com/ros-planning/moveit2/issues/2065>`_)
   Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
-* Contributors: mergify[bot]
+* Contributors: Heramb Modugula, Sebastian Jahr
+
+2.7.1 (2023-03-23)
+------------------
+
+2.7.0 (2023-01-29)
+------------------
+* Fix BSD license in package.xml (`#1796 <https://github.com/ros-planning/moveit2/issues/1796>`_)
+  * fix BSD license in package.xml
+  * this must also be spdx compliant
+* Enable `-Wold-style-cast` (`#1770 <https://github.com/ros-planning/moveit2/issues/1770>`_)
+* Add `-Wunused-parameter` (`#1756 <https://github.com/ros-planning/moveit2/issues/1756>`_)
+* Add `-Wunused-function` (`#1754 <https://github.com/ros-planning/moveit2/issues/1754>`_)
+* Contributors: Chris Thrasher, Christian Henkel
+
+2.6.0 (2022-11-10)
+------------------
+* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_)
+* Contributors: Sebastian Jahr
 
 2.5.3 (2022-07-28)
 ------------------

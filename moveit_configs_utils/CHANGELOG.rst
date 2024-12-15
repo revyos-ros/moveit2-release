@@ -2,53 +2,90 @@
 Changelog for package moveit_configs_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.5.6 (2024-11-17)
-------------------
-* fix move_group_capabilities usage (`#3018 <https://github.com/ros-planning/moveit2/issues/3018>`_) (`#3033 <https://github.com/ros-planning/moveit2/issues/3033>`_)
-* Backport of `#2172 <https://github.com/ros-planning/moveit2/issues/2172>`_ and `#2684 <https://github.com/ros-planning/moveit2/issues/2684>`_ into Humble (`#2779 <https://github.com/ros-planning/moveit2/issues/2779>`_)
-* Use different packages for launch and config packages in generate_demo_launch (backport `#2647 <https://github.com/ros-planning/moveit2/issues/2647>`_) (`#2650 <https://github.com/ros-planning/moveit2/issues/2650>`_)
-* Pass along move_group_capabilities parameters (`#2587 <https://github.com/ros-planning/moveit2/issues/2587>`_) (`#2696 <https://github.com/ros-planning/moveit2/issues/2696>`_)
-* Use $DISPLAY rather than assuming :0 (`#2049 <https://github.com/ros-planning/moveit2/issues/2049>`_) (`#2365 <https://github.com/ros-planning/moveit2/issues/2365>`_)
-* Contributors: Michael Ferguson, Anthony Baker, Alex Navarro, Forrest Rogers-Marcovitz, Stephanie Eng, mergify[bot]
+2.12.0 (2024-11-29)
+-------------------
+* Added joint limits to rviz launch file. (`#3091 <https://github.com/ros-planning/moveit2/issues/3091>`_)
+* Switch to get for Dict lookup to prevent KeyError (`#3043 <https://github.com/ros-planning/moveit2/issues/3043>`_)
+* fix move_group_capabilities usage (`#3018 <https://github.com/ros-planning/moveit2/issues/3018>`_)
+* Contributors: Brendan Burns, Matthew Elwin, Michael Ferguson
 
-2.5.5 (2023-09-10)
+2.11.0 (2024-09-16)
+-------------------
+
+2.10.0 (2024-06-13)
+-------------------
+* Migrate ros-planning org to moveit (`#2847 <https://github.com/moveit/moveit2/issues/2847>`_)
+  * Rename github.com/ros-planning -> github.com/moveit
+  * Rename ros-planning.github.io -> moveit.github.io
+  * Rename ros-planning organization in docker and CI workflow files
+  - ghcr.io/ros-planning -> ghcr.io/moveit
+  - github.repository == 'moveit/*''
+* Fix xacro args loading issue (`#2684 <https://github.com/moveit/moveit2/issues/2684>`_)
+  * Fixed xacro args loading issue
+  * Formatting fixes with pre-commit action
+* Pass along move_group_capabilities parameters (`#2587 <https://github.com/moveit/moveit2/issues/2587>`_)
+  * Pass along move_group_capabilities parameters
+  * fix lint check
+  * Use move_group_capabilities as default launch argument
+* CMake format and lint in pre-commit (`#2683 <https://github.com/moveit/moveit2/issues/2683>`_)
+* Use different packages for launch and config packages in generate_demo_launch (`#2647 <https://github.com/moveit/moveit2/issues/2647>`_)
+* Contributors: Alex Navarro, Forrest Rogers-Marcovitz, Robert Haschke, Tyler Weaver
+
+2.9.0 (2024-01-09)
 ------------------
-* Do not add Pilz parameters to MoveIt Configs Utils if Pilz is not used (`#1583 <https://github.com/ros-planning/moveit2/issues/1583>`_) (`#2174 <https://github.com/ros-planning/moveit2/issues/2174>`_)
-  (cherry picked from commit 1c7fa52edeef08bf8eb1e9cc73c1b0835aaf17e7)
-  Co-authored-by: Stephanie Eng <stephanie-eng@users.noreply.github.com>
-* Update default planning configs to use AddTimeOptimalParameterization (`#2167 <https://github.com/ros-planning/moveit2/issues/2167>`_) (`#2170 <https://github.com/ros-planning/moveit2/issues/2170>`_)
-  (cherry picked from commit 895e9268bd5d9337bebdede07a7f68a99055a1df)
-  Co-authored-by: Anthony Baker <abake48@users.noreply.github.com>
-* Add xacro subsititution class and use it for loading urdf & srdf (backport `#1805 <https://github.com/ros-planning/moveit2/issues/1805>`_) (`#1937 <https://github.com/ros-planning/moveit2/issues/1937>`_)
-  * Add xacro subsititution class and use it for loading urdf & srdf (`#1805 <https://github.com/ros-planning/moveit2/issues/1805>`_)
-  * Add Xacro substitution type
-  * Use Xacro substitution for robot description and robot description semantic
-  * Install subsititution folder
-  * Default to load_xacro if there's no launch substitution specified in the mappings
-  (cherry picked from commit 4bc83c3c9e6bfa9efea8c431794a630fbf27dddc)
-  # Conflicts:
-  #	moveit_configs_utils/moveit_configs_utils/moveit_configs_builder.py
-  * Fix merge conflicts
+* Update ros2_control usage (`#2620 <https://github.com/ros-planning/moveit2/issues/2620>`_)
+  * Update ros2_control usage
+  * Update xacro file
+* [Planning Pipeline Refactoring] `#2 <https://github.com/ros-planning/moveit2/issues/2>`_ Enable chaining planners (`#2457 <https://github.com/ros-planning/moveit2/issues/2457>`_)
+  * Enable chaining multiple planners
+* [Planning Pipeline Refactoring] `#1 <https://github.com/ros-planning/moveit2/issues/1>`_ Simplify Adapter - Planner chain (`#2429 <https://github.com/ros-planning/moveit2/issues/2429>`_)
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Contributors: Sebastian Jahr
+
+2.8.0 (2023-09-10)
+------------------
+* Add stomp default config to moveit_config_utils (`#2238 <https://github.com/ros-planning/moveit2/issues/2238>`_)
+* Contributors: Sebastian Jahr
+
+2.7.4 (2023-05-18)
+------------------
+* Parse xacro args from .setup_assistant config in MoveIt Configs Builder (`#2172 <https://github.com/ros-planning/moveit2/issues/2172>`_)
+  Co-authored-by: Jafar <jafar.uruc@gmail.com>
+* Update default planning configs to use AddTimeOptimalParameterization (`#2167 <https://github.com/ros-planning/moveit2/issues/2167>`_)
+* Contributors: Anthony Baker
+
+2.7.3 (2023-04-24)
+------------------
+
+2.7.2 (2023-04-18)
+------------------
+* Update pre-commit (`#2094 <https://github.com/ros-planning/moveit2/issues/2094>`_)
+* Use $DISPLAY rather than assuming :0 (`#2049 <https://github.com/ros-planning/moveit2/issues/2049>`_)
+  * Use $DISPLAY rather than assuming :
+  * Double quotes
   ---------
-  Co-authored-by: Jafar <cafer.abdi@gmail.com>
-  Co-authored-by: Tyler Weaver <tyler@picknik.ai>
-* Add support for multiple MoveItConfigBuilder instaces (`#1807 <https://github.com/ros-planning/moveit2/issues/1807>`_) (`#1808 <https://github.com/ros-planning/moveit2/issues/1808>`_)
-  (cherry picked from commit 25d086cee9a7cf1c95a15ea12a27e5b7cbe50a1f)
-  Co-authored-by: Marco Magri <94347649+MarcoMagriDev@users.noreply.github.com>
-* Contributors: mergify[bot]
+  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
+* Contributors: Shobuj Paul, Stephanie Eng
 
-2.5.4 (2022-11-04)
+2.7.1 (2023-03-23)
 ------------------
-* Use MoveItConfigsBuilder in Pilz test launch file (`#1571 <https://github.com/ros-planning/moveit2/issues/1571>`_) (`#1662 <https://github.com/ros-planning/moveit2/issues/1662>`_)
-  (cherry picked from commit 5e880bacaad780f511ed99847050216a8b9905c1)
-  Co-authored-by: Abishalini Sivaraman <abi.gpuram@gmail.com>
-* Only require Cartesian limits if Pilz is used (`#1519 <https://github.com/ros-planning/moveit2/issues/1519>`_) (`#1653 <https://github.com/ros-planning/moveit2/issues/1653>`_)
-  (cherry picked from commit 40f7f091cc77a683f3c0a4af64f6a463dd0846f1)
-  Co-authored-by: Stephanie Eng <stephanie-eng@users.noreply.github.com>
-* Typo fix (`#1518 <https://github.com/ros-planning/moveit2/issues/1518>`_) (`#1650 <https://github.com/ros-planning/moveit2/issues/1650>`_)
-  (cherry picked from commit e89526de24d88fb05eb646a7925de69ba480bfe8)
-  Co-authored-by: Stephanie Eng <stephanie-eng@users.noreply.github.com>
-* Contributors: mergify[bot]
+
+2.7.0 (2023-01-29)
+------------------
+* feat: adds compatibility to robot_description from topic instead of parameter (`#1806 <https://github.com/ros-planning/moveit2/issues/1806>`_)
+* Add support for multiple MoveItConfigBuilder instaces (`#1807 <https://github.com/ros-planning/moveit2/issues/1807>`_)
+* Fix BSD license in package.xml (`#1796 <https://github.com/ros-planning/moveit2/issues/1796>`_)
+  * fix BSD license in package.xml
+  * this must also be spdx compliant
+* Contributors: Christian Henkel, Marco Magri
+
+2.6.0 (2022-11-10)
+------------------
+* Do not add Pilz parameters to MoveIt Configs Utils if Pilz is not used (`#1583 <https://github.com/ros-planning/moveit2/issues/1583>`_)
+* Use MoveItConfigsBuilder in Pilz test launch file (`#1571 <https://github.com/ros-planning/moveit2/issues/1571>`_)
+* Only require Cartesian limits if Pilz is used (`#1519 <https://github.com/ros-planning/moveit2/issues/1519>`_)
+* Typo fix (`#1518 <https://github.com/ros-planning/moveit2/issues/1518>`_)
+* Contributors: Abishalini Sivaraman, Stephanie Eng
 
 2.5.3 (2022-07-28)
 ------------------

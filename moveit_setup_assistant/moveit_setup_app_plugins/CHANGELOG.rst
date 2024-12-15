@@ -2,40 +2,79 @@
 Changelog for package moveit_setup_app_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.5.6 (2024-11-17)
+2.12.0 (2024-11-29)
+-------------------
+* Enhancement/use hpp for headers (`#3113 <https://github.com/ros-planning/moveit2/issues/3113>`_)
+* Contributors: Tom Noble
+
+2.11.0 (2024-09-16)
+-------------------
+
+2.10.0 (2024-06-13)
+-------------------
+* CMake format and lint in pre-commit (`#2683 <https://github.com/moveit/moveit2/issues/2683>`_)
+* Contributors: Tyler Weaver
+
+2.9.0 (2024-01-09)
+------------------
+* Node logging for the rest of MoveIt (`#2599 <https://github.com/ros-planning/moveit2/issues/2599>`_)
+* Update pre-commit and add to .codespell_words (`#2465 <https://github.com/ros-planning/moveit2/issues/2465>`_)
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Contributors: Sebastian Jahr, Shobuj Paul, Tyler Weaver
+
+2.8.0 (2023-09-10)
+------------------
+* Replaced boost::algorithm::join with fmt::join (`#2273 <https://github.com/ros-planning/moveit2/issues/2273>`_)
+  * Replaced boost::algorithm::join with fmt::join
+  * Made changes in CMakeLists.txt to accomodate fmt
+  * Updated package.xml files
+  * removed redundant boost dependencies
+  * Rename variables -> variable
+  ---------
+  Co-authored-by: Sebastian Castro <4603398+sea-bass@users.noreply.github.com>
+  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
+* Contributors: Shobuj Paul
+
+2.7.4 (2023-05-18)
 ------------------
 
-2.5.5 (2023-09-10)
+2.7.3 (2023-04-24)
 ------------------
-* add missing dependencies on config utils (backport `#1962 <https://github.com/ros-planning/moveit2/issues/1962>`_) (`#2206 <https://github.com/ros-planning/moveit2/issues/2206>`_)
+* Replace Variable PROJECT_NAME in CMakeLists.txt with the actual name (`#2020 <https://github.com/ros-planning/moveit2/issues/2020>`_)
+* Contributors: Shobuj Paul
+
+2.7.2 (2023-04-18)
+------------------
+
+2.7.1 (2023-03-23)
+------------------
+* add missing dependencies on config utils (`#1962 <https://github.com/ros-planning/moveit2/issues/1962>`_)
   when installing ros-humble-moveit-setup-assistant from debs,
   the package cannot currently run due to this missing depend
-  (cherry picked from commit cc635471aadfb9446398ece319ae31c6b72bec86)
-  Co-authored-by: Michael Ferguson <mfergs7@gmail.com>
-* Fix clang compiler warnings (backport of `#1712 <https://github.com/ros-planning/moveit2/issues/1712>`_) (`#1896 <https://github.com/ros-planning/moveit2/issues/1896>`_)
-  - Fix warning: definition of implicit copy assignment operator is deprecated
-  - Fix warning: expression with side effects will be evaluated
-  - Fix warning: passing by value
-  - Enable -Werror
-  - Fix -Wdelete-non-abstract-non-virtual-dtor
-  - Fix more clang warnings
-  - Modernize gtest: TYPED_TEST_CASE -> TYPED_TEST_SUITE
-  - Fix GoogleTestVerification.UninstantiatedTypeParameterizedTestSuite
-  - Add default copy/move constructors/assignment operators
-  As a user-declared destructor deletes any implicitly-defined move constructor/assignment operator,
-  we need to declared them manually. This in turn requires to declare the copy constructor/assignment as well.
-  - Explicitly declare overrides
-  - Add default constructors as they are not implicitly declared anymore
-  - Declare selected classes as final
-  - Add noexcept specifier to constructors
-  - Fixup gmock/gtest warnings
-* Contributors: Robert Haschke, mergify[bot]
+* Contributors: Michael Ferguson
 
-2.5.4 (2022-11-04)
+2.7.0 (2023-01-29)
 ------------------
-* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_) (`#1555 <https://github.com/ros-planning/moveit2/issues/1555>`_)
-  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
-* Contributors: mergify[bot]
+* Merge PR `#1712 <https://github.com/ros-planning/moveit2/issues/1712>`_: fix clang compiler warnings + stricter CI
+* Declare selected classes as final
+* Fix BSD license in package.xml (`#1796 <https://github.com/ros-planning/moveit2/issues/1796>`_)
+  * fix BSD license in package.xml
+  * this must also be spdx compliant
+* Minimize use of `this->` (`#1784 <https://github.com/ros-planning/moveit2/issues/1784>`_)
+  It's often unnecessary. MoveIt already avoids this in most cases
+  so this PR better cements that existing pattern.
+* Contributors: Chris Thrasher, Christian Henkel, Robert Haschke
+
+2.6.0 (2022-11-10)
+------------------
+* Merge PR `#1553 <https://github.com/ros-planning/moveit2/issues/1553>`_: Improve cmake files
+* Cleanup cmake files
+  - Replace ament_export_libraries() -> ament_export_targets(HAS_LIBRARY_TARGET)
+  - Replace ament_export_include_directories() -> INCLUDES DESTINATION include
+  See https://docs.ros.org/en/foxy/How-To-Guides/Ament-CMake-Documentation.html#building-a-library
+* Use standard exported targets: export\_${PROJECT_NAME} -> ${PROJECT_NAME}Targets
+* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_)
+* Contributors: Robert Haschke, Sebastian Jahr
 
 2.5.3 (2022-07-28)
 ------------------

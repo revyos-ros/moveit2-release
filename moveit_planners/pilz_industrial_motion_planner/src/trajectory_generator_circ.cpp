@@ -32,8 +32,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <pilz_industrial_motion_planner/trajectory_generator_circ.h>
-#include <pilz_industrial_motion_planner/path_circle_generator.h>
+#include <pilz_industrial_motion_planner/trajectory_generator_circ.hpp>
+#include <pilz_industrial_motion_planner/path_circle_generator.hpp>
 
 #include <cassert>
 #include <sstream>
@@ -42,27 +42,29 @@
 #include <kdl/trajectory_segment.hpp>
 #include <kdl/utilities/error.h>
 #include <kdl/utilities/utility.h>
-#include <moveit/robot_state/conversions.h>
+#include <moveit/robot_state/conversions.hpp>
 #include <tf2_eigen_kdl/tf2_eigen_kdl.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <moveit/utils/logger.hpp>
 
 namespace pilz_industrial_motion_planner
 {
-static const rclcpp::Logger LOGGER =
-    rclcpp::get_logger("moveit.pilz_industrial_motion_planner.trajectory_generator_circ");
+namespace
+{
+rclcpp::Logger getLogger()
+{
+  return moveit::getLogger("moveit.planners.pilz.trajectory_generator.circ");
+}
+}  // namespace
 TrajectoryGeneratorCIRC::TrajectoryGeneratorCIRC(const moveit::core::RobotModelConstPtr& robot_model,
                                                  const LimitsContainer& planner_limits,
                                                  const std::string& /*group_name*/)
   : TrajectoryGenerator::TrajectoryGenerator(robot_model, planner_limits)
 {
-  if (!planner_limits_.hasFullCartesianLimits())
-  {
-    throw TrajectoryGeneratorInvalidLimitsException(
-        "Cartesian limits are not fully set for CIRC trajectory generator.");
-  }
+  planner_limits_.printCartesianLimits();
 }
 
 void TrajectoryGeneratorCIRC::cmdSpecificRequestValidation(const planning_interface::MotionPlanRequest& req) const
@@ -92,7 +94,7 @@ void TrajectoryGeneratorCIRC::extractMotionPlanInfo(const planning_scene::Planni
                                                     const planning_interface::MotionPlanRequest& req,
                                                     TrajectoryGenerator::MotionPlanInfo& info) const
 {
-  RCLCPP_DEBUG(LOGGER, "Extract necessary information from motion plan request.");
+  RCLCPP_DEBUG(getLogger(), "Extract necessary information from motion plan request.");
 
   info.group_name = req.group_name;
   moveit::core::RobotState robot_state = scene->getCurrentState();
@@ -132,8 +134,8 @@ void TrajectoryGeneratorCIRC::extractMotionPlanInfo(const planning_scene::Planni
     if (req.goal_constraints.front().position_constraints.front().header.frame_id.empty() ||
         req.goal_constraints.front().orientation_constraints.front().header.frame_id.empty())
     {
-      RCLCPP_WARN(LOGGER, "Frame id is not set in position/orientation constraints of "
-                          "goal. Use model frame as default");
+      RCLCPP_WARN(getLogger(), "Frame id is not set in position/orientation constraints of "
+                               "goal. Use model frame as default");
       frame_id = robot_model_->getModelFrame();
     }
     else
@@ -167,8 +169,8 @@ void TrajectoryGeneratorCIRC::extractMotionPlanInfo(const planning_scene::Planni
   info.circ_path_point.first = req.path_constraints.name;
   if (req.path_constraints.position_constraints.front().header.frame_id.empty())
   {
-    RCLCPP_WARN(LOGGER, "Frame id is not set in position constraints of "
-                        "path. Use model frame as default");
+    RCLCPP_WARN(getLogger(), "Frame id is not set in position constraints of "
+                             "path. Use model frame as default");
     center_point_frame_id = robot_model_->getModelFrame();
   }
   else
@@ -198,7 +200,7 @@ void TrajectoryGeneratorCIRC::extractMotionPlanInfo(const planning_scene::Planni
 
 void TrajectoryGeneratorCIRC::plan(const planning_scene::PlanningSceneConstPtr& scene,
                                    const planning_interface::MotionPlanRequest& req, const MotionPlanInfo& plan_info,
-                                   const double& sampling_time, trajectory_msgs::msg::JointTrajectory& joint_trajectory)
+                                   double sampling_time, trajectory_msgs::msg::JointTrajectory& joint_trajectory)
 {
   std::unique_ptr<KDL::Path> cart_path(setPathCIRC(plan_info));
   std::unique_ptr<KDL::VelocityProfile> vel_profile(
@@ -224,7 +226,7 @@ void TrajectoryGeneratorCIRC::plan(const planning_scene::PlanningSceneConstPtr& 
 
 std::unique_ptr<KDL::Path> TrajectoryGeneratorCIRC::setPathCIRC(const MotionPlanInfo& info) const
 {
-  RCLCPP_DEBUG(LOGGER, "Set Cartesian path for CIRC command.");
+  RCLCPP_DEBUG(getLogger(), "Set Cartesian path for CIRC command.");
 
   KDL::Frame start_pose, goal_pose;
   tf2::transformEigenToKDL(info.start_pose, start_pose);
@@ -239,8 +241,8 @@ std::unique_ptr<KDL::Path> TrajectoryGeneratorCIRC::setPathCIRC(const MotionPlan
   // The KDL::Path implementation chooses the motion with the longer duration
   // (translation vs. rotation)
   // and uses eqradius as scaling factor between the distances.
-  double eqradius = planner_limits_.getCartesianLimits().getMaxTranslationalVelocity() /
-                    planner_limits_.getCartesianLimits().getMaxRotationalVelocity();
+  double eqradius =
+      planner_limits_.getCartesianLimits().max_trans_vel / planner_limits_.getCartesianLimits().max_rot_vel;
 
   try
   {

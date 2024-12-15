@@ -36,16 +36,17 @@
 
 /* Author: Ioan Sucan, Adam Leeper */
 
-#include <moveit/robot_interaction/interaction_handler.h>
-#include <moveit/robot_interaction/robot_interaction.h>
-#include <moveit/robot_interaction/interactive_marker_helpers.h>
-#include <moveit/robot_interaction/kinematic_options_map.h>
-#include <moveit/transforms/transforms.h>
+#include <moveit/robot_interaction/interaction_handler.hpp>
+#include <moveit/robot_interaction/robot_interaction.hpp>
+#include <moveit/robot_interaction/interactive_marker_helpers.hpp>
+#include <moveit/robot_interaction/kinematic_options_map.hpp>
+#include <moveit/transforms/transforms.hpp>
 #include <interactive_markers/interactive_marker_server.hpp>
 #include <interactive_markers/menu_handler.hpp>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <moveit/utils/logger.hpp>
 #include <algorithm>
 #include <string>
 
@@ -54,7 +55,6 @@
 
 namespace robot_interaction
 {
-static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit_ros_robot_interaction.interaction_handler");
 
 InteractionHandler::InteractionHandler(const RobotInteractionPtr& robot_interaction, const std::string& name,
                                        const moveit::core::RobotState& initial_robot_state,
@@ -292,9 +292,11 @@ void InteractionHandler::updateStateGeneric(
   bool ok = g.process_feedback(state, feedback);
   bool error_state_changed = setErrorState(g.marker_name_suffix, !ok);
   if (update_callback_)
-    callback = [cb = this->update_callback_, error_state_changed](robot_interaction::InteractionHandler* handler) {
+  {
+    callback = [cb = update_callback_, error_state_changed](robot_interaction::InteractionHandler* handler) {
       cb(handler, error_state_changed);
     };
+  }
 }
 
 // MUST hold state_lock_ when calling this!
@@ -308,9 +310,11 @@ void InteractionHandler::updateStateEndEffector(moveit::core::RobotState& state,
   bool ok = kinematic_options.setStateFromIK(state, eef.parent_group, eef.parent_link, pose);
   bool error_state_changed = setErrorState(eef.parent_group, !ok);
   if (update_callback_)
-    callback = [cb = this->update_callback_, error_state_changed](robot_interaction::InteractionHandler* handler) {
+  {
+    callback = [cb = update_callback_, error_state_changed](robot_interaction::InteractionHandler* handler) {
       cb(handler, error_state_changed);
     };
+  }
 }
 
 // MUST hold state_lock_ when calling this!
@@ -328,7 +332,7 @@ void InteractionHandler::updateStateJoint(moveit::core::RobotState& state, const
   state.update();
 
   if (update_callback_)
-    callback = [cb = this->update_callback_](robot_interaction::InteractionHandler* handler) { cb(handler, false); };
+    callback = [cb = update_callback_](robot_interaction::InteractionHandler* handler) { cb(handler, false); };
 }
 
 bool InteractionHandler::inError(const EndEffectorInteraction& eef) const
@@ -362,9 +366,13 @@ bool InteractionHandler::setErrorState(const std::string& name, bool new_error_s
     return false;
 
   if (new_error_state)
+  {
     error_state_.insert(name);
+  }
   else
+  {
     error_state_.erase(name);
+  }
 
   return true;
 }
@@ -384,6 +392,7 @@ bool InteractionHandler::transformFeedbackPose(
   if (feedback->header.frame_id != planning_frame_)
   {
     if (tf_buffer_)
+    {
       try
       {
         geometry_msgs::msg::PoseStamped spose(tpose);
@@ -397,13 +406,16 @@ bool InteractionHandler::transformFeedbackPose(
       }
       catch (tf2::TransformException& e)
       {
-        RCLCPP_ERROR(LOGGER, "Error transforming from frame '%s' to frame '%s'", tpose.header.frame_id.c_str(),
+        RCLCPP_ERROR(moveit::getLogger("moveit.ros.interaction_handler"),
+                     "Error transforming from frame '%s' to frame '%s'", tpose.header.frame_id.c_str(),
                      planning_frame_.c_str());
         return false;
       }
+    }
     else
     {
-      RCLCPP_ERROR(LOGGER, "Cannot transform from frame '%s' to frame '%s' (no TF instance provided)",
+      RCLCPP_ERROR(moveit::getLogger("moveit.ros.interaction_handler"),
+                   "Cannot transform from frame '%s' to frame '%s' (no TF instance provided)",
                    tpose.header.frame_id.c_str(), planning_frame_.c_str());
       return false;
     }

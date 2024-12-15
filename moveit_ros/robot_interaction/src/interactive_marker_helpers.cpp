@@ -35,7 +35,7 @@
 /* Author: Ioan Sucan, Acorn Pooley, Adam Leeper */
 
 #include <math.h>
-#include <moveit/robot_interaction/interactive_marker_helpers.h>
+#include <moveit/robot_interaction/interactive_marker_helpers.hpp>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
@@ -236,11 +236,17 @@ void addViewPlaneControl(visualization_msgs::msg::InteractiveMarker& int_marker,
   visualization_msgs::msg::InteractiveMarkerControl control;
   control.orientation_mode = visualization_msgs::msg::InteractiveMarkerControl::VIEW_FACING;
   if (position && orientation)
+  {
     control.interaction_mode = visualization_msgs::msg::InteractiveMarkerControl::MOVE_ROTATE_3D;
+  }
   else if (orientation)
+  {
     control.interaction_mode = visualization_msgs::msg::InteractiveMarkerControl::ROTATE_3D;
+  }
   else
+  {
     control.interaction_mode = visualization_msgs::msg::InteractiveMarkerControl::MOVE_3D;
+  }
   control.independent_marker_orientation = true;
   control.name = "move";
 

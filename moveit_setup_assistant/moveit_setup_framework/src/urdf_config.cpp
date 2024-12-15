@@ -34,8 +34,8 @@
 
 #include <moveit_setup_framework/data/urdf_config.hpp>
 #include <moveit_setup_framework/utilities.hpp>
-#include <moveit/rdf_loader/rdf_loader.h>
-#include <boost/algorithm/string/join.hpp>
+#include <moveit/rdf_loader/rdf_loader.hpp>
+#include <fmt/format.h>
 
 namespace moveit_setup
 {
@@ -85,30 +85,34 @@ void URDFConfig::loadFromPath(const std::filesystem::path& urdf_file_path, const
 {
   urdf_path_ = urdf_file_path;
   xacro_args_vec_ = xacro_args;
-  xacro_args_ = boost::algorithm::join(xacro_args_vec_, " ");
+  xacro_args_ = fmt::format("{}", fmt::join(xacro_args_vec_, " "));
   setPackageName();
   load();
 }
 
 void URDFConfig::setPackageName()
 {
-  bool package_found = extractPackageNameFromPath(urdf_path_, urdf_pkg_name_, urdf_pkg_relative_path_);
-  if (!package_found)
-  {
-    urdf_pkg_name_ = "";
-    urdf_pkg_relative_path_ = urdf_path_;  // just the absolute path
-  }
-  else
-  {
-    // Check that ROS can find the package
-    const std::filesystem::path robot_desc_pkg_path = getSharePath(urdf_pkg_name_);
+  // Reset to defaults: no package name, relative path is set to absolute path
+  urdf_pkg_name_ = "";
+  urdf_pkg_relative_path_ = urdf_path_;
 
-    if (robot_desc_pkg_path.empty())
+  std::string pkg_name;
+  std::filesystem::path relative_path;
+  if (extractPackageNameFromPath(urdf_path_, pkg_name, relative_path))
+  {
+    // Check that ROS can find the package, update members accordingly
+    const std::filesystem::path robot_desc_pkg_path = getSharePath(pkg_name);
+    if (!robot_desc_pkg_path.empty())
+    {
+      urdf_pkg_name_ = pkg_name;
+      urdf_pkg_relative_path_ = relative_path;
+    }
+    else
     {
       RCLCPP_WARN(*logger_,
-                  "Package Not Found In ROS Workspace. ROS was unable to find the package name '%s'"
-                  " within the ROS workspace. This may cause issues later.",
-                  urdf_pkg_name_.c_str());
+                  "Found package name '%s' but failed to resolve ROS package path."
+                  "Attempting to load the URDF from absolute path, instead.",
+                  pkg_name.c_str());
     }
   }
 }
@@ -116,11 +120,17 @@ void URDFConfig::setPackageName()
 void URDFConfig::loadFromPackage(const std::filesystem::path& package_name, const std::filesystem::path& relative_path,
                                  const std::string& xacro_args)
 {
+  const std::filesystem::path package_path = getSharePath(package_name);
+  if (package_path.empty())
+  {
+    throw std::runtime_error("URDF/COLLADA package not found: ''" + package_name.string());
+  }
+
   urdf_pkg_name_ = package_name;
   urdf_pkg_relative_path_ = relative_path;
   xacro_args_ = xacro_args;
 
-  urdf_path_ = getSharePath(urdf_pkg_name_) / relative_path;
+  urdf_path_ = package_path / relative_path;
   load();
 }
 

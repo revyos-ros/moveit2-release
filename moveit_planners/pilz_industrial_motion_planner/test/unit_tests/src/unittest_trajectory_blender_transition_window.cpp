@@ -36,23 +36,23 @@
 
 #include <gtest/gtest.h>
 
-#include <moveit/kinematic_constraints/utils.h>
-#include <moveit/robot_model/robot_model.h>
-#include <moveit/robot_model_loader/robot_model_loader.h>
-#include <moveit/robot_state/conversions.h>
+#include <moveit/kinematic_constraints/utils.hpp>
+#include <moveit/robot_model/robot_model.hpp>
+#include <moveit/robot_model_loader/robot_model_loader.hpp>
+#include <moveit/robot_state/conversions.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
-#include <pilz_industrial_motion_planner_testutils/command_types_typedef.h>
-#include <pilz_industrial_motion_planner_testutils/sequence.h>
-#include <pilz_industrial_motion_planner_testutils/xml_testdata_loader.h>
+#include <pilz_industrial_motion_planner_testutils/command_types_typedef.hpp>
+#include <pilz_industrial_motion_planner_testutils/sequence.hpp>
+#include <pilz_industrial_motion_planner_testutils/xml_testdata_loader.hpp>
 
-#include <pilz_industrial_motion_planner/joint_limits_aggregator.h>
-#include <pilz_industrial_motion_planner/trajectory_blend_request.h>
-#include <pilz_industrial_motion_planner/trajectory_blend_response.h>
-#include <pilz_industrial_motion_planner/trajectory_blender_transition_window.h>
-#include <pilz_industrial_motion_planner/trajectory_generator_lin.h>
-#include "test_utils.h"
+#include <pilz_industrial_motion_planner/joint_limits_aggregator.hpp>
+#include <pilz_industrial_motion_planner/trajectory_blend_request.hpp>
+#include <pilz_industrial_motion_planner/trajectory_blend_response.hpp>
+#include <pilz_industrial_motion_planner/trajectory_blender_transition_window.hpp>
+#include <pilz_industrial_motion_planner/trajectory_generator_lin.hpp>
+#include "test_utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -108,11 +108,13 @@ protected:
     pilz_industrial_motion_planner::JointLimitsContainer joint_limits =
         pilz_industrial_motion_planner::JointLimitsAggregator::getAggregatedLimits(
             node_, PARAM_NAMESPACE_LIMITS, robot_model_->getActiveJointModels());
-    CartesianLimit cart_limits;
-    cart_limits.setMaxRotationalVelocity(1 * M_PI);
-    cart_limits.setMaxTranslationalAcceleration(2);
-    cart_limits.setMaxTranslationalDeceleration(2);
-    cart_limits.setMaxTranslationalVelocity(1);
+
+    cartesian_limits::Params cart_limits;
+    cart_limits.max_trans_vel = 1 * M_PI;
+    cart_limits.max_trans_acc = 2;
+    cart_limits.max_trans_dec = 2;
+    cart_limits.max_rot_vel = 1;
+
     planner_limits_.setJointLimits(joint_limits);
     planner_limits_.setCartesianLimits(cart_limits);
 
@@ -141,11 +143,12 @@ protected:
       // for first)
       if (index > 0)
       {
-        moveit::core::robotStateToRobotStateMsg(responses[index - 1].trajectory_->getLastWayPoint(), req.start_state);
+        moveit::core::robotStateToRobotStateMsg(responses[index - 1].trajectory->getLastWayPoint(), req.start_state);
       }
       // generate trajectory
       planning_interface::MotionPlanResponse resp;
-      if (!lin_generator_->generate(planning_scene_, req, resp, sampling_time_))
+      lin_generator_->generate(planning_scene_, req, resp, sampling_time_);
+      if (resp.error_code.val != moveit_msgs::msg::MoveItErrorCodes::SUCCESS)
       {
         std::runtime_error("Failed to generate trajectory.");
       }
@@ -196,8 +199,8 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testInvalidGroupName)
 
   blend_req.group_name = "invalid_group_name";
   blend_req.link_name = target_link_;
-  blend_req.first_trajectory = res.at(0).trajectory_;
-  blend_req.second_trajectory = res.at(1).trajectory_;
+  blend_req.first_trajectory = res.at(0).trajectory;
+  blend_req.second_trajectory = res.at(1).trajectory;
 
   blend_req.blend_radius = seq.getBlendRadius(0);
   EXPECT_FALSE(blender_->blend(planning_scene_, blend_req, blend_res));
@@ -225,8 +228,8 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testInvalidTargetLink)
 
   blend_req.group_name = planning_group_;
   blend_req.link_name = "invalid_target_link";
-  blend_req.first_trajectory = res.at(0).trajectory_;
-  blend_req.second_trajectory = res.at(1).trajectory_;
+  blend_req.first_trajectory = res.at(0).trajectory;
+  blend_req.second_trajectory = res.at(1).trajectory;
 
   blend_req.blend_radius = seq.getBlendRadius(0);
   EXPECT_FALSE(blender_->blend(planning_scene_, blend_req, blend_res));
@@ -255,8 +258,8 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testNegativeRadius)
 
   blend_req.group_name = planning_group_;
   blend_req.link_name = target_link_;
-  blend_req.first_trajectory = res.at(0).trajectory_;
-  blend_req.second_trajectory = res.at(1).trajectory_;
+  blend_req.first_trajectory = res.at(0).trajectory;
+  blend_req.second_trajectory = res.at(1).trajectory;
 
   blend_req.blend_radius = -0.1;
   EXPECT_FALSE(blender_->blend(planning_scene_, blend_req, blend_res));
@@ -284,8 +287,8 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testZeroRadius)
 
   blend_req.group_name = planning_group_;
   blend_req.link_name = target_link_;
-  blend_req.first_trajectory = res.at(0).trajectory_;
-  blend_req.second_trajectory = res.at(1).trajectory_;
+  blend_req.first_trajectory = res.at(0).trajectory;
+  blend_req.second_trajectory = res.at(1).trajectory;
 
   blend_req.blend_radius = 0.;
   EXPECT_FALSE(blender_->blend(planning_scene_, blend_req, blend_res));
@@ -318,12 +321,13 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testDifferentSamplingTimes)
     // for first)
     if (index > 0)
     {
-      moveit::core::robotStateToRobotStateMsg(responses[index - 1].trajectory_->getLastWayPoint(), req.start_state);
+      moveit::core::robotStateToRobotStateMsg(responses[index - 1].trajectory->getLastWayPoint(), req.start_state);
       sampling_time_ *= 2;
     }
     // generate trajectory
     planning_interface::MotionPlanResponse resp;
-    if (!lin_generator_->generate(planning_scene_, req, resp, sampling_time_))
+    lin_generator_->generate(planning_scene_, req, resp, sampling_time_);
+    if (resp.error_code.val != moveit_msgs::msg::MoveItErrorCodes::SUCCESS)
     {
       std::runtime_error("Failed to generate trajectory.");
     }
@@ -335,8 +339,8 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testDifferentSamplingTimes)
 
   blend_req.group_name = planning_group_;
   blend_req.link_name = target_link_;
-  blend_req.first_trajectory = responses[0].trajectory_;
-  blend_req.second_trajectory = responses[1].trajectory_;
+  blend_req.first_trajectory = responses[0].trajectory;
+  blend_req.second_trajectory = responses[1].trajectory;
   blend_req.blend_radius = seq.getBlendRadius(0);
   EXPECT_FALSE(blender_->blend(planning_scene_, blend_req, blend_res));
 }
@@ -362,16 +366,16 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testNonUniformSamplingTime)
   std::vector<planning_interface::MotionPlanResponse> res{ generateLinTrajs(seq, 2) };
 
   // Modify first time interval
-  EXPECT_GT(res[0].trajectory_->getWayPointCount(), 2u);
-  res[0].trajectory_->setWayPointDurationFromPrevious(1, 2 * sampling_time_);
+  EXPECT_GT(res[0].trajectory->getWayPointCount(), 2u);
+  res[0].trajectory->setWayPointDurationFromPrevious(1, 2 * sampling_time_);
 
   pilz_industrial_motion_planner::TrajectoryBlendRequest blend_req;
   pilz_industrial_motion_planner::TrajectoryBlendResponse blend_res;
 
   blend_req.group_name = planning_group_;
   blend_req.link_name = target_link_;
-  blend_req.first_trajectory = res.at(0).trajectory_;
-  blend_req.second_trajectory = res.at(1).trajectory_;
+  blend_req.first_trajectory = res.at(0).trajectory;
+  blend_req.second_trajectory = res.at(1).trajectory;
   blend_req.blend_radius = seq.getBlendRadius(0);
   EXPECT_FALSE(blender_->blend(planning_scene_, blend_req, blend_res));
 }
@@ -400,10 +404,10 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testNotIntersectingTrajectories)
 
   blend_req.group_name = planning_group_;
   blend_req.link_name = target_link_;
-  blend_req.first_trajectory = res.at(0).trajectory_;
+  blend_req.first_trajectory = res.at(0).trajectory;
   // replace the second trajectory to make the two trajectories timely not
   // intersect
-  blend_req.second_trajectory = res.at(0).trajectory_;
+  blend_req.second_trajectory = res.at(0).trajectory;
   blend_req.blend_radius = seq.getBlendRadius(0);
   EXPECT_FALSE(blender_->blend(planning_scene_, blend_req, blend_res));
 }
@@ -433,8 +437,8 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testNonStationaryPoint)
   blend_req.link_name = target_link_;
   blend_req.blend_radius = seq.getBlendRadius(0);
 
-  blend_req.first_trajectory = res.at(0).trajectory_;
-  blend_req.second_trajectory = res.at(1).trajectory_;
+  blend_req.first_trajectory = res.at(0).trajectory;
+  blend_req.second_trajectory = res.at(1).trajectory;
 
   // Modify last waypoint of first trajectory and first point of second
   // trajectory
@@ -464,8 +468,8 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testTraj1InsideBlendRadius)
   std::vector<planning_interface::MotionPlanResponse> res{ generateLinTrajs(seq, 2) };
 
   double lin1_distance;
-  lin1_distance = (res[0].trajectory_->getFirstWayPoint().getFrameTransform(target_link_).translation() -
-                   res[0].trajectory_->getLastWayPoint().getFrameTransform(target_link_).translation())
+  lin1_distance = (res[0].trajectory->getFirstWayPoint().getFrameTransform(target_link_).translation() -
+                   res[0].trajectory->getLastWayPoint().getFrameTransform(target_link_).translation())
                       .norm();
 
   pilz_industrial_motion_planner::TrajectoryBlendRequest blend_req;
@@ -475,8 +479,8 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testTraj1InsideBlendRadius)
   blend_req.link_name = target_link_;
   blend_req.blend_radius = 1.1 * lin1_distance;
 
-  blend_req.first_trajectory = res.at(0).trajectory_;
-  blend_req.second_trajectory = res.at(1).trajectory_;
+  blend_req.first_trajectory = res.at(0).trajectory;
+  blend_req.second_trajectory = res.at(1).trajectory;
 
   EXPECT_FALSE(blender_->blend(planning_scene_, blend_req, blend_res));
 }
@@ -507,8 +511,8 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testTraj2InsideBlendRadius)
   blend_req.link_name = target_link_;
   blend_req.blend_radius = seq.getBlendRadius(0);
 
-  blend_req.first_trajectory = res.at(0).trajectory_;
-  blend_req.second_trajectory = res.at(1).trajectory_;
+  blend_req.first_trajectory = res.at(0).trajectory;
+  blend_req.second_trajectory = res.at(1).trajectory;
 
   EXPECT_FALSE(blender_->blend(planning_scene_, blend_req, blend_res));
 }
@@ -544,8 +548,8 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testLinLinBlending)
   blend_req.link_name = target_link_;
   blend_req.blend_radius = seq.getBlendRadius(0);
 
-  blend_req.first_trajectory = res.at(0).trajectory_;
-  blend_req.second_trajectory = res.at(1).trajectory_;
+  blend_req.first_trajectory = res.at(0).trajectory;
+  blend_req.second_trajectory = res.at(1).trajectory;
 
   EXPECT_TRUE(blender_->blend(planning_scene_, blend_req, blend_res));
 
@@ -587,8 +591,8 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testOverlappingBlendTrajectories)
 
   blend_req.group_name = planning_group_;
   blend_req.link_name = target_link_;
-  blend_req.first_trajectory = res.at(0).trajectory_;
-  blend_req.second_trajectory = res.at(1).trajectory_;
+  blend_req.first_trajectory = res.at(0).trajectory;
+  blend_req.second_trajectory = res.at(1).trajectory;
   blend_req.blend_radius = seq.getBlendRadius(0);
   EXPECT_TRUE(blender_->blend(planning_scene_, blend_req, blend_res));
 
@@ -634,7 +638,7 @@ TEST_F(TrajectoryBlenderTransitionWindowTest, testNonLinearBlending)
 
   for (size_t traj_index = 0; traj_index < 2; ++traj_index)
   {
-    auto lin_traj{ res.at(traj_index).trajectory_ };
+    auto lin_traj{ res.at(traj_index).trajectory };
 
     CartesianTrajectory cart_traj;
     trajectory_msgs::msg::JointTrajectory joint_traj;

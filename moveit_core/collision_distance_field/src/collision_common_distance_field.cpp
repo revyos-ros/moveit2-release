@@ -34,7 +34,7 @@
 
 /* Author: E. Gil Jones */
 
-#include <moveit/collision_distance_field/collision_common_distance_field.h>
+#include <moveit/collision_distance_field/collision_common_distance_field.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
@@ -42,11 +42,18 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <memory>
 #include <mutex>
+#include <moveit/utils/logger.hpp>
 
 namespace collision_detection
 {
-static const rclcpp::Logger LOGGER =
-    rclcpp::get_logger("moveit_collision_distance_field.collision_common_distance_field");
+namespace
+{
+rclcpp::Logger getLogger()
+{
+  return moveit::getLogger("moveit.core.collision_common_distance_field");
+}
+}  // namespace
+
 struct BodyDecompositionCache
 {
   using Comperator = std::owner_less<shapes::ShapeConstWeakPtr>;
@@ -55,7 +62,7 @@ struct BodyDecompositionCache
   BodyDecompositionCache() : clean_count_(0)
   {
   }
-  static const unsigned int MAX_CLEAN_COUNT = 100;
+  static const unsigned int MAX_CLEAN_COUNT{ 100 };
   Map map_;
   unsigned int clean_count_;
   std::mutex lock_;
@@ -109,7 +116,7 @@ PosedBodySphereDecompositionVectorPtr getAttachedBodySphereDecomposition(const m
                                                                          double resolution)
 {
   PosedBodySphereDecompositionVectorPtr ret = std::make_shared<PosedBodySphereDecompositionVector>();
-  for (unsigned int i = 0; i < att->getShapes().size(); ++i)
+  for (unsigned int i{ 0 }; i < att->getShapes().size(); ++i)
   {
     PosedBodySphereDecompositionPtr pbd(
         new PosedBodySphereDecomposition(getBodyDecompositionCacheEntry(att->getShapes()[i], resolution)));
@@ -123,7 +130,7 @@ PosedBodyPointDecompositionVectorPtr getAttachedBodyPointDecomposition(const mov
                                                                        double resolution)
 {
   PosedBodyPointDecompositionVectorPtr ret = std::make_shared<PosedBodyPointDecompositionVector>();
-  for (unsigned int i = 0; i < att->getShapes().size(); ++i)
+  for (unsigned int i{ 0 }; i < att->getShapes().size(); ++i)
   {
     PosedBodyPointDecompositionPtr pbd =
         std::make_shared<PosedBodyPointDecomposition>(getBodyDecompositionCacheEntry(att->getShapes()[i], resolution));
@@ -169,8 +176,8 @@ void getBodySphereVisualizationMarkers(const GroupStateRepresentationConstPtr& g
   sphere_marker.lifetime = rclcpp::Duration(0, 0);
 
   const moveit::core::RobotState& state = *(gsr->dfce_->state_);
-  unsigned int id = 0;
-  for (unsigned int i = 0; i < gsr->dfce_->link_names_.size(); ++i)
+  unsigned int id{ 0 };
+  for (unsigned int i{ 0 }; i < gsr->dfce_->link_names_.size(); ++i)
   {
     const moveit::core::LinkModel* ls = state.getLinkModel(gsr->dfce_->link_names_[i]);
     if (gsr->dfce_->link_has_geometry_[i])
@@ -194,12 +201,12 @@ void getBodySphereVisualizationMarkers(const GroupStateRepresentationConstPtr& g
 
   sphere_marker.ns = attached_ns;
   sphere_marker.color = attached_color;
-  for (unsigned int i = 0; i < gsr->dfce_->attached_body_names_.size(); ++i)
+  for (unsigned int i{ 0 }; i < gsr->dfce_->attached_body_names_.size(); ++i)
   {
     const moveit::core::AttachedBody* att = state.getAttachedBody(gsr->dfce_->attached_body_names_[i]);
     if (!att)
     {
-      RCLCPP_WARN(LOGGER,
+      RCLCPP_WARN(getLogger(),
                   "Attached body '%s' was not found, skipping sphere "
                   "decomposition visualization",
                   gsr->dfce_->attached_body_names_[i].c_str());
@@ -208,11 +215,11 @@ void getBodySphereVisualizationMarkers(const GroupStateRepresentationConstPtr& g
 
     if (gsr->attached_body_decompositions_[i]->getSize() != att->getShapes().size())
     {
-      RCLCPP_WARN(LOGGER, "Attached body size discrepancy");
+      RCLCPP_WARN(getLogger(), "Attached body size discrepancy");
       continue;
     }
 
-    for (unsigned int j = 0; j < att->getShapes().size(); ++j)
+    for (unsigned int j{ 0 }; j < att->getShapes().size(); ++j)
     {
       PosedBodySphereDecompositionVectorPtr sphere_decp = gsr->attached_body_decompositions_[i];
       sphere_decp->updatePose(j, att->getGlobalCollisionBodyTransforms()[j]);

@@ -34,16 +34,22 @@
 
 /* Author: Ioan Sucan, E. Gil Jones */
 
-#include <moveit/collision_detection/collision_matrix.h>
+#include <moveit/collision_detection/collision_matrix.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 #include <functional>
 #include <iomanip>
+#include <moveit/utils/logger.hpp>
 
 namespace collision_detection
 {
-// Logger
-static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit_collision_detection.collision_matrix");
+namespace
+{
+rclcpp::Logger getLogger()
+{
+  return moveit::getLogger("moveit.core.collision_detection_matrix");
+}
+}  // namespace
 
 AllowedCollisionMatrix::AllowedCollisionMatrix()
 {
@@ -52,8 +58,10 @@ AllowedCollisionMatrix::AllowedCollisionMatrix()
 AllowedCollisionMatrix::AllowedCollisionMatrix(const std::vector<std::string>& names, const bool allowed)
 {
   for (std::size_t i = 0; i < names.size(); ++i)
+  {
     for (std::size_t j = i; j < names.size(); ++j)
       setEntry(names[i], names[j], allowed);
+  }
 }
 
 AllowedCollisionMatrix::AllowedCollisionMatrix(const srdf::Model& srdf)
@@ -62,10 +70,10 @@ AllowedCollisionMatrix::AllowedCollisionMatrix(const srdf::Model& srdf)
   for (const std::string& name : srdf.getNoDefaultCollisionLinks())
     setDefaultEntry(name, collision_detection::AllowedCollision::ALWAYS);
   // re-enable specific collision pairs
-  for (auto const& collision : srdf.getEnabledCollisionPairs())
+  for (const auto& collision : srdf.getEnabledCollisionPairs())
     setEntry(collision.link1_, collision.link2_, false);
   // *finally* disable selected collision pairs
-  for (auto const& collision : srdf.getDisabledCollisionPairs())
+  for (const auto& collision : srdf.getDisabledCollisionPairs())
     setEntry(collision.link1_, collision.link2_, true);
 }
 
@@ -74,7 +82,8 @@ AllowedCollisionMatrix::AllowedCollisionMatrix(const moveit_msgs::msg::AllowedCo
   if (msg.entry_names.size() != msg.entry_values.size() ||
       msg.default_entry_names.size() != msg.default_entry_values.size())
   {
-    RCLCPP_ERROR(LOGGER, "The number of links does not match the number of entries in AllowedCollisionMatrix message");
+    RCLCPP_ERROR(getLogger(),
+                 "The number of links does not match the number of entries in AllowedCollisionMatrix message");
     return;
   }
   for (std::size_t i = 0; i < msg.default_entry_names.size(); ++i)
@@ -86,7 +95,7 @@ AllowedCollisionMatrix::AllowedCollisionMatrix(const moveit_msgs::msg::AllowedCo
   {
     if (msg.entry_values[i].enabled.size() != msg.entry_names.size())
     {
-      RCLCPP_ERROR(LOGGER, "Number of entries is incorrect for link '%s' in AllowedCollisionMatrix message",
+      RCLCPP_ERROR(getLogger(), "Number of entries is incorrect for link '%s' in AllowedCollisionMatrix message",
                    msg.entry_names[i].c_str());
       return;
     }
@@ -217,8 +226,10 @@ void AllowedCollisionMatrix::setEntry(const std::string& name, const std::vector
                                       const bool allowed)
 {
   for (const auto& other_name : other_names)
+  {
     if (other_name != name)
       setEntry(other_name, name, allowed);
+  }
 }
 
 void AllowedCollisionMatrix::setEntry(const std::vector<std::string>& names1, const std::vector<std::string>& names2,
@@ -232,19 +243,23 @@ void AllowedCollisionMatrix::setEntry(const std::string& name, const bool allowe
 {
   std::string last = name;
   for (auto& entry : entries_)
+  {
     if (name != entry.first && last != entry.first)
     {
       last = entry.first;
       setEntry(name, entry.first, allowed);
     }
+  }
 }
 
 void AllowedCollisionMatrix::setEntry(const bool allowed)
 {
   const AllowedCollision::Type v = allowed ? AllowedCollision::ALWAYS : AllowedCollision::NEVER;
   for (auto& entry : entries_)
+  {
     for (auto& it2 : entry.second)
       it2.second = v;
+  }
 }
 
 void AllowedCollisionMatrix::setDefaultEntry(const std::string& name, const bool allowed)
@@ -293,13 +308,21 @@ bool AllowedCollisionMatrix::getAllowedCollision(const std::string& name1, const
     const bool found1 = getDefaultEntry(name1, fn1);
     const bool found2 = getDefaultEntry(name2, fn2);
     if (found1 && !found2)
+    {
       fn = fn1;
+    }
     else if (!found1 && found2)
+    {
       fn = fn2;
+    }
     else if (found1 && found2)
+    {
       fn = [fn1, fn2](Contact& contact) { return andDecideContact(fn1, fn2, contact); };
+    }
     else
+    {
       return false;
+    }
   }
   return true;
 }
@@ -311,19 +334,31 @@ bool AllowedCollisionMatrix::getDefaultEntry(const std::string& name1, const std
   const bool found1 = getDefaultEntry(name1, t1);
   const bool found2 = getDefaultEntry(name2, t2);
   if (!found1 && !found2)
+  {
     return false;
+  }
   else if (found1 && !found2)
+  {
     allowed_collision = t1;
+  }
   else if (!found1 && found2)
+  {
     allowed_collision = t2;
+  }
   else if (found1 && found2)
   {
     if (t1 == AllowedCollision::NEVER || t2 == AllowedCollision::NEVER)
+    {
       allowed_collision = AllowedCollision::NEVER;
+    }
     else if (t1 == AllowedCollision::CONDITIONAL || t2 == AllowedCollision::CONDITIONAL)
+    {
       allowed_collision = AllowedCollision::CONDITIONAL;
-    else  // ALWAYS is the only remaining case
+    }
+    else
+    {  // ALWAYS is the only remaining case
       allowed_collision = AllowedCollision::ALWAYS;
+    }
   }
   return true;
 }
@@ -430,18 +465,26 @@ void AllowedCollisionMatrix::print(std::ostream& out) const
     // print default value
     AllowedCollision::Type type;
     if (getDefaultEntry(names[i], type))
+    {
       out << indicator[type];
+    }
     else
+    {
       out << '-';
+    }
     out << " | ";
     // print pairs
     for (std::size_t j = 0; j < names.size(); ++j)
     {
       const bool found = getAllowedCollision(names[i], names[j], type);
       if (found)
+      {
         out << std::setw(3) << indicator[type];
+      }
       else
+      {
         out << std::setw(3) << '-';
+      }
     }
     out << '\n';
   }

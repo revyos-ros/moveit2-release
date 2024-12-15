@@ -2,23 +2,158 @@
 Changelog for package moveit_ros_benchmarks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.5.6 (2024-11-17)
+2.12.0 (2024-11-29)
+-------------------
+* Enhancement/use hpp for headers (`#3113 <https://github.com/ros-planning/moveit2/issues/3113>`_)
+* Add use_padding flag + deprecate checkCollisionUnpadded() functions (`#3088 <https://github.com/ros-planning/moveit2/issues/3088>`_)
+* Contributors: Sebastian Jahr, Tom Noble
+
+2.11.0 (2024-09-16)
+-------------------
+
+2.10.0 (2024-06-13)
+-------------------
+* Migrate ros-planning org to moveit (`#2847 <https://github.com/moveit/moveit2/issues/2847>`_)
+  * Rename github.com/ros-planning -> github.com/moveit
+  * Rename ros-planning.github.io -> moveit.github.io
+  * Rename ros-planning organization in docker and CI workflow files
+  - ghcr.io/ros-planning -> ghcr.io/moveit
+  - github.repository == 'moveit/*''
+* Fix CI for Rolling / Ubuntu Noble (`#2793 <https://github.com/moveit/moveit2/issues/2793>`_)
+  * docker.yaml: Enable caching
+  * [TEMP] moveit2_rolling.repos: add not yet released packages
+  * Skip broken ci-testing image: osrf/ros2:testing doesn't contain /opt/ros!
+  * use boost::timer::progress_display if available
+  check for header to stay compatible with ubuntu 20.04.
+  Support boost >= 1.83
+  Slightly ugly due to the double alias, but boost::timer was a class
+  before 1.72, so using `boost::timer::progress_display` in the code
+  breaks with older versions.
+  * cherry-pick of `#3547 <https://github.com/moveit/moveit2/issues/3547>`_ from MoveIt1
+  * Tag ci image as ci-testing as well
+  ---------
+  Co-authored-by: Michael Görner <me@v4hn.de>
+  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
+  Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
+* Update deprecated include of boost/progress.hpp to boost/timer/progress_display.hpp (`#2811 <https://github.com/moveit/moveit2/issues/2811>`_)
+* Unify log names (`#2720 <https://github.com/moveit/moveit2/issues/2720>`_)
+  Co-authored-by: Abishalini Sivaraman <abi.gpuram@gmail.com>
+* CMake format and lint in pre-commit (`#2683 <https://github.com/moveit/moveit2/issues/2683>`_)
+* Contributors: Robert Haschke, Sebastian Jahr, Stephanie Eng, Tyler Weaver
+
+2.9.0 (2024-01-09)
+------------------
+* [Planning Pipeline Refactoring] `#2 <https://github.com/ros-planning/moveit2/issues/2>`_ Enable chaining planners (`#2457 <https://github.com/ros-planning/moveit2/issues/2457>`_)
+  * Enable chaining multiple planners
+* Node logging in moveit_core (`#2503 <https://github.com/ros-planning/moveit2/issues/2503>`_)
+* Use node logging in moveit_ros (`#2482 <https://github.com/ros-planning/moveit2/issues/2482>`_)
+* Add new clang-tidy style rules (`#2177 <https://github.com/ros-planning/moveit2/issues/2177>`_)
+* Use generate parameters library in PlanningPipelineClass + general cleanups (`#2288 <https://github.com/ros-planning/moveit2/issues/2288>`_)
+  * Don't discard stuff
+  * Move constants into source file
+  * Move static consts into header
+  * Don't ignore pipeline result
+  * Use generate parameter library for planning pipeline parameters
+  * Fix CI
+  * More CI fixes
+  * Remove more state from planning pipeline
+  * Small cleanups
+  * Assert planner_instance\_ is not a nullptr
+  * Remove valid variable
+  * Simplify logic for trajectory printing
+  * More helpful comments
+  * Small logic simplification by using break
+  * Fix clang-tidy
+  * Pre-commit + Deprecate functions instead of removing them
+  * Fix CI
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Enable running parallel or single pipeline benchmarks (`#2385 <https://github.com/ros-planning/moveit2/issues/2385>`_)
+  * Enable running single or parallel planning pipeline benchmarks
+  * Decrease log severity
+* Update clang-format-14 with QualifierAlignment (`#2362 <https://github.com/ros-planning/moveit2/issues/2362>`_)
+  * Set qualifier order in .clang-format
+  * Ran pre-commit to update according to new style guide
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Contributors: Marq Rasmussen, Sebastian Jahr, Shobuj Paul, Tyler Weaver
+
+2.8.0 (2023-09-10)
 ------------------
 
-2.5.5 (2023-09-10)
+2.7.4 (2023-05-18)
 ------------------
 
-2.5.4 (2022-11-04)
+2.7.3 (2023-04-24)
 ------------------
-* Free functions for calculating properties of trajectories (`#1503 <https://github.com/ros-planning/moveit2/issues/1503>`_) (`#1657 <https://github.com/ros-planning/moveit2/issues/1657>`_)
-  (cherry picked from commit 43a22ece72bb5362e6ef7df1d2783b03935aea2e)
-* Remove unused benchmark_execution.cpp file (`#1535 <https://github.com/ros-planning/moveit2/issues/1535>`_) (`#1564 <https://github.com/ros-planning/moveit2/issues/1564>`_)
-  (cherry picked from commit 8a9652ecbb4bc43964b296a0f62e298bfe7c1870)
+* Replace Variable PROJECT_NAME in CMakeLists.txt with the actual name (`#2020 <https://github.com/ros-planning/moveit2/issues/2020>`_)
+* Contributors: Shobuj Paul
+
+2.7.2 (2023-04-18)
+------------------
+* Update pre-commit (`#2094 <https://github.com/ros-planning/moveit2/issues/2094>`_)
+* Extract parallel planning from moveit cpp (`#2043 <https://github.com/ros-planning/moveit2/issues/2043>`_)
+  * Add parallel_planning_interface
+  * Add parallel planning interface
+  * Rename package to pipeline_planning_interface
+  * Move plan_responses_container into own header + source file
+  * Add plan_responses_contrainer source file
+  * Add solution selection and stopping criterion function files
+  * Remove parallel planning from moveit_cpp
+  * Move parallel planning into planning package
+  * Update moveit_cpp
+  * Drop planning_interface changes
+  * Add documentation
+  * Update other moveit packages
+  * Remove removed header
+  * Address CI complains
+  * Address clang-tidy complains
+  * Address clang-tidy complains 2
+  * Address clang-tidy complains 3
+  * Extract planning pipeline map creation function from moveit_cpp
+  * Cleanup comment
+  * Use const moveit::core::RobotModelConstPtr&
+  * Formatting
+  * Add header descriptions
+  * Remove superfluous TODOs
+  * Cleanup
+* Contributors: Sebastian Jahr, Shobuj Paul
+
+2.7.1 (2023-03-23)
+------------------
+* Fix member naming (`#1949 <https://github.com/ros-planning/moveit2/issues/1949>`_)
+  * Update clang-tidy rules for readability-identifier-naming
   Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
-* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_) (`#1555 <https://github.com/ros-planning/moveit2/issues/1555>`_)
+* Benchmark parallel planning pipelines (`#1539 <https://github.com/ros-planning/moveit2/issues/1539>`_)
+  * Remove launch and config files (moved to moveit_resources)
+* remove underscore from public member in MotionPlanResponse (`#1939 <https://github.com/ros-planning/moveit2/issues/1939>`_)
+  * remove underscore from private members
+  * fix more uses of the suffix notation
+* Contributors: AlexWebb, Robert Haschke, Sebastian Jahr
+
+2.7.0 (2023-01-29)
+------------------
+* converted characters from string format to character format (`#1881 <https://github.com/ros-planning/moveit2/issues/1881>`_)
+* Fix BSD license in package.xml (`#1796 <https://github.com/ros-planning/moveit2/issues/1796>`_)
+  * fix BSD license in package.xml
+  * this must also be spdx compliant
+* Remove `MOVEIT_LIB_NAME` (`#1751 <https://github.com/ros-planning/moveit2/issues/1751>`_)
+  It's more readable and searchable if we just spell out the target
+  name.
+* Add braces around blocks. (`#999 <https://github.com/ros-planning/moveit2/issues/999>`_)
+* Used C++ style cast instead of C style cast  (`#1628 <https://github.com/ros-planning/moveit2/issues/1628>`_)
+  Co-authored-by: Henning Kayser <henningkayser@picknik.ai>
+* Contributors: Abhijeet Das Gupta, Chris Thrasher, Christian Henkel, Cory Crean, Sameer Gupta
+
+2.6.0 (2022-11-10)
+------------------
+* Remove unused benchmark_execution.cpp file (`#1535 <https://github.com/ros-planning/moveit2/issues/1535>`_)
+* Merge PR `#1553 <https://github.com/ros-planning/moveit2/issues/1553>`_: Improve cmake files
+* Use standard exported targets: export\_${PROJECT_NAME} -> ${PROJECT_NAME}Targets
+* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_)
+* Free functions for calculating properties of trajectories (`#1503 <https://github.com/ros-planning/moveit2/issues/1503>`_)
   Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
-* Remove __has_include statements (`#1481 <https://github.com/ros-planning/moveit2/issues/1481>`_) (`#1483 <https://github.com/ros-planning/moveit2/issues/1483>`_)
-* Contributors: mergify[bot]
+  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
+* Remove __has_include statements (`#1481 <https://github.com/ros-planning/moveit2/issues/1481>`_)
+* Contributors: Robert Haschke, Sebastian Jahr, Tyler Weaver, Vatan Aksoy Tezer
 
 2.5.3 (2022-07-28)
 ------------------
