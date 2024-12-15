@@ -2,6 +2,16 @@
 Changelog for package chomp_interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.12.0 (2024-11-29)
+-------------------
+* Enhancement/use hpp for headers (`#3113 <https://github.com/ros-planning/moveit2/issues/3113>`_)
+* Contributors: Tom Noble
+
+2.11.0 (2024-09-16)
+-------------------
+* Fix CHOMP segfault (`#3621 <https://github.com/moveit/moveit2/issues/3621>`_)
+* Contributors: Robert Haschke
+
 2.10.0 (2024-06-13)
 -------------------
 * Unify log names (`#2720 <https://github.com/moveit/moveit2/issues/2720>`_)
