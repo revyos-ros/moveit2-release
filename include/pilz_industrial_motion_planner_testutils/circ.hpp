@@ -32,31 +32,72 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <pilz_industrial_motion_planner_testutils/robotconfiguration.hpp>
+#pragma once
 
-#include <stdexcept>
+#include <memory>
+
+#include "basecmd.hpp"
+#include "circauxiliary.hpp"
 
 namespace pilz_industrial_motion_planner_testutils
 {
-RobotConfiguration::RobotConfiguration() : RobotStateMsgConvertible(), GoalConstraintMsgConvertible()
+/**
+ * @brief Data class storing all information regarding a Circ command.
+ */
+template <class StartType, class AuxiliaryType, class GoalType>
+class Circ : public BaseCmd<StartType, GoalType>
 {
-}
-
-RobotConfiguration::RobotConfiguration(const std::string& group_name)
-  : RobotStateMsgConvertible(), GoalConstraintMsgConvertible(), group_name_(group_name)
-{
-}
-
-RobotConfiguration::RobotConfiguration(const std::string& group_name,
-                                       const moveit::core::RobotModelConstPtr& robot_model)
-  : RobotStateMsgConvertible(), GoalConstraintMsgConvertible(), group_name_(group_name), robot_model_(robot_model)
-{
-  if (robot_model && (!robot_model_->hasJointModelGroup(group_name_)))
+public:
+  Circ() : BaseCmd<StartType, GoalType>()
   {
-    std::string msg{ "Specified robot model does not contain specified group \"" };
-    msg.append(group_name).append("\"");
-    throw std::invalid_argument(msg);
   }
+
+public:
+  void setAuxiliaryConfiguration(AuxiliaryType auxiliary);
+  AuxiliaryType& getAuxiliaryConfiguration();
+  const AuxiliaryType& getAuxiliaryConfiguration() const;
+
+public:
+  planning_interface::MotionPlanRequest toRequest() const override;
+
+private:
+  std::string getPlannerId() const override;
+
+private:
+  AuxiliaryType auxiliary_;
+};
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+template <class StartType, class AuxiliaryType, class GoalType>
+inline void Circ<StartType, AuxiliaryType, GoalType>::setAuxiliaryConfiguration(AuxiliaryType auxiliary)
+{
+  auxiliary_ = auxiliary;
 }
 
+template <class StartType, class AuxiliaryType, class GoalType>
+inline std::string Circ<StartType, AuxiliaryType, GoalType>::getPlannerId() const
+{
+  return "CIRC";
+}
+
+template <class StartType, class AuxiliaryType, class GoalType>
+inline planning_interface::MotionPlanRequest Circ<StartType, AuxiliaryType, GoalType>::toRequest() const
+{
+  planning_interface::MotionPlanRequest req{ BaseCmd<StartType, GoalType>::toRequest() };
+  req.path_constraints = auxiliary_.toPathConstraints();
+
+  return req;
+}
+
+template <class StartType, class AuxiliaryType, class GoalType>
+inline AuxiliaryType& Circ<StartType, AuxiliaryType, GoalType>::getAuxiliaryConfiguration()
+{
+  return auxiliary_;
+}
+
+template <class StartType, class AuxiliaryType, class GoalType>
+inline const AuxiliaryType& Circ<StartType, AuxiliaryType, GoalType>::getAuxiliaryConfiguration() const
+{
+  return auxiliary_;
+}
 }  // namespace pilz_industrial_motion_planner_testutils
