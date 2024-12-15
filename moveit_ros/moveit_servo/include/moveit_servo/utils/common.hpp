@@ -43,9 +43,9 @@
 
 #include <moveit_servo_lib_parameters.hpp>
 #include <moveit_servo/utils/datatypes.hpp>
-#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
-#include <moveit/robot_model/joint_model_group.h>
-#include <moveit/robot_state/robot_state.h>
+#include <moveit/planning_scene_monitor/planning_scene_monitor.hpp>
+#include <moveit/robot_model/joint_model_group.hpp>
+#include <moveit/robot_state/robot_state.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
@@ -166,15 +166,16 @@ double jointLimitVelocityScalingFactor(const Eigen::VectorXd& velocities,
                                        const moveit::core::JointBoundsVector& joint_bounds, double scaling_override);
 
 /**
- * \brief Finds the joints that are exceeding allowable position limits.
+ * \brief Finds the joint variable indices corresponding to joints exceeding allowable position limits.
  * @param positions The joint positions.
  * @param velocities The current commanded velocities.
  * @param joint_bounds The allowable limits for the robot joints.
  * @param margins Additional buffer on the actual joint limits.
- * @return The joints that are violating the specified position limits.
+ * @return The joint variable indices that violate the specified position limits.
  */
-std::vector<int> jointsToHalt(const Eigen::VectorXd& positions, const Eigen::VectorXd& velocities,
-                              const moveit::core::JointBoundsVector& joint_bounds, const std::vector<double>& margins);
+std::vector<size_t> jointVariablesToHalt(const Eigen::VectorXd& positions, const Eigen::VectorXd& velocities,
+                                         const moveit::core::JointBoundsVector& joint_bounds,
+                                         const std::vector<double>& margins);
 
 /**
  * \brief Helper function for converting Eigen::Isometry3d to geometry_msgs/TransformStamped.
