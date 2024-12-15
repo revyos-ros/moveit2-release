@@ -34,9 +34,9 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/rviz_plugin_render_tools/planning_scene_render.h>
-#include <moveit/rviz_plugin_render_tools/robot_state_visualization.h>
-#include <moveit/rviz_plugin_render_tools/render_shapes.h>
+#include <moveit/rviz_plugin_render_tools/planning_scene_render.hpp>
+#include <moveit/rviz_plugin_render_tools/robot_state_visualization.hpp>
+#include <moveit/rviz_plugin_render_tools/render_shapes.hpp>
 #include <rviz_common/display_context.hpp>
 
 #include <OgreSceneNode.h>
@@ -91,7 +91,7 @@ void PlanningSceneRender::renderPlanningScene(const planning_scene::PlanningScen
     color.r = default_attached_color.r;
     color.g = default_attached_color.g;
     color.b = default_attached_color.b;
-    color.a = 1.0f;
+    color.a = default_attached_color.a;
     planning_scene::ObjectColorMap color_map;
     scene->getKnownObjectColors(color_map);
     scene_robot_->update(moveit::core::RobotStateConstPtr(rs), color, color_map);
