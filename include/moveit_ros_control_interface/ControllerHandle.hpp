@@ -34,30 +34,26 @@
 
 /* Author: Mathias Lüdtke */
 
-#include <moveit_ros_control_interface/ControllerHandle.hpp>
-#include <pluginlib/class_list_macros.hpp>
-#include <moveit_simple_controller_manager/follow_joint_trajectory_controller_handle.hpp>
-#include <rclcpp/node.hpp>
-#include <memory>
+#pragma once
+
+#include <moveit/controller_manager/controller_manager.hpp>
+#include <moveit/macros/class_forward.hpp>
 
 namespace moveit_ros_control_interface
 {
+MOVEIT_CLASS_FORWARD(ControllerHandleAllocator);  // Defines ControllerHandleAllocatorPtr, ConstPtr, WeakPtr... etc
+
 /**
- * \brief Simple allocator for moveit_simple_controller_manager::FollowJointTrajectoryControllerHandle instances.
+ * Base class for MoveItControllerHandle allocators
  */
-class JointTrajectoryControllerAllocator : public ControllerHandleAllocator
+class ControllerHandleAllocator
 {
 public:
-  moveit_controller_manager::MoveItControllerHandlePtr alloc(const rclcpp::Node::SharedPtr& node,
-                                                             const std::string& name,
-                                                             const std::vector<std::string>& /* resources */) override
+  virtual moveit_controller_manager::MoveItControllerHandlePtr
+  alloc(const rclcpp::Node::SharedPtr& node, const std::string& name, const std::vector<std::string>& resources) = 0;
+  virtual ~ControllerHandleAllocator()
   {
-    return std::make_shared<moveit_simple_controller_manager::FollowJointTrajectoryControllerHandle>(
-        node, name, "follow_joint_trajectory");
   }
 };
 
 }  // namespace moveit_ros_control_interface
-
-PLUGINLIB_EXPORT_CLASS(moveit_ros_control_interface::JointTrajectoryControllerAllocator,
-                       moveit_ros_control_interface::ControllerHandleAllocator);
