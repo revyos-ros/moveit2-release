@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-common
+Section: misc
+Priority: optional
+Maintainer: Henning Kayser <henningkayser@picknik.ai>
+Build-Depends: debhelper (>= 9.0.0), ros-jazzy-ament-cmake, ros-jazzy-backward-ros, ros-jazzy-ros-workspace
+Homepage: http://moveit.ros.org
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-common
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-jazzy-backward-ros, ros-jazzy-ros-workspace
+Description: Common support functionality used throughout MoveIt
