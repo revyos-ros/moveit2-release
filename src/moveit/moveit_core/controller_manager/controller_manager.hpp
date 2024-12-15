@@ -36,22 +36,17 @@
 
 #pragma once
 
+#include <moveit/controller_manager/controller_manager.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>
-#include <moveit/transforms/transforms.h>
 
 namespace py = pybind11;
 
 namespace moveit_py
 {
-namespace bind_transforms
+namespace bind_controller_manager
 {
-Eigen::MatrixXd getTransform(std::shared_ptr<moveit::core::Transforms>& transforms, std::string& from_frame);
-
-std::map<std::string, Eigen::MatrixXd> getAllTransforms(std::shared_ptr<moveit::core::Transforms>& transforms);
-
-void initTransforms(py::module& m);
-
-}  // namespace bind_transforms
+void initExecutionStatus(py::module& m);
+}
 }  // namespace moveit_py

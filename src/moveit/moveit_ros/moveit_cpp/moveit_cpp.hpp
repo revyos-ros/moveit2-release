@@ -37,47 +37,24 @@
 #pragma once
 
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#pragma GCC diagnostic push
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
+#include <pybind11/numpy.h>
 #include <pybind11/eigen.h>
-#pragma GCC diagnostic pop
-#include <moveit_py/moveit_py_utils/copy_ros_msg.h>
-#include <tf2_eigen/tf2_eigen.hpp>
-#include <moveit/robot_state/robot_state.h>
+#include <pybind11/stl.h>
+#include <moveit_msgs/msg/robot_state.hpp>
+#include <moveit_msgs/msg/move_it_error_codes.h>
+#include <moveit_py/moveit_py_utils/ros_msg_typecasters.hpp>
+#include <moveit/moveit_cpp/moveit_cpp.hpp>
+#include <moveit/moveit_cpp/planning_component.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include "planning_component.hpp"
 
 namespace py = pybind11;
 
 namespace moveit_py
 {
-namespace bind_robot_state
+namespace bind_moveit_cpp
 {
-void update(moveit::core::RobotState* self, bool force, std::string& category);
-
-Eigen::MatrixXd getFrameTransform(const moveit::core::RobotState* self, std::string& frame_id);
-
-Eigen::MatrixXd getGlobalLinkTransform(const moveit::core::RobotState* self, std::string& link_name);
-
-geometry_msgs::msg::Pose getPose(const moveit::core::RobotState* self, const std::string& link_name);
-
-Eigen::VectorXd copyJointGroupPositions(const moveit::core::RobotState* self, const std::string& joint_model_group_name);
-Eigen::VectorXd copyJointGroupVelocities(const moveit::core::RobotState* self,
-                                         const std::string& joint_model_group_name);
-Eigen::VectorXd copyJointGroupAccelerations(const moveit::core::RobotState* self,
-                                            const std::string& joint_model_group_name);
-
-Eigen::MatrixXd getJacobian(const moveit::core::RobotState* self, const std::string& joint_model_group_name,
-                            const std::string& link_model_name, const Eigen::Vector3d& reference_point_position,
-                            bool use_quaternion_representation);
-
-Eigen::MatrixXd getJacobian(const moveit::core::RobotState* self, const std::string& joint_model_group_name,
-                            const Eigen::Vector3d& reference_point_position);
-
-bool setToDefaultValues(moveit::core::RobotState* self, const std::string& joint_model_group_name,
-                        const std::string& state_name);
-
-void initRobotState(py::module& m);
-}  // namespace bind_robot_state
+void initMoveitPy(py::module& m);
+}  // namespace bind_moveit_cpp
 }  // namespace moveit_py
