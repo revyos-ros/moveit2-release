@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2016, Michael 'v4hn' Goerner
+ *  Copyright (c) 2012, Willow Garage, Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -32,31 +32,46 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Michael 'v4hn' Goerner */
+/* Author: Ioan Sucan */
 
 #pragma once
 
-#include <moveit/move_group/move_group_capability.h>
-#include <moveit_msgs/srv/apply_planning_scene.hpp>
+#include <moveit/move_group/move_group_capability.hpp>
+#include <rclcpp_action/rclcpp_action.hpp>
+#include <moveit_msgs/action/move_group.hpp>
+#include <memory>
 
 namespace move_group
 {
-/**
- * Provides the ability to update the shared planning scene
- * with a remote blocking call using a ROS-Service
- */
-class ApplyPlanningSceneService : public MoveGroupCapability
+using MGAction = moveit_msgs::action::MoveGroup;
+using MGActionGoal = rclcpp_action::ServerGoalHandle<MGAction>;
+
+class MoveGroupMoveAction : public MoveGroupCapability
 {
 public:
-  ApplyPlanningSceneService();
+  MoveGroupMoveAction();
 
   void initialize() override;
 
 private:
-  bool applyScene(const std::shared_ptr<rmw_request_id_t>& request_header,
-                  const std::shared_ptr<moveit_msgs::srv::ApplyPlanningScene::Request>& req,
-                  const std::shared_ptr<moveit_msgs::srv::ApplyPlanningScene::Response>& res);
+  void executeMoveCallback(const std::shared_ptr<MGActionGoal>& goal);
+  void executeMoveCallbackPlanAndExecute(const std::shared_ptr<MGActionGoal>& goal,
+                                         std::shared_ptr<MGAction::Result>& action_res);
+  void executeMoveCallbackPlanOnly(const std::shared_ptr<MGActionGoal>& goal,
+                                   std::shared_ptr<MGAction::Result>& action_res);
 
-  rclcpp::Service<moveit_msgs::srv::ApplyPlanningScene>::SharedPtr service_;
+  void startMoveExecutionCallback();
+  void startMoveLookCallback();
+  void preemptMoveCallback();
+  void setMoveState(MoveGroupState state, const std::shared_ptr<MGActionGoal>& goal);
+
+  bool planUsingPlanningPipeline(const planning_interface::MotionPlanRequest& req,
+                                 plan_execution::ExecutableMotionPlan& plan);
+
+  std::shared_ptr<rclcpp_action::Server<MGAction>> execute_action_server_;
+
+  MoveGroupState move_state_;
+  bool preempt_requested_;
+  std::shared_ptr<MGActionGoal> goal_;
 };
 }  // namespace move_group

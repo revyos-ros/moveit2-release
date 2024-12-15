@@ -36,23 +36,53 @@
 
 #pragma once
 
-#include <moveit/move_group/move_group_capability.h>
-#include <moveit_msgs/srv/get_motion_plan.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <string>
+#include <moveit/macros/class_forward.hpp>
+
+namespace moveit_cpp
+{
+MOVEIT_CLASS_FORWARD(MoveItCpp);
+}
+
+namespace planning_scene_monitor
+{
+MOVEIT_CLASS_FORWARD(PlanningSceneMonitor);  // Defines PlanningSceneMonitorPtr, ConstPtr, WeakPtr... etc
+}
+
+namespace planning_pipeline
+{
+MOVEIT_CLASS_FORWARD(PlanningPipeline);  // Defines PlanningPipelinePtr, ConstPtr, WeakPtr... etc
+}
+
+namespace plan_execution
+{
+MOVEIT_CLASS_FORWARD(PlanExecution);  // Defines PlanExecutionPtr, ConstPtr, WeakPtr... etc
+}  // namespace plan_execution
+
+namespace trajectory_execution_manager
+{
+MOVEIT_CLASS_FORWARD(TrajectoryExecutionManager);  // Defines TrajectoryExecutionManagerPtr, ConstPtr, WeakPtr... etc
+}
 
 namespace move_group
 {
-class MoveGroupPlanService : public MoveGroupCapability
+MOVEIT_STRUCT_FORWARD(MoveGroupContext);
+
+struct MoveGroupContext
 {
-public:
-  MoveGroupPlanService();
+  MoveGroupContext(const moveit_cpp::MoveItCppPtr& moveit_cpp, const std::string& default_planning_pipeline,
+                   bool allow_trajectory_execution = false, bool debug = false);
+  ~MoveGroupContext();
 
-  void initialize() override;
+  bool status() const;
 
-private:
-  bool computePlanService(const std::shared_ptr<rmw_request_id_t>& request_header,
-                          const std::shared_ptr<moveit_msgs::srv::GetMotionPlan::Request>& req,
-                          const std::shared_ptr<moveit_msgs::srv::GetMotionPlan::Response>& res);
-
-  rclcpp::Service<moveit_msgs::srv::GetMotionPlan>::SharedPtr plan_service_;
+  moveit_cpp::MoveItCppPtr moveit_cpp_;
+  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
+  trajectory_execution_manager::TrajectoryExecutionManagerPtr trajectory_execution_manager_;
+  planning_pipeline::PlanningPipelinePtr planning_pipeline_;
+  plan_execution::PlanExecutionPtr plan_execution_;
+  bool allow_trajectory_execution_;
+  bool debug_;
 };
 }  // namespace move_group

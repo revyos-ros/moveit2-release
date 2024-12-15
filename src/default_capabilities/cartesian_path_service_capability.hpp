@@ -34,23 +34,29 @@
 
 /* Author: Ioan Sucan */
 
+#pragma once
+
 #include <moveit/move_group/move_group_capability.hpp>
-#include <pluginlib/class_loader.hpp>
-#include <fmt/format.h>
+#include <moveit_msgs/srv/get_cartesian_path.hpp>
+#include <moveit_msgs/msg/display_trajectory.hpp>
 
-int main(int /*argc*/, char** /*argv*/)
+namespace move_group
 {
-  try
-  {
-    pluginlib::ClassLoader<move_group::MoveGroupCapability> capability_plugin_loader("moveit_ros_move_group",
-                                                                                     "move_group::MoveGroupCapability");
-    std::cout << "Available capabilities:\n"
-              << fmt::format("{}", fmt::join(capability_plugin_loader.getDeclaredClasses(), "\n")) << '\n';
-  }
-  catch (pluginlib::PluginlibException& ex)
-  {
-    std::cerr << "Exception while creating plugin loader for move_group capabilities: " << ex.what() << '\n';
-  }
+class MoveGroupCartesianPathService : public MoveGroupCapability
+{
+public:
+  MoveGroupCartesianPathService();
 
-  return 0;
-}
+  void initialize() override;
+
+private:
+  bool computeService(const std::shared_ptr<rmw_request_id_t>& request_header,
+                      const std::shared_ptr<moveit_msgs::srv::GetCartesianPath::Request>& req,
+                      const std::shared_ptr<moveit_msgs::srv::GetCartesianPath::Response>& res);
+
+  rclcpp::Service<moveit_msgs::srv::GetCartesianPath>::SharedPtr cartesian_path_service_;
+  rclcpp::Publisher<moveit_msgs::msg::DisplayTrajectory>::SharedPtr display_path_;
+
+  bool display_computed_paths_;
+};
+}  // namespace move_group

@@ -32,35 +32,37 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Ioan Sucan, Robert Haschke */
+/* Author: Ioan Sucan */
 
 #pragma once
 
-#include <moveit/move_group/move_group_capability.h>
-#include <moveit_msgs/srv/query_planner_interfaces.hpp>
-#include <moveit_msgs/srv/get_planner_params.hpp>
-#include <moveit_msgs/srv/set_planner_params.hpp>
+#include <moveit/move_group/move_group_capability.hpp>
+#include <moveit_msgs/srv/get_position_ik.hpp>
+#include <moveit_msgs/srv/get_position_fk.hpp>
 
 namespace move_group
 {
-class MoveGroupQueryPlannersService : public MoveGroupCapability
+class MoveGroupKinematicsService : public MoveGroupCapability
 {
 public:
-  MoveGroupQueryPlannersService();
+  MoveGroupKinematicsService();
 
   void initialize() override;
 
 private:
-  void queryInterface(const std::shared_ptr<moveit_msgs::srv::QueryPlannerInterfaces::Request>& /*req*/,
-                      const std::shared_ptr<moveit_msgs::srv::QueryPlannerInterfaces::Response>& res);
+  bool computeIKService(const std::shared_ptr<rmw_request_id_t>& request_header,
+                        const std::shared_ptr<moveit_msgs::srv::GetPositionIK::Request>& req,
+                        const std::shared_ptr<moveit_msgs::srv::GetPositionIK::Response>& res);
+  bool computeFKService(const std::shared_ptr<rmw_request_id_t>& request_header,
+                        const std::shared_ptr<moveit_msgs::srv::GetPositionFK::Request>& req,
+                        const std::shared_ptr<moveit_msgs::srv::GetPositionFK::Response>& res);
 
-  void getParams(const std::shared_ptr<moveit_msgs::srv::GetPlannerParams::Request>& req,
-                 const std::shared_ptr<moveit_msgs::srv::GetPlannerParams::Response>& res);
-  void setParams(const std::shared_ptr<moveit_msgs::srv::SetPlannerParams::Request>& req,
-                 const std::shared_ptr<moveit_msgs::srv::SetPlannerParams::Response>& /*res*/);
+  void computeIK(moveit_msgs::msg::PositionIKRequest& req, moveit_msgs::msg::RobotState& solution,
+                 moveit_msgs::msg::MoveItErrorCodes& error_code, moveit::core::RobotState& rs,
+                 const moveit::core::GroupStateValidityCallbackFn& constraint =
+                     moveit::core::GroupStateValidityCallbackFn()) const;
 
-  rclcpp::Service<moveit_msgs::srv::QueryPlannerInterfaces>::SharedPtr query_service_;
-  rclcpp::Service<moveit_msgs::srv::GetPlannerParams>::SharedPtr get_service_;
-  rclcpp::Service<moveit_msgs::srv::SetPlannerParams>::SharedPtr set_service_;
+  rclcpp::Service<moveit_msgs::srv::GetPositionFK>::SharedPtr fk_service_;
+  rclcpp::Service<moveit_msgs::srv::GetPositionIK>::SharedPtr ik_service_;
 };
 }  // namespace move_group
