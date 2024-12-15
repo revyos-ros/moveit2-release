@@ -39,45 +39,30 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
 #include <pybind11/stl.h>
-#include <pybind11/numpy.h>
-#include <pybind11/functional.h>
-#include <moveit_py/moveit_py_utils/copy_ros_msg.h>
-#include <moveit_py/moveit_py_utils/ros_msg_typecasters.h>
-#include <moveit/moveit_cpp/moveit_cpp.h>
-#include <moveit/moveit_cpp/planning_component.h>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <moveit_msgs/msg/constraints.hpp>
-
-#include "moveit_cpp.h"
-#include "../planning_scene_monitor/planning_scene_monitor.h"
-#include "../../moveit_core/planning_interface/planning_response.h"
+#include <moveit_msgs/msg/robot_state.hpp>
+#include <moveit_msgs/msg/move_it_error_codes.hpp>
+#include <moveit_py/moveit_py_utils/ros_msg_typecasters.hpp>
+#include <moveit/planning_interface/planning_response.hpp>
 
 namespace py = pybind11;
 
 namespace moveit_py
 {
-namespace bind_planning_component
+namespace bind_planning_interface
 {
-planning_interface::MotionPlanResponse
-plan(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
-     std::shared_ptr<moveit_cpp::PlanningComponent::PlanRequestParameters>& single_plan_parameters,
-     std::shared_ptr<moveit_cpp::PlanningComponent::MultiPipelinePlanRequestParameters>& multi_plan_parameters,
-     std::shared_ptr<planning_scene::PlanningScene>& planning_scene,
-     std::optional<const moveit::planning_pipeline_interfaces::SolutionSelectionFunction> solution_selection_function,
-     std::optional<moveit::planning_pipeline_interfaces::StoppingCriterionFunction> stopping_criterion_callback);
+std::shared_ptr<robot_trajectory::RobotTrajectory>
+getMotionPlanResponseTrajectory(std::shared_ptr<planning_interface::MotionPlanResponse>& response);
 
-bool setGoal(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
-             std::optional<std::string> configuration_name, std::optional<moveit::core::RobotState> robot_state,
-             std::optional<geometry_msgs::msg::PoseStamped> pose_stamped_msg, std::optional<std::string> pose_link,
-             std::optional<std::vector<moveit_msgs::msg::Constraints>> motion_plan_constraints);
+moveit_msgs::msg::RobotState
+getMotionPlanResponseStartState(std::shared_ptr<planning_interface::MotionPlanResponse>& response);
 
-bool setStartState(std::shared_ptr<moveit_cpp::PlanningComponent>& planning_component,
-                   std::optional<std::string> configuration_name, std::optional<moveit::core::RobotState> robot_state);
+moveit_msgs::msg::MoveItErrorCodes
+getMotionPlanResponseErrorCode(std::shared_ptr<planning_interface::MotionPlanResponse>& response);
 
-void initPlanRequestParameters(py::module& m);
+double getMotionPlanResponsePlanningTime(std::shared_ptr<planning_interface::MotionPlanResponse>& response);
 
-void initMultiPlanRequestParameters(py::module& m);
+std::string getMotionPlanResponsePlannerId(std::shared_ptr<planning_interface::MotionPlanResponse>& response);
 
-void initPlanningComponent(py::module& m);
-}  // namespace bind_planning_component
+void initMotionPlanResponse(py::module& m);
+}  // namespace bind_planning_interface
 }  // namespace moveit_py

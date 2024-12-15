@@ -39,23 +39,16 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>
-#include <moveit/robot_trajectory/robot_trajectory.h>
-#include <moveit_msgs/msg/robot_trajectory.hpp>
-#include <rclcpp/rclcpp.hpp>
+#include <moveit/robot_model/robot_model.hpp>
 
 namespace py = pybind11;
 
 namespace moveit_py
 {
-namespace bind_robot_trajectory
+namespace bind_robot_model
 {
-moveit_msgs::msg::RobotTrajectory
-getRobotTrajectoryMsg(const robot_trajectory::RobotTrajectoryConstPtr& robot_trajectory,
-                      const std::vector<std::string>& joint_filter);
-robot_trajectory::RobotTrajectory
-setRobotTrajectoryMsg(const std::shared_ptr<robot_trajectory::RobotTrajectory>& robot_trajectory,
-                      const moveit::core::RobotState& robot_state, const moveit_msgs::msg::RobotTrajectory& msg);
-
-void initRobotTrajectory(py::module& m);
-}  // namespace bind_robot_trajectory
+bool satisfiesPositionBounds(const moveit::core::JointModelGroup* jmg, const Eigen::VectorXd& joint_positions,
+                             const double margin);
+void initJointModelGroup(py::module& m);
+}  // namespace bind_robot_model
 }  // namespace moveit_py
