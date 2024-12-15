@@ -1,0 +1,20 @@
+ros-jazzy-moveit-ros-trajectory-cache (2.12.0-1bookworm) bookworm; urgency=high
+
+  * Enhancement/use hpp for headers (#3113 <https://github.com/ros-planning/moveit2/issues/3113>)
+  * Contributors: Tom Noble
+
+ -- Brandon Ong <methylDragon@intrinsic.ai>  Fri, 29 Nov 2024 00:00:00 -0000
+
+ros-jazzy-moveit-ros-trajectory-cache (2.11.0-1bookworm) bookworm; urgency=high
+
+
+
+ -- Brandon Ong <methylDragon@intrinsic.ai>  Mon, 16 Sep 2024 00:00:00 -0000
+
+ros-jazzy-moveit-ros-trajectory-cache (0.1.0-1bookworm) bookworm; urgency=high
+
+  * Add ``moveit_ros_trajectory_cache`` package for trajectory caching.
+
+ -- Brandon Ong <methylDragon@intrinsic.ai>  Fri, 17 May 2024 00:00:00 -0000
+
+
