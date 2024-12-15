@@ -59,6 +59,7 @@ def generate_moveit_rviz_launch(moveit_config):
     rviz_parameters = [
         moveit_config.planning_pipelines,
         moveit_config.robot_description_kinematics,
+        moveit_config.joint_limits,
     ]
 
     add_debuggable_node(
@@ -204,7 +205,12 @@ def generate_move_group_launch(moveit_config):
         )
     )
     # inhibit these default MoveGroup capabilities (space separated)
-    ld.add_action(DeclareLaunchArgument("disable_capabilities", default_value=""))
+    ld.add_action(
+        DeclareLaunchArgument(
+            "disable_capabilities",
+            default_value=moveit_config.move_group_capabilities["disable_capabilities"],
+        )
+    )
 
     # do not copy dynamics information from /joint_states to internal robot monitoring
     # default to false, because almost nothing in move_group relies on this information
@@ -244,7 +250,7 @@ def generate_move_group_launch(moveit_config):
         parameters=move_group_params,
         extra_debug_args=["--debug"],
         # Set the display variable, in case OpenGL code is used internally
-        additional_env={"DISPLAY": os.environ["DISPLAY"]},
+        additional_env={"DISPLAY": os.environ.get("DISPLAY", "")},
     )
     return ld
 
