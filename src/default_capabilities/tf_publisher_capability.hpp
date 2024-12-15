@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2012, Willow Garage, Inc.
+ *  Copyright (c) 2019, Hamburg University
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage nor the names of its
+ *   * Neither the name of Hamburg University nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,25 +32,28 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Ioan Sucan */
+/* Author: Jonas Tietz */
+
+#pragma once
 
 #include <moveit/move_group/move_group_capability.hpp>
-#include <pluginlib/class_loader.hpp>
-#include <fmt/format.h>
+#include <thread>
 
-int main(int /*argc*/, char** /*argv*/)
+namespace move_group
 {
-  try
-  {
-    pluginlib::ClassLoader<move_group::MoveGroupCapability> capability_plugin_loader("moveit_ros_move_group",
-                                                                                     "move_group::MoveGroupCapability");
-    std::cout << "Available capabilities:\n"
-              << fmt::format("{}", fmt::join(capability_plugin_loader.getDeclaredClasses(), "\n")) << '\n';
-  }
-  catch (pluginlib::PluginlibException& ex)
-  {
-    std::cerr << "Exception while creating plugin loader for move_group capabilities: " << ex.what() << '\n';
-  }
+class TfPublisher : public MoveGroupCapability
+{
+public:
+  TfPublisher();
+  ~TfPublisher() override;
 
-  return 0;
-}
+  void initialize() override;
+
+private:
+  void publishPlanningSceneFrames();
+  int rate_;
+  std::string prefix_;
+  std::thread thread_;
+  bool keep_running_;
+};
+}  // namespace move_group
