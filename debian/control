@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-hybrid-planning
+Section: misc
+Priority: optional
+Maintainer: MoveIt Release Team <moveit_releasers@googlegroups.com>
+Build-Depends: debhelper (>= 9.0.0), ros-jazzy-ament-cmake, ros-jazzy-ament-cmake-gtest <!nocheck>, ros-jazzy-ament-index-cpp, ros-jazzy-controller-manager <!nocheck>, ros-jazzy-moveit-common, ros-jazzy-moveit-configs-utils <!nocheck>, ros-jazzy-moveit-core, ros-jazzy-moveit-msgs, ros-jazzy-moveit-planners-ompl <!nocheck>, ros-jazzy-moveit-resources-panda-moveit-config <!nocheck>, ros-jazzy-moveit-ros-planning, ros-jazzy-moveit-ros-planning-interface, ros-jazzy-moveit-simple-controller-manager <!nocheck>, ros-jazzy-pluginlib, ros-jazzy-position-controllers <!nocheck>, ros-jazzy-rclcpp, ros-jazzy-rclcpp-action, ros-jazzy-rclcpp-components, ros-jazzy-robot-state-publisher <!nocheck>, ros-jazzy-ros-testing <!nocheck>, ros-jazzy-std-msgs, ros-jazzy-std-srvs, ros-jazzy-tf2-ros, ros-jazzy-trajectory-msgs, ros-jazzy-ros-workspace
+Homepage: http://moveit.ros.org
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-hybrid-planning
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-jazzy-ament-index-cpp, ros-jazzy-controller-manager, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-moveit-msgs, ros-jazzy-moveit-resources-panda-moveit-config, ros-jazzy-moveit-ros-planning, ros-jazzy-moveit-ros-planning-interface, ros-jazzy-pluginlib, ros-jazzy-position-controllers, ros-jazzy-rclcpp, ros-jazzy-rclcpp-action, ros-jazzy-rclcpp-components, ros-jazzy-robot-state-publisher, ros-jazzy-rviz2, ros-jazzy-std-msgs, ros-jazzy-std-srvs, ros-jazzy-tf2-ros, ros-jazzy-trajectory-msgs, ros-jazzy-ros-workspace
+Description: Hybrid planning components of MoveIt 2
