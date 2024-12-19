@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-resources-prbt-ikfast-manipulator-plugin
+Section: misc
+Priority: optional
+Maintainer: Alexander Gutenkunst <a.gutenkunst@pilz.de>
+Build-Depends: debhelper (>= 9.0.0), ros-jazzy-ament-cmake, ros-jazzy-generate-parameter-library, ros-jazzy-moveit-core, ros-jazzy-pluginlib, ros-jazzy-rclcpp, ros-jazzy-tf2-eigen, ros-jazzy-tf2-eigen-kdl, ros-jazzy-tf2-geometry-msgs, ros-jazzy-tf2-kdl, ros-jazzy-ros-workspace
+Homepage: http://moveit.ros.org
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-resources-prbt-ikfast-manipulator-plugin
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-jazzy-generate-parameter-library, ros-jazzy-moveit-core, ros-jazzy-pluginlib, ros-jazzy-rclcpp, ros-jazzy-tf2-geometry-msgs, ros-jazzy-tf2-kdl, ros-jazzy-ros-workspace
+Description: The prbt_ikfast_manipulator_plugin package
