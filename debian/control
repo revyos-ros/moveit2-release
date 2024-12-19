@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-planners-chomp
+Section: misc
+Priority: optional
+Maintainer: Chittaranjan Srinivas Swaminathan <chitt@live.in>
+Build-Depends: debhelper (>= 9.0.0), ros-jazzy-ament-cmake, ros-jazzy-chomp-motion-planner, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-pluginlib, ros-jazzy-rclcpp, ros-jazzy-ros-workspace
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-planners-chomp
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-jazzy-chomp-motion-planner, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-pluginlib, ros-jazzy-rclcpp, ros-jazzy-ros-workspace
+Description: The interface for using CHOMP within MoveIt
