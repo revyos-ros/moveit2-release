@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-ros-trajectory-cache
+Section: misc
+Priority: optional
+Maintainer: Brandon Ong <methylDragon@intrinsic.ai>
+Build-Depends: debhelper (>= 9.0.0), python3-pytest <!nocheck>, ros-jazzy-ament-cmake, ros-jazzy-ament-cmake-pytest <!nocheck>, ros-jazzy-ament-cmake-uncrustify <!nocheck>, ros-jazzy-geometry-msgs, ros-jazzy-launch-pytest <!nocheck>, ros-jazzy-launch-testing-ament-cmake <!nocheck>, ros-jazzy-moveit-common, ros-jazzy-moveit-configs-utils <!nocheck>, ros-jazzy-moveit-planners-ompl <!nocheck>, ros-jazzy-moveit-resources <!nocheck>, ros-jazzy-moveit-ros-planning-interface, ros-jazzy-rclcpp, ros-jazzy-rclcpp-action, ros-jazzy-rmf-utils <!nocheck>, ros-jazzy-robot-state-publisher <!nocheck>, ros-jazzy-ros2-control <!nocheck>, ros-jazzy-tf2-ros, ros-jazzy-trajectory-msgs, ros-jazzy-warehouse-ros-sqlite <!nocheck>, ros-jazzy-ros-workspace
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-ros-trajectory-cache
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, python3-yaml, ros-jazzy-geometry-msgs, ros-jazzy-moveit-common, ros-jazzy-moveit-ros, ros-jazzy-moveit-ros-planning-interface, ros-jazzy-rclcpp, ros-jazzy-rclcpp-action, ros-jazzy-tf2-ros, ros-jazzy-trajectory-msgs, ros-jazzy-xacro, ros-jazzy-ros-workspace
+Description: A trajectory cache for MoveIt 2 motion plans and cartesian plans.
