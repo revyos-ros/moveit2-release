@@ -37,18 +37,11 @@
 #include <moveit_setup_framework/templates.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <boost/algorithm/string.hpp>  // for string find and replace in templates
-#include <moveit/utils/logger.hpp>
 
 namespace moveit_setup
 {
-namespace
-{
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.setup_assistant.setup.templates");
-}
-}  // namespace
-std::vector<TemplateVariable> TemplatedGeneratedFile::variables;
+std::vector<TemplateVariable> TemplatedGeneratedFile::variables_;
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit_setup.templates");
 
 bool TemplatedGeneratedFile::write()
 {
@@ -57,7 +50,7 @@ bool TemplatedGeneratedFile::write()
   // Error check file
   if (!std::filesystem::is_regular_file(template_path))
   {
-    RCLCPP_ERROR_STREAM(getLogger(), "Unable to find template file " << template_path.string());
+    RCLCPP_ERROR_STREAM(LOGGER, "Unable to find template file " << template_path.string());
     return false;
   }
 
@@ -65,7 +58,7 @@ bool TemplatedGeneratedFile::write()
   std::ifstream template_stream(template_path);
   if (!template_stream.good())  // File not found
   {
-    RCLCPP_ERROR_STREAM(getLogger(), "Unable to load file " << template_path.string());
+    RCLCPP_ERROR_STREAM(LOGGER, "Unable to load file " << template_path.string());
     return false;
   }
 
@@ -78,7 +71,7 @@ bool TemplatedGeneratedFile::write()
   template_stream.close();
 
   // Replace keywords in string ------------------------------------------------------------
-  for (const auto& variable : variables)
+  for (const auto& variable : variables_)
   {
     std::string key_with_brackets = "[" + variable.key + "]";
     boost::replace_all(template_string, key_with_brackets, variable.value);
@@ -91,7 +84,7 @@ bool TemplatedGeneratedFile::write()
   std::ofstream output_stream(file_path, std::ios_base::trunc);
   if (!output_stream.good())
   {
-    RCLCPP_ERROR_STREAM(getLogger(), "Unable to open file for writing " << file_path.string());
+    RCLCPP_ERROR_STREAM(LOGGER, "Unable to open file for writing " << file_path.string());
     return false;
   }
 

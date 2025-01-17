@@ -34,21 +34,14 @@
 
 /* Author: Sachin Chitta, Dave Coleman */
 
-#include <moveit/kinematics_base/kinematics_base.hpp>
-#include <moveit/robot_model/joint_model_group.hpp>
+#include <moveit/kinematics_base/kinematics_base.h>
+#include <moveit/robot_model/joint_model_group.h>
 #include <rclcpp/logger.hpp>
-#include <moveit/utils/logger.hpp>
 
 namespace kinematics
 {
-namespace
-{
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.core.kinematics_base");
-}
-}  // namespace
-
+// Logger
+const rclcpp::Logger KinematicsBase::LOGGER = rclcpp::get_logger("moveit_kinematics_base.kinematics_base");
 const double KinematicsBase::DEFAULT_SEARCH_DISCRETIZATION = 0.1;
 const double KinematicsBase::DEFAULT_TIMEOUT = 1.0;
 
@@ -93,7 +86,7 @@ bool KinematicsBase::initialize(const rclcpp::Node::SharedPtr& /*node*/,
                                 const std::string& /*base_frame*/, const std::vector<std::string>& /*tip_frames*/,
                                 double /*search_discretization*/)
 {
-  RCLCPP_ERROR(getLogger(),
+  RCLCPP_ERROR(LOGGER,
                "IK plugin for group '%s' relies on deprecated API. "
                "Please implement initialize(rclcpp::Node::SharedPtr, RobotModel, ...).",
                group_name.c_str());
@@ -102,7 +95,7 @@ bool KinematicsBase::initialize(const rclcpp::Node::SharedPtr& /*node*/,
 
 bool KinematicsBase::setRedundantJoints(const std::vector<unsigned int>& redundant_joint_indices)
 {
-  for (unsigned int redundant_joint_index : redundant_joint_indices)
+  for (const unsigned int& redundant_joint_index : redundant_joint_indices)
   {
     if (redundant_joint_index >= getJointNames().size())
     {
@@ -120,16 +113,12 @@ bool KinematicsBase::setRedundantJoints(const std::vector<std::string>& redundan
   const std::vector<std::string>& jnames = getJointNames();
   std::vector<unsigned int> redundant_joint_indices;
   for (const std::string& redundant_joint_name : redundant_joint_names)
-  {
     for (std::size_t j = 0; j < jnames.size(); ++j)
-    {
       if (jnames[j] == redundant_joint_name)
       {
         redundant_joint_indices.push_back(j);
         break;
       }
-    }
-  }
   return redundant_joint_indices.size() == redundant_joint_names.size() ? setRedundantJoints(redundant_joint_indices) :
                                                                           false;
 }
@@ -178,14 +167,14 @@ bool KinematicsBase::getPositionIK(const std::vector<geometry_msgs::msg::Pose>& 
 
   if (ik_poses.size() != 1)
   {
-    RCLCPP_ERROR(getLogger(), "This kinematic solver does not support getPositionIK for multiple tips");
+    RCLCPP_ERROR(LOGGER, "This kinematic solver does not support getPositionIK for multiple tips");
     result.kinematic_error = KinematicErrors::MULTIPLE_TIPS_NOT_SUPPORTED;
     return false;
   }
 
   if (ik_poses.empty())
   {
-    RCLCPP_ERROR(getLogger(), "Input ik_poses array is empty");
+    RCLCPP_ERROR(LOGGER, "Input ik_poses array is empty");
     result.kinematic_error = KinematicErrors::EMPTY_TIP_POSES;
     return false;
   }

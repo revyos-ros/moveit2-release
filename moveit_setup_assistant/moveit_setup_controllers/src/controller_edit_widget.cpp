@@ -163,7 +163,7 @@ ControllerEditWidget::ControllerEditWidget(QWidget* parent, const FieldPointers&
   layout->addLayout(controls_layout);
 
   // Finish Layout --------------------------------------------------
-  setLayout(layout);
+  this->setLayout(layout);
 }
 
 // ******************************************************************************************

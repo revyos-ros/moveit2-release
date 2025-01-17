@@ -56,7 +56,7 @@
 #include <QVBoxLayout>
 
 #include <regex>
-#include <moveit/robot_state/conversions.hpp>
+#include <moveit/robot_state/conversions.h>
 
 namespace moveit_setup
 {
@@ -73,7 +73,7 @@ void ControllersWidget::onInit()
   layout->setAlignment(Qt::AlignTop);
 
   // Title
-  setWindowTitle("Controller Configuration");  // title of window
+  this->setWindowTitle("Controller Configuration");  // title of window
 
   // Top Header Area ------------------------------------------------
   auto header = new HeaderWidget("Setup " + setup_step_->getName(), setup_step_->getInstructions(), this);
@@ -112,7 +112,7 @@ void ControllersWidget::onInit()
   stacked_widget_->addWidget(joint_groups_widget_);      // screen index 3
   layout->addWidget(stacked_widget_);
 
-  setLayout(layout);
+  this->setLayout(layout);
 }
 
 // ******************************************************************************************
@@ -355,7 +355,7 @@ void ControllersWidget::deleteController()
   // Delete actual controller
   if (setup_step_->deleteController(controller_name))
   {
-    RCLCPP_INFO_STREAM(setup_step_->getLogger(), "Controller " << controller_name << " deleted successfully");
+    RCLCPP_INFO_STREAM(setup_step_->getLogger(), "Controller " << controller_name << " deleted succefully");
   }
   else
   {
@@ -489,7 +489,7 @@ void ControllersWidget::previewSelectedGroup(const std::vector<std::string>& gro
 }
 
 // ******************************************************************************************
-// Called when an item is selected from the controllers tree
+// Called when an item is seleceted from the controllers tree
 // ******************************************************************************************
 void ControllersWidget::previewSelected(QTreeWidgetItem* selected_item, int /*column*/)
 {
@@ -781,13 +781,9 @@ void ControllersWidget::changeScreen(int index)
 void ControllersWidget::alterTree(const QString& link)
 {
   if (link.contains("expand"))
-  {
     controllers_tree_->expandAll();
-  }
   else
-  {
     controllers_tree_->collapseAll();
-  }
 }
 
 void ControllersWidget::itemSelectionChanged()

@@ -393,13 +393,9 @@ void DefaultCollisionsWidget::showHeaderContextMenu(const QPoint& p)
 
   QMenu menu;
   if (clicked_section_ < 0)
-  {
     menu.addAction(header_actions_.at(0));  // only 'show' action
-  }
   else
-  {
     menu.addActions(header_actions_);
-  }
   menu.exec(global);
 
   clicked_headers_ = {};
@@ -442,19 +438,15 @@ void DefaultCollisionsWidget::hideOtherSections()
   {
     header = collision_table_->horizontalHeader();
     for (const QModelIndex& index : selection_model_->selectedColumns())
-    {
       if (!header->isSectionHidden(index.column()))
         list << index.column();
-    }
   }
   else if (clicked_headers_ == Qt::Vertical)
   {
     header = collision_table_->verticalHeader();
     for (const QModelIndex& index : selection_model_->selectedRows())
-    {
       if (!header->isSectionHidden(index.row()))
         list << index.row();
-    }
   }
 
   // if somewhere else than the selection was clicked, hide only this row/column
@@ -582,9 +574,7 @@ void DefaultCollisionsWidget::toggleSelection(QItemSelection selection)
   {
     QModelIndex input_index;
     if (cur_idx.flags() & Qt::ItemIsUserCheckable)
-    {
       input_index = cur_idx;  // if current index is checkable, this serves as input
-    }
     else
     {  // search for first checkable index in selection that can serve as input
       for (const auto idx : selection.indexes())

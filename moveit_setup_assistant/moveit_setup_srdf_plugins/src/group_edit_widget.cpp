@@ -219,7 +219,7 @@ GroupEditWidget::GroupEditWidget(QWidget* parent, PlanningGroups& setup_step) : 
   layout->addLayout(controls_layout);
 
   // Finish Layout --------------------------------------------------
-  setLayout(layout);
+  this->setLayout(layout);
 }
 
 // ******************************************************************************************

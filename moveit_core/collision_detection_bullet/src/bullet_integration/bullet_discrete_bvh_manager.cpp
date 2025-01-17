@@ -31,11 +31,12 @@
 
 /* Author: Levi Armstrong, Jens Petit */
 
-#include <moveit/collision_detection_bullet/bullet_integration/bullet_discrete_bvh_manager.hpp>
+#include <moveit/collision_detection_bullet/bullet_integration/bullet_discrete_bvh_manager.h>
 
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
-#include <moveit/collision_detection_bullet/bullet_integration/ros_bullet_utils.hpp>
+
+static const rclcpp::Logger BULLET_LOGGER = rclcpp::get_logger("collision_detection.bullet");
 
 namespace collision_detection_bullet
 {
@@ -70,14 +71,14 @@ void BulletDiscreteBVHManager::contactTest(collision_detection::CollisionResult&
   broadphase_->calculateOverlappingPairs(dispatcher_.get());
   btOverlappingPairCache* pair_cache = broadphase_->getOverlappingPairCache();
 
-  RCLCPP_DEBUG_STREAM(getLogger(), "Num overlapping candidates " << pair_cache->getNumOverlappingPairs());
+  RCLCPP_DEBUG_STREAM(BULLET_LOGGER, "Num overlapping candidates " << pair_cache->getNumOverlappingPairs());
 
   BroadphaseContactResultCallback cc(cdata, contact_distance_, acm, self);
   TesseractCollisionPairCallback collision_callback(dispatch_info_, dispatcher_.get(), cc);
   pair_cache->processAllOverlappingPairs(&collision_callback, dispatcher_.get());
 
-  RCLCPP_DEBUG_STREAM(getLogger(), (collisions.collision ? "In" : "No")
-                                       << " collision with " << collisions.contact_count << " collisions");
+  RCLCPP_DEBUG_STREAM(BULLET_LOGGER, (collisions.collision ? "In" : "No")
+                                         << " collision with " << collisions.contact_count << " collisions");
 }
 
 void BulletDiscreteBVHManager::addCollisionObject(const CollisionObjectWrapperPtr& cow)

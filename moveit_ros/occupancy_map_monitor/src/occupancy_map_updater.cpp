@@ -34,23 +34,16 @@
 
 /* Author: Ioan Sucan, Jon Binney */
 
-#include <moveit/occupancy_map_monitor/occupancy_map_monitor.hpp>
-#include <moveit/occupancy_map_monitor/occupancy_map_updater.hpp>
+#include <moveit/occupancy_map_monitor/occupancy_map_monitor.h>
+#include <moveit/occupancy_map_monitor/occupancy_map_updater.h>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 #include <string>
-#include <moveit/utils/logger.hpp>
 
 namespace occupancy_map_monitor
 {
-namespace
-{
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.ros.occupancy_map_updater");
-}
-}  // namespace
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.ros.occupancy_map_updater");
 
 OccupancyMapUpdater::OccupancyMapUpdater(const std::string& type) : type_(type)
 {
@@ -72,7 +65,7 @@ void OccupancyMapUpdater::setMonitor(OccupancyMapMonitor* monitor)
 //     if (params[param_name].getType() == XmlRpc::XmlRpcValue::TypeInt)
 //       *value = static_cast<int>(params[param_name]);
 //     else
-//       *value = static_cast<double>(params[param_name]);
+//       *value = (double)params[param_name];
 //   }
 // }
 
@@ -93,24 +86,18 @@ bool OccupancyMapUpdater::updateTransformCache(const std::string& target_frame, 
     if (!success)
     {
       rclcpp::Clock steady_clock(RCL_STEADY_TIME);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
       RCLCPP_ERROR_THROTTLE(
-          getLogger(), steady_clock, 1000,
+          LOGGER, steady_clock, 1000,
           "Transform cache was not updated. Self-filtering may fail. If transforms were not available yet, consider "
           "setting robot_description_planning.shape_transform_cache_lookup_wait_time to wait longer for transforms");
-#pragma GCC diagnostic pop
     }
     return success;
   }
   else
   {
     rclcpp::Clock steady_clock(RCL_STEADY_TIME);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-    RCLCPP_WARN_THROTTLE(getLogger(), steady_clock, 1000,
+    RCLCPP_WARN_THROTTLE(LOGGER, steady_clock, 1000,
                          "No callback provided for updating the transform cache for octomap updaters");
-#pragma GCC diagnostic pop
     return false;
   }
 }

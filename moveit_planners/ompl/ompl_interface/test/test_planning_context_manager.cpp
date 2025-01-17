@@ -46,25 +46,25 @@
  * TODO(jeroendm) I also tried something similar with position constraints, but get a segmentation fault
  * that occurs in the 'geometric_shapes' package, in the method 'useDimensions' in 'bodies.h'.
  * git permalink:
- * https://github.com/moveit/geometric_shapes/blob/df0478870b8592ce789ee1919f3124058c4327d7/include/geometric_shapes/bodies.h#L196
+ * https://github.com/ros-planning/geometric_shapes/blob/df0478870b8592ce789ee1919f3124058c4327d7/include/geometric_shapes/bodies.h#L196
  *
  **/
 
-#include "load_test_robot.hpp"
+#include "load_test_robot.h"
 
 #include <gtest/gtest.h>
 
 #include <tf2_eigen/tf2_eigen.hpp>
 
-#include <moveit/ompl_interface/planning_context_manager.hpp>
-#include <moveit/planning_scene/planning_scene.hpp>
-#include <moveit/planning_interface/planning_request.hpp>
-#include <moveit/robot_state/conversions.hpp>
-#include <moveit/kinematic_constraints/utils.hpp>
-#include <moveit/constraint_samplers/constraint_sampler_manager.hpp>
-#include <moveit/ompl_interface/parameterization/joint_space/joint_model_state_space.hpp>
-#include <moveit/ompl_interface/parameterization/joint_space/constrained_planning_state_space.hpp>
-#include <moveit/utils/logger.hpp>
+#include <moveit/ompl_interface/planning_context_manager.h>
+#include <moveit/planning_scene/planning_scene.h>
+#include <moveit/planning_interface/planning_request.h>
+#include <moveit/robot_state/conversions.h>
+#include <moveit/kinematic_constraints/utils.h>
+#include <moveit/constraint_samplers/constraint_sampler_manager.h>
+#include <moveit/ompl_interface/parameterization/joint_space/joint_model_state_space.h>
+
+// static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.ompl_planning.test.test_planning_context_manager");
 
 /** \brief Generic implementation of the tests that can be executed on different robots. **/
 class TestPlanningContext : public ompl_interface_testing::LoadTestRobot, public testing::Test
@@ -73,7 +73,6 @@ public:
   TestPlanningContext(const std::string& robot_name, const std::string& group_name)
     : LoadTestRobot(robot_name, group_name), node_(std::make_shared<rclcpp::Node>("planning_context_manager_test"))
   {
-    moveit::setNodeLoggerName(node_->get_name());
   }
 
   void testSimpleRequest(const std::vector<double>& start, const std::vector<double>& goal)
@@ -108,8 +107,7 @@ public:
 
     // solve the planning problem
     planning_interface::MotionPlanDetailedResponse res;
-    pc->solve(res);
-    ASSERT_TRUE(res.error_code.val == moveit_msgs::msg::MoveItErrorCodes::SUCCESS);
+    ASSERT_TRUE(pc->solve(res));
   }
 
   void testPathConstraints(const std::vector<double>& start, const std::vector<double>& goal)
@@ -117,14 +115,10 @@ public:
     SCOPED_TRACE("testPathConstraints");
 
     // create all the test specific input necessary to make the getPlanningContext call possible
-    const auto& joint_names = joint_model_group_->getJointModelNames();
-
     planning_interface::PlannerConfigurationSettings pconfig_settings;
     pconfig_settings.group = group_name_;
     pconfig_settings.name = group_name_;
-    pconfig_settings.config = { { "enforce_joint_model_state_space", "0" },
-                                { "projection_evaluator", "joints(" + joint_names[0] + "," + joint_names[1] + ")" },
-                                { "type", "geometric::PRM" } };
+    pconfig_settings.config = { { "enforce_joint_model_state_space", "0" } };
 
     planning_interface::PlannerConfigurationMap pconfig_map{ { pconfig_settings.name, pconfig_settings } };
     moveit_msgs::msg::MoveItErrorCodes error_code;
@@ -151,12 +145,11 @@ public:
 
     EXPECT_NE(pc->getOMPLSimpleSetup(), nullptr);
 
-    // As the joint_model_group_ has exactly one constraint, we expect a constrained planning state space
-    EXPECT_NE(dynamic_cast<ompl_interface::ConstrainedPlanningStateSpace*>(pc->getOMPLStateSpace().get()), nullptr);
+    // As the joint_model_group_ has no IK solver initialized, we expect a joint model state space
+    EXPECT_NE(dynamic_cast<ompl_interface::JointModelStateSpace*>(pc->getOMPLStateSpace().get()), nullptr);
 
     planning_interface::MotionPlanDetailedResponse response;
-    pc->solve(response);
-    ASSERT_TRUE(response.error_code.val == moveit_msgs::msg::MoveItErrorCodes::SUCCESS);
+    ASSERT_TRUE(pc->solve(response));
 
     // Are the path constraints created in the planning context?
     auto path_constraints = pc->getPathConstraints();
@@ -169,7 +162,7 @@ public:
     // Check if all the states in the solution satisfy the path constraints.
     // A detailed response returns 3 solutions: the ompl solution, the simplified solution and the interpolated
     // solution. We test all of them here.
-    for (const robot_trajectory::RobotTrajectoryPtr& trajectory : response.trajectory)
+    for (const robot_trajectory::RobotTrajectoryPtr& trajectory : response.trajectory_)
     {
       for (std::size_t pt_index = 0; pt_index < trajectory->getWayPointCount(); ++pt_index)
       {
@@ -188,13 +181,12 @@ public:
 
     EXPECT_NE(pc->getOMPLSimpleSetup(), nullptr);
 
-    // As the joint_model_group_ has exactly one constraint, we expect a constrained planning state space
-    EXPECT_NE(dynamic_cast<ompl_interface::ConstrainedPlanningStateSpace*>(pc->getOMPLStateSpace().get()), nullptr);
+    // As the joint_model_group_ has no IK solver initialized, we expect a joint model state space
+    EXPECT_NE(dynamic_cast<ompl_interface::JointModelStateSpace*>(pc->getOMPLStateSpace().get()), nullptr);
 
-    // Create a new response, because the solve method does not clear the given response
+    // Create a new response, because the solve method does not clear the given respone
     planning_interface::MotionPlanDetailedResponse response2;
-    pc->solve(response2);
-    ASSERT_TRUE(response2.error_code.val == moveit_msgs::msg::MoveItErrorCodes::SUCCESS);
+    ASSERT_TRUE(pc->solve(response2));
 
     // Are the path constraints created in the planning context?
     path_constraints = pc->getPathConstraints();
@@ -205,7 +197,7 @@ public:
     // Check if all the states in the solution satisfy the path constraints.
     // A detailed response returns 3 solutions: the ompl solution, the simplified solution and the interpolated
     // solution. We test all of them here.
-    for (const robot_trajectory::RobotTrajectoryPtr& trajectory : response2.trajectory)
+    for (const robot_trajectory::RobotTrajectoryPtr& trajectory : response2.trajectory_)
     {
       for (std::size_t pt_index = 0; pt_index < trajectory->getWayPointCount(); ++pt_index)
       {
@@ -324,11 +316,10 @@ TEST_F(PandaTestPlanningContext, testSimpleRequest)
   testSimpleRequest({ 0., -0.785, 0., -2.356, 0, 1.571, 0.785 }, { 0., -0.785, 0., -2.356, 0, 1.571, 0.685 });
 }
 
-// TODO(seng): This test is temporarily disabled as it is flaky since #1300. Re-enable when #2015 is resolved.
-// TEST_F(PandaTestPlanningContext, testPathConstraints)
-// {
-//   testPathConstraints({ 0., -0.785, 0., -2.356, 0., 1.571, 0.785 }, { .0, -0.785, 0., -2.356, 0., 1.571, 0.685 });
-// }
+TEST_F(PandaTestPlanningContext, testPathConstraints)
+{
+  testPathConstraints({ 0., -0.785, 0., -2.356, 0., 1.571, 0.785 }, { .0, -0.785, 0., -2.356, 0., 1.571, 0.685 });
+}
 
 /***************************************************************************
  * Run all tests on the Fanuc robot

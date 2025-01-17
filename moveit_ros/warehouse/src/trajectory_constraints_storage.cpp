@@ -34,8 +34,7 @@
 
 /* Author: Mario Prats, Ioan Sucan */
 
-#include <moveit/warehouse/trajectory_constraints_storage.hpp>
-#include <moveit/utils/logger.hpp>
+#include <moveit/warehouse/trajectory_constraints_storage.h>
 
 #include <utility>
 
@@ -45,12 +44,13 @@ const std::string moveit_warehouse::TrajectoryConstraintsStorage::CONSTRAINTS_ID
 const std::string moveit_warehouse::TrajectoryConstraintsStorage::CONSTRAINTS_GROUP_NAME = "group_id";
 const std::string moveit_warehouse::TrajectoryConstraintsStorage::ROBOT_NAME = "robot_id";
 
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.ros.warehouse.trajectory_constraints_storage");
+
 using warehouse_ros::Metadata;
 using warehouse_ros::Query;
 
 moveit_warehouse::TrajectoryConstraintsStorage::TrajectoryConstraintsStorage(warehouse_ros::DatabaseConnection::Ptr conn)
   : MoveItMessageStorage(std::move(conn))
-  , logger_(moveit::getLogger("moveit.ros.warehouse_trajectory_constraints_storage"))
 {
   createCollections();
 }
@@ -83,7 +83,7 @@ void moveit_warehouse::TrajectoryConstraintsStorage::addTrajectoryConstraints(
   metadata->append(ROBOT_NAME, robot);
   metadata->append(CONSTRAINTS_GROUP_NAME, group);
   constraints_collection_->insert(msg, metadata);
-  RCLCPP_DEBUG(logger_, "%s constraints '%s'", replace ? "Replaced" : "Added", name.c_str());
+  RCLCPP_DEBUG(LOGGER, "%s constraints '%s'", replace ? "Replaced" : "Added", name.c_str());
 }
 
 bool moveit_warehouse::TrajectoryConstraintsStorage::hasTrajectoryConstraints(const std::string& name,
@@ -122,10 +122,8 @@ void moveit_warehouse::TrajectoryConstraintsStorage::getKnownTrajectoryConstrain
   std::vector<TrajectoryConstraintsWithMetadata> constr =
       constraints_collection_->queryList(q, true, CONSTRAINTS_ID_NAME, true);
   for (TrajectoryConstraintsWithMetadata& traj_constraint : constr)
-  {
     if (traj_constraint->lookupField(CONSTRAINTS_ID_NAME))
       names.push_back(traj_constraint->lookupString(CONSTRAINTS_ID_NAME));
-  }
 }
 
 bool moveit_warehouse::TrajectoryConstraintsStorage::getTrajectoryConstraints(TrajectoryConstraintsWithMetadata& msg_m,
@@ -141,9 +139,7 @@ bool moveit_warehouse::TrajectoryConstraintsStorage::getTrajectoryConstraints(Tr
     q->append(CONSTRAINTS_GROUP_NAME, group);
   std::vector<TrajectoryConstraintsWithMetadata> constr = constraints_collection_->queryList(q, false);
   if (constr.empty())
-  {
     return false;
-  }
   else
   {
     msg_m = constr.back();
@@ -165,7 +161,7 @@ void moveit_warehouse::TrajectoryConstraintsStorage::renameTrajectoryConstraints
   Metadata::Ptr m = constraints_collection_->createMetadata();
   m->append(CONSTRAINTS_ID_NAME, new_name);
   constraints_collection_->modifyMetadata(q, m);
-  RCLCPP_DEBUG(logger_, "Renamed constraints from '%s' to '%s'", old_name.c_str(), new_name.c_str());
+  RCLCPP_DEBUG(LOGGER, "Renamed constraints from '%s' to '%s'", old_name.c_str(), new_name.c_str());
 }
 
 void moveit_warehouse::TrajectoryConstraintsStorage::removeTrajectoryConstraints(const std::string& name,
@@ -179,5 +175,5 @@ void moveit_warehouse::TrajectoryConstraintsStorage::removeTrajectoryConstraints
   if (!group.empty())
     q->append(CONSTRAINTS_GROUP_NAME, group);
   unsigned int rem = constraints_collection_->removeMessages(q);
-  RCLCPP_DEBUG(logger_, "Removed %u TrajectoryConstraints messages (named '%s')", rem, name.c_str());
+  RCLCPP_DEBUG(LOGGER, "Removed %u TrajectoryConstraints messages (named '%s')", rem, name.c_str());
 }

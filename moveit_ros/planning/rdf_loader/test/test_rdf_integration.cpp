@@ -34,7 +34,7 @@
 
 /* Author: David V. Lu!! */
 
-#include <moveit/rdf_loader/rdf_loader.hpp>
+#include <moveit/rdf_loader/rdf_loader.h>
 #include <rclcpp/rclcpp.hpp>
 #include <gtest/gtest.h>
 

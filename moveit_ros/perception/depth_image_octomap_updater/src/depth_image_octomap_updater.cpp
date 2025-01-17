@@ -34,21 +34,20 @@
 
 /* Author: Ioan Sucan, Suat Gedikli */
 
-#include <moveit/depth_image_octomap_updater/depth_image_octomap_updater.hpp>
-#include <moveit/occupancy_map_monitor/occupancy_map_monitor.hpp>
-#include <cmath>
+#include <moveit/depth_image_octomap_updater/depth_image_octomap_updater.h>
+#include <moveit/occupancy_map_monitor/occupancy_map_monitor.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2/LinearMath/Vector3.h>
 #include <tf2/LinearMath/Transform.h>
 #include <geometric_shapes/shape_operations.h>
 #include <sensor_msgs/image_encodings.hpp>
 #include <stdint.h>
-#include <moveit/utils/logger.hpp>
 
 #include <memory>
 
 namespace occupancy_map_monitor
 {
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.ros.perception.depth_image_octomap_updater");
 
 DepthImageOctomapUpdater::DepthImageOctomapUpdater()
   : OccupancyMapUpdater("DepthImageUpdater")
@@ -71,13 +70,12 @@ DepthImageOctomapUpdater::DepthImageOctomapUpdater()
   , K2_(0.0)
   , K4_(0.0)
   , K5_(0.0)
-  , logger_(moveit::getLogger("moveit.ros.depth_image_octomap_updater"))
 {
 }
 
 DepthImageOctomapUpdater::~DepthImageOctomapUpdater()
 {
-  sub_depth_image_.shutdown();
+  stopHelper();
 }
 
 bool DepthImageOctomapUpdater::setParams(const std::string& name_space)
@@ -100,7 +98,7 @@ bool DepthImageOctomapUpdater::setParams(const std::string& name_space)
   }
   catch (const rclcpp::exceptions::InvalidParameterTypeException& e)
   {
-    RCLCPP_ERROR_STREAM(logger_, e.what() << '\n');
+    RCLCPP_ERROR_STREAM(LOGGER, e.what() << '\n');
     return false;
   }
 }
@@ -131,6 +129,7 @@ bool DepthImageOctomapUpdater::initialize(const rclcpp::Node::SharedPtr& node)
 
 void DepthImageOctomapUpdater::start()
 {
+  rmw_qos_profile_t custom_qos = rmw_qos_profile_system_default;
   pub_model_depth_image_ = model_depth_transport_->advertiseCamera("model_depth", 1);
 
   std::string prefix = "";
@@ -139,13 +138,9 @@ void DepthImageOctomapUpdater::start()
 
   pub_model_depth_image_ = model_depth_transport_->advertiseCamera(prefix + "model_depth", 1);
   if (!filtered_cloud_topic_.empty())
-  {
     pub_filtered_depth_image_ = filtered_depth_transport_->advertiseCamera(prefix + filtered_cloud_topic_, 1);
-  }
   else
-  {
     pub_filtered_depth_image_ = filtered_depth_transport_->advertiseCamera(prefix + "filtered_depth", 1);
-  }
 
   pub_filtered_label_image_ = filtered_label_transport_->advertiseCamera(prefix + "filtered_label", 1);
 
@@ -155,10 +150,15 @@ void DepthImageOctomapUpdater::start()
              const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg) {
         return depthImageCallback(depth_msg, info_msg);
       },
-      "raw", rmw_qos_profile_sensor_data);
+      "raw", custom_qos);
 }
 
 void DepthImageOctomapUpdater::stop()
+{
+  stopHelper();
+}
+
+void DepthImageOctomapUpdater::stopHelper()
 {
   sub_depth_image_.shutdown();
 }
@@ -169,9 +169,7 @@ mesh_filter::MeshHandle DepthImageOctomapUpdater::excludeShape(const shapes::Sha
   if (mesh_filter_)
   {
     if (shape->type == shapes::MESH)
-    {
       h = mesh_filter_->addMesh(static_cast<const shapes::Mesh&>(*shape));
-    }
     else
     {
       std::unique_ptr<shapes::Mesh> m(shapes::createMeshFromShape(shape.get()));
@@ -180,7 +178,7 @@ mesh_filter::MeshHandle DepthImageOctomapUpdater::excludeShape(const shapes::Sha
     }
   }
   else
-    RCLCPP_ERROR(logger_, "Mesh filter not yet initialized!");
+    RCLCPP_ERROR(LOGGER, "Mesh filter not yet initialized!");
   return h;
 }
 
@@ -195,7 +193,7 @@ bool DepthImageOctomapUpdater::getShapeTransform(mesh_filter::MeshHandle h, Eige
   ShapeTransformCache::const_iterator it = transform_cache_.find(h);
   if (it == transform_cache_.end())
   {
-    RCLCPP_ERROR(logger_, "Internal error. Mesh filter handle %u not found", h);
+    RCLCPP_ERROR(LOGGER, "Internal error. Mesh filter handle %u not found", h);
     return false;
   }
   transform = it->second;
@@ -204,20 +202,23 @@ bool DepthImageOctomapUpdater::getShapeTransform(mesh_filter::MeshHandle h, Eige
 
 namespace
 {
-const bool HOST_IS_BIG_ENDIAN = []() {
+bool host_is_big_endian()
+{
   union
   {
     uint32_t i;
     char c[sizeof(uint32_t)];
   } bint = { 0x01020304 };
   return bint.c[0] == 1;
-}();
+}
 }  // namespace
+
+static const bool HOST_IS_BIG_ENDIAN = host_is_big_endian();
 
 void DepthImageOctomapUpdater::depthImageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& depth_msg,
                                                   const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg)
 {
-  RCLCPP_DEBUG(logger_, "Received a new depth image message (frame = '%s', encoding='%s')",
+  RCLCPP_DEBUG(LOGGER, "Received a new depth image message (frame = '%s', encoding='%s')",
                depth_msg->header.frame_id.c_str(), depth_msg->encoding.c_str());
   rclcpp::Time start = node_->now();
 
@@ -236,22 +237,16 @@ void DepthImageOctomapUpdater::depthImageCallback(const sensor_msgs::msg::Image:
     {
       const double dt_start = (start - last_depth_callback_start_).seconds();
       if (image_callback_count_ < 2)
-      {
         average_callback_dt_ = dt_start;
-      }
       else
-      {
-        average_callback_dt_ = ((image_callback_count_ - 1) * average_callback_dt_ + dt_start) /
-                               static_cast<double>(image_callback_count_);
-      }
+        average_callback_dt_ =
+            ((image_callback_count_ - 1) * average_callback_dt_ + dt_start) / (double)image_callback_count_;
     }
   }
   else
-  {
     // every 1000 updates we reset the counter almost to the beginning (use 2 so we don't have so much of a ripple in
     // the measured average)
     image_callback_count_ = 2;
-  }
   last_depth_callback_start_ = start;
   ++image_callback_count_;
 
@@ -261,9 +256,7 @@ void DepthImageOctomapUpdater::depthImageCallback(const sensor_msgs::msg::Image:
   /* get transform for cloud into map frame */
   tf2::Stamped<tf2::Transform> map_h_sensor;
   if (monitor_->getMapFrame() == depth_msg->header.frame_id)
-  {
     map_h_sensor.setIdentity();
-  }
   else
   {
     if (tf_buffer_)
@@ -275,7 +268,6 @@ void DepthImageOctomapUpdater::depthImageCallback(const sensor_msgs::msg::Image:
       bool found = false;
       std::string err;
       for (int t = 0; t < nt; ++t)
-      {
         try
         {
           tf2::fromMsg(tf_buffer_->lookupTransform(monitor_->getMapFrame(), depth_msg->header.frame_id,
@@ -291,7 +283,6 @@ void DepthImageOctomapUpdater::depthImageCallback(const sensor_msgs::msg::Image:
           err = ex.what();
           std::this_thread::sleep_for(D.to_chrono<std::chrono::seconds>());
         }
-      }
       static const unsigned int MAX_TF_COUNTER = 1000;  // so we avoid int overflow
       if (found)
       {
@@ -307,23 +298,13 @@ void DepthImageOctomapUpdater::depthImageCallback(const sensor_msgs::msg::Image:
       {
         failed_tf_++;
         if (failed_tf_ > good_tf_)
-        {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-          RCLCPP_WARN_THROTTLE(logger_, *node_->get_clock(), 1000,
+          RCLCPP_WARN_THROTTLE(LOGGER, *node_->get_clock(), 1000,
                                "More than half of the image messages discarded due to TF being unavailable (%u%%). "
                                "Transform error of sensor data: %s; quitting callback.",
                                (100 * failed_tf_) / (good_tf_ + failed_tf_), err.c_str());
-#pragma GCC diagnostic pop
-        }
         else
-        {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-          RCLCPP_DEBUG_THROTTLE(logger_, *node_->get_clock(), 1000,
+          RCLCPP_DEBUG_THROTTLE(LOGGER, *node_->get_clock(), 1000,
                                 "Transform error of sensor data: %s; quitting callback", err.c_str());
-#pragma GCC diagnostic pop
-        }
         if (failed_tf_ > MAX_TF_COUNTER)
         {
           const unsigned int div = MAX_TF_COUNTER / 10;
@@ -341,12 +322,7 @@ void DepthImageOctomapUpdater::depthImageCallback(const sensor_msgs::msg::Image:
     return;
 
   if (depth_msg->is_bigendian && !HOST_IS_BIG_ENDIAN)
-  {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-    RCLCPP_ERROR_THROTTLE(logger_, *node_->get_clock(), 1000, "endian problem: received image data does not match host");
-#pragma GCC diagnostic pop
-  }
+    RCLCPP_ERROR_THROTTLE(LOGGER, *node_->get_clock(), 1000, "endian problem: received image data does not match host");
 
   const int w = depth_msg->width;
   const int h = depth_msg->height;
@@ -358,18 +334,13 @@ void DepthImageOctomapUpdater::depthImageCallback(const sensor_msgs::msg::Image:
 
   const bool is_u_short = depth_msg->encoding == sensor_msgs::image_encodings::TYPE_16UC1;
   if (is_u_short)
-  {
     mesh_filter_->filter(&depth_msg->data[0], GL_UNSIGNED_SHORT);
-  }
   else
   {
     if (depth_msg->encoding != sensor_msgs::image_encodings::TYPE_32FC1)
     {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-      RCLCPP_ERROR_THROTTLE(logger_, *node_->get_clock(), 1000, "Unexpected encoding type: '%s'. Ignoring input.",
+      RCLCPP_ERROR_THROTTLE(LOGGER, *node_->get_clock(), 1000, "Unexpected encoding type: '%s'. Ignoring input.",
                             depth_msg->encoding.c_str());
-#pragma GCC diagnostic pop
       return;
     }
     mesh_filter_->filter(&depth_msg->data[0], GL_FLOAT);
@@ -394,7 +365,7 @@ void DepthImageOctomapUpdater::depthImageCallback(const sensor_msgs::msg::Image:
     inv_fy_ = 1.0 / K4_;
 
     // if there are any NaNs, discard data
-    if (isnan(px) || isnan(py) || isnan(inv_fx_) || isnan(inv_fy_))
+    if (!(px == px && py == py && inv_fx_ == inv_fx_ && inv_fy_ == inv_fy_))
       return;
 
     // Pre-compute some constants
@@ -504,13 +475,12 @@ void DepthImageOctomapUpdater::depthImageCallback(const sensor_msgs::msg::Image:
       const uint16_t* input_row = reinterpret_cast<const uint16_t*>(&depth_msg->data[0]);
 
       for (int y = skip_vertical_pixels_; y < h_bound; ++y, labels_row += w, input_row += w)
-      {
         for (int x = skip_horizontal_pixels_; x < w_bound; ++x)
         {
           // not filtered
           if (labels_row[x] == mesh_filter::MeshFilterBase::BACKGROUND)
           {
-            float zz = static_cast<float>(input_row[x]) * 1e-3;  // scale from mm to m
+            float zz = (float)input_row[x] * 1e-3;  // scale from mm to m
             float yy = y_cache_[y] * zz;
             float xx = x_cache_[x] * zz;
             /* transform to map frame */
@@ -529,14 +499,12 @@ void DepthImageOctomapUpdater::depthImageCallback(const sensor_msgs::msg::Image:
             model_cells.insert(tree_->coordToKey(point_tf.getX(), point_tf.getY(), point_tf.getZ()));
           }
         }
-      }
     }
     else
     {
       const float* input_row = reinterpret_cast<const float*>(&depth_msg->data[0]);
 
       for (int y = skip_vertical_pixels_; y < h_bound; ++y, labels_row += w, input_row += w)
-      {
         for (int x = skip_horizontal_pixels_; x < w_bound; ++x)
         {
           if (labels_row[x] == mesh_filter::MeshFilterBase::BACKGROUND)
@@ -559,13 +527,12 @@ void DepthImageOctomapUpdater::depthImageCallback(const sensor_msgs::msg::Image:
             model_cells.insert(tree_->coordToKey(point_tf.getX(), point_tf.getY(), point_tf.getZ()));
           }
         }
-      }
     }
   }
   catch (...)
   {
     tree_->unlockRead();
-    RCLCPP_ERROR(logger_, "Internal error while parsing depth data");
+    RCLCPP_ERROR(LOGGER, "Internal error while parsing depth data");
     return;
   }
   tree_->unlockRead();
@@ -584,7 +551,7 @@ void DepthImageOctomapUpdater::depthImageCallback(const sensor_msgs::msg::Image:
   }
   catch (...)
   {
-    RCLCPP_ERROR(logger_, "Internal error while updating octree");
+    RCLCPP_ERROR(LOGGER, "Internal error while updating octree");
   }
   tree_->unlockWrite();
   tree_->triggerUpdateCallback();
@@ -592,6 +559,6 @@ void DepthImageOctomapUpdater::depthImageCallback(const sensor_msgs::msg::Image:
   // at this point we still have not freed the space
   free_space_updater_->pushLazyUpdate(occupied_cells_ptr, model_cells_ptr, sensor_origin);
 
-  RCLCPP_DEBUG(logger_, "Processed depth image in %lf ms", (node_->now() - start).seconds() * 1000.0);
+  RCLCPP_DEBUG(LOGGER, "Processed depth image in %lf ms", (node_->now() - start).seconds() * 1000.0);
 }
 }  // namespace occupancy_map_monitor

@@ -58,7 +58,7 @@ QModelIndex CollisionLinearModel::mapFromSource(const QModelIndex& sourceIndex) 
   // map (row,column) index to linear index k
   // http://stackoverflow.com/questions/27086195/linear-index-upper-triangular-matrix
   int r = sourceIndex.row(), c = sourceIndex.column();
-  int n = sourceModel()->columnCount();
+  int n = this->sourceModel()->columnCount();
   if (r == c)
     return QModelIndex();  // main diagonal elements are invalid
   if (r > c)               // only consider upper triagonal matrix
@@ -81,7 +81,7 @@ QModelIndex CollisionLinearModel::mapToSource(const QModelIndex& proxyIndex) con
 
 int CollisionLinearModel::rowCount(const QModelIndex& /*parent*/) const
 {
-  int n = sourceModel()->rowCount();
+  int n = this->sourceModel()->rowCount();
   return (n * (n - 1) / 2);
 }
 
@@ -102,53 +102,41 @@ QModelIndex CollisionLinearModel::parent(const QModelIndex& /*child*/) const
 
 QVariant CollisionLinearModel::data(const QModelIndex& index, int role) const
 {
-  QModelIndex src_index = mapToSource(index);
+  QModelIndex src_index = this->mapToSource(index);
   switch (index.column())
   {
     case 0:  // link name 1
       if (role != Qt::DisplayRole)
-      {
         return QVariant();
-      }
       else
-      {
-        return sourceModel()->headerData(src_index.row(), Qt::Horizontal, Qt::DisplayRole);
-      }
+        return this->sourceModel()->headerData(src_index.row(), Qt::Horizontal, Qt::DisplayRole);
     case 1:  // link name 2
       if (role != Qt::DisplayRole)
         return QVariant();
-      return sourceModel()->headerData(src_index.column(), Qt::Vertical, Qt::DisplayRole);
+      return this->sourceModel()->headerData(src_index.column(), Qt::Vertical, Qt::DisplayRole);
     case 2:  // checkbox
       if (role != Qt::CheckStateRole)
-      {
         return QVariant();
-      }
       else
-      {
-        return sourceModel()->data(src_index, Qt::CheckStateRole);
-      }
+        return this->sourceModel()->data(src_index, Qt::CheckStateRole);
     case 3:  // reason
       if (role != Qt::DisplayRole)
-      {
         return QVariant();
-      }
       else
-      {
-        return sourceModel()->data(src_index, Qt::ToolTipRole);
-      }
+        return this->sourceModel()->data(src_index, Qt::ToolTipRole);
   }
   return QVariant();
 }
 
 DisabledReason CollisionLinearModel::reason(int row) const
 {
-  QModelIndex src_index = mapToSource(index(row, 0));
+  QModelIndex src_index = this->mapToSource(index(row, 0));
   return qobject_cast<CollisionMatrixModel*>(sourceModel())->reason(src_index);
 }
 
 bool CollisionLinearModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
-  QModelIndex src_index = mapToSource(index);
+  QModelIndex src_index = this->mapToSource(index);
 
   if (role == Qt::CheckStateRole)
   {
@@ -173,13 +161,9 @@ void CollisionLinearModel::setEnabled(const QItemSelection& selection, bool valu
 Qt::ItemFlags CollisionLinearModel::flags(const QModelIndex& index) const
 {
   if (index.column() == 2)
-  {
     return Qt::ItemIsUserCheckable | QAbstractItemModel::flags(index);
-  }
   else
-  {
     return QAbstractItemModel::flags(index);
-  }
 }
 
 QVariant CollisionLinearModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -222,13 +206,9 @@ SortFilterProxyModel::SortFilterProxyModel(QObject* parent) : QSortFilterProxyMo
 QVariant SortFilterProxyModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
   if (role == Qt::DisplayRole && orientation == Qt::Vertical)
-  {
     return section + 1;  // simply enumerate rows
-  }
   else
-  {
     return QSortFilterProxyModel::headerData(section, orientation, role);
-  }
 }
 
 void SortFilterProxyModel::setEnabled(const QItemSelection& selection, bool value)
@@ -260,11 +240,11 @@ void SortFilterProxyModel::setShowAll(bool show_all)
 bool SortFilterProxyModel::filterAcceptsRow(int source_row, const QModelIndex& source_parent) const
 {
   CollisionLinearModel* m = qobject_cast<CollisionLinearModel*>(sourceModel());
-  if (!show_all_ && m->reason(source_row) > ALWAYS &&
-      m->data(m->index(source_row, 2), Qt::CheckStateRole) != Qt::Checked)
+  if (!(show_all_ || m->reason(source_row) <= ALWAYS ||
+        m->data(m->index(source_row, 2), Qt::CheckStateRole) == Qt::Checked))
     return false;  // not accepted due to check state
 
-  const QRegExp regexp = filterRegExp();
+  const QRegExp regexp = this->filterRegExp();
   if (regexp.isEmpty())
     return true;
 
@@ -276,13 +256,9 @@ bool SortFilterProxyModel::filterAcceptsRow(int source_row, const QModelIndex& s
 bool compareVariants(const QVariant& left, const QVariant& right)
 {
   if (left.userType() == QVariant::Type::Int)
-  {
     return left.toInt() < right.toInt();
-  }
   else
-  {
     return left.toString() < right.toString();
-  }
 }
 
 bool SortFilterProxyModel::lessThan(const QModelIndex& src_left, const QModelIndex& src_right) const
@@ -313,9 +289,7 @@ void SortFilterProxyModel::sort(int column, Qt::SortOrder order)
 {
   beginResetModel();
   if (column < 0)
-  {
     initSorting();
-  }
   else
   {
     // remember sorting history

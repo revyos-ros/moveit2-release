@@ -34,22 +34,15 @@
 
 /* Author: Ioan Sucan, Jeroen De Maeyer */
 
-#include <moveit/ompl_interface/detail/state_validity_checker.hpp>
-#include <moveit/ompl_interface/model_based_planning_context.hpp>
+#include <moveit/ompl_interface/detail/state_validity_checker.h>
+#include <moveit/ompl_interface/model_based_planning_context.h>
 #include <ompl/base/spaces/constraint/ConstrainedStateSpace.h>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
-#include <moveit/utils/logger.hpp>
 
 namespace ompl_interface
 {
-namespace
-{
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.planners.ompl.state_validity_checker");
-}
-}  // namespace
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.ompl_planning.state_validity_checker");
 
 ompl_interface::StateValidityChecker::StateValidityChecker(const ModelBasedPlanningContext* pc)
   : ompl::base::StateValidityChecker(pc->getOMPLSimpleSetup()->getSpaceInformation())
@@ -93,7 +86,7 @@ bool StateValidityChecker::isValid(const ompl::base::State* state, bool verbose)
   {
     if (verbose)
     {
-      RCLCPP_INFO(getLogger(), "State outside bounds");
+      RCLCPP_INFO(LOGGER, "State outside bounds");
     }
     const_cast<ob::State*>(state)->as<ModelBasedStateSpace::StateType>()->markInvalid();
     return false;
@@ -147,7 +140,7 @@ bool StateValidityChecker::isValid(const ompl::base::State* state, double& dist,
   {
     if (verbose)
     {
-      RCLCPP_INFO(getLogger(), "State outside bounds");
+      RCLCPP_INFO(LOGGER, "State outside bounds");
     }
     const_cast<ob::State*>(state)->as<ModelBasedStateSpace::StateType>()->markInvalid(0.0);
     return false;
@@ -233,7 +226,7 @@ bool ConstrainedPlanningStateValidityChecker::isValid(const ompl::base::State* w
   // do not use the unwrapped state here, as satisfiesBounds expects a state of type ConstrainedStateSpace::StateType
   if (!si_->satisfiesBounds(wrapped_state))  // si_ = ompl::base::SpaceInformation
   {
-    RCLCPP_DEBUG(getLogger(), "State outside bounds");
+    RCLCPP_DEBUG(LOGGER, "State outside bounds");
     const_cast<ob::State*>(state)->as<ModelBasedStateSpace::StateType>()->markInvalid();
     return false;
   }
@@ -290,7 +283,7 @@ bool ConstrainedPlanningStateValidityChecker::isValid(const ompl::base::State* w
   // do not use the unwrapped state here, as satisfiesBounds expects a state of type ConstrainedStateSpace::StateType
   if (!si_->satisfiesBounds(wrapped_state))  // si_ = ompl::base::SpaceInformation
   {
-    RCLCPP_DEBUG(getLogger(), "State outside bounds");
+    RCLCPP_DEBUG(LOGGER, "State outside bounds");
     const_cast<ob::State*>(state)->as<ModelBasedStateSpace::StateType>()->markInvalid(0.0);
     return false;
   }

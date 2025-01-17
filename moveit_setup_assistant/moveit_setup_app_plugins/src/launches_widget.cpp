@@ -85,7 +85,7 @@ void LaunchesWidget::onInit()
   layout->addWidget(splitter);
 
   // Finish Layout --------------------------------------------------
-  setLayout(layout);
+  this->setLayout(layout);
 }
 
 unsigned int getID(QListWidgetItem* item)

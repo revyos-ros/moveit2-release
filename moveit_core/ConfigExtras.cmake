@@ -1,8 +1,6 @@
 # Extras module needed for dependencies to find boost components
 
-find_package(
-  Boost
-  REQUIRED
+find_package(Boost REQUIRED
   chrono
   date_time
   filesystem
@@ -11,4 +9,5 @@ find_package(
   regex
   serialization
   system
-  thread)
+  thread
+)

@@ -34,7 +34,7 @@
 
 /* Author: Simon Schmeisser */
 
-#include <moveit/utils/lexical_casts.hpp>
+#include <moveit/utils/lexical_casts.h>
 #include <locale>
 #include <sstream>
 

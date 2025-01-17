@@ -34,7 +34,7 @@
 
 /* Author: Acorn Pooley */
 
-#include <moveit/robot_interaction/kinematic_options_map.hpp>
+#include <moveit/robot_interaction/kinematic_options_map.h>
 
 // These strings have no content.  They are compared by address.
 const std::string robot_interaction::KinematicOptionsMap::DEFAULT = "";

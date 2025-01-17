@@ -74,10 +74,10 @@ HeaderWidget::HeaderWidget(const std::string& title, const std::string& instruct
   // Margin on bottom
   layout->setContentsMargins(0, 0, 0, 0);  // last 15
 
-  setLayout(layout);
+  this->setLayout(layout);
 
   // For some reason, this style sheet setting affects the placement layout!?
-  setStyleSheet(QString("background-color:%1;").arg(QWidget::palette().color(QWidget::backgroundRole()).name()));
+  this->setStyleSheet(QString("background-color:%1;").arg(QWidget::palette().color(QWidget::backgroundRole()).name()));
 }
 
 // ******************************************************************************************

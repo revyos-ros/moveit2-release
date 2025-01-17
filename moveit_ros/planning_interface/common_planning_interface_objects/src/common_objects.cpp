@@ -34,7 +34,7 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/common_planning_interface_objects/common_objects.hpp>
+#include <moveit/common_planning_interface_objects/common_objects.h>
 
 using namespace planning_scene_monitor;
 using namespace robot_model_loader;

@@ -34,7 +34,7 @@
 
 /* Author: Mrinal Kalakrishnan */
 
-#include <chomp_motion_planner/chomp_trajectory.hpp>
+#include <chomp_motion_planner/chomp_trajectory.h>
 
 namespace chomp
 {

@@ -35,7 +35,7 @@
 /* Author: David V. Lu!! */
 
 #include <moveit_setup_srdf_plugins/planning_groups.hpp>
-#include <moveit/kinematics_base/kinematics_base.hpp>
+#include <moveit/kinematics_base/kinematics_base.h>
 #include <pluginlib/class_loader.hpp>  // for loading all avail kinematic planners
 
 //// Cycle checking
@@ -49,18 +49,18 @@ namespace srdf_setup
 // Used for checking for cycles in a subgroup hierarchy
 struct CycleDetector : public boost::dfs_visitor<>
 {
-  CycleDetector(bool& has_cycle) : m_has_cycle_(has_cycle)
+  CycleDetector(bool& has_cycle) : m_has_cycle(has_cycle)
   {
   }
 
   template <class Edge, class Graph>
   void backEdge(Edge /*unused*/, Graph& /*unused*/)
   {
-    m_has_cycle_ = true;
+    m_has_cycle = true;
   }
 
 protected:
-  bool& m_has_cycle_;
+  bool& m_has_cycle;
 };
 
 void PlanningGroups::onInit()
@@ -229,14 +229,10 @@ void PlanningGroups::setChain(const std::string& group_name, const std::string& 
     for (const std::string& link : links)
     {
       // Check if string matches either of user specified links
-      if (link.compare(tip) == 0)
-      {  // they are same
+      if (link.compare(tip) == 0)  // they are same
         found_tip = true;
-      }
-      else if (link.compare(base) == 0)
-      {  // they are same
+      else if (link.compare(base) == 0)  // they are same
         found_base = true;
-      }
 
       // Check if we are done searching
       if (found_tip && found_base)

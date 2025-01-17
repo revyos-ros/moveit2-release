@@ -71,7 +71,7 @@ SetupAssistantWidget::SetupAssistantWidget(const rviz_common::ros_integration::R
 
   // Setting the window icon
   auto icon_path = getSharePath("moveit_ros_visualization") / "icons/classes/MotionPlanning.png";
-  setWindowIcon(QIcon(icon_path.c_str()));
+  this->setWindowIcon(QIcon(icon_path.c_str()));
 
   // Basic widget container -----------------------------------------
   QHBoxLayout* layout = new QHBoxLayout();
@@ -157,10 +157,10 @@ SetupAssistantWidget::SetupAssistantWidget(const rviz_common::ros_integration::R
   connect(navs_view_, SIGNAL(clicked(const QModelIndex&)), this, SLOT(navigationClicked(const QModelIndex&)));
 
   // Final Layout Setup ---------------------------------------------
-  setLayout(layout);
+  this->setLayout(layout);
 
   // Title
-  setWindowTitle("MoveIt Setup Assistant");  // title of window
+  this->setWindowTitle("MoveIt Setup Assistant");  // title of window
 
   // Show screen before message
   QApplication::processEvents();

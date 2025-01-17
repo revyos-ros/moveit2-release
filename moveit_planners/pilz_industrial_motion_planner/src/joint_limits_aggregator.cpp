@@ -32,21 +32,18 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <pilz_industrial_motion_planner/joint_limits_aggregator.hpp>
-#include <pilz_industrial_motion_planner/joint_limits_interface_extension.hpp>
+#include <pilz_industrial_motion_planner/joint_limits_aggregator.h>
+#include <pilz_industrial_motion_planner/joint_limits_interface_extension.h>
 
-#include <moveit/robot_model/robot_model.hpp>
-#include <moveit/robot_model_loader/robot_model_loader.hpp>
-#include <moveit/utils/logger.hpp>
+#include <moveit/robot_model/robot_model.h>
+#include <moveit/robot_model_loader/robot_model_loader.h>
 
 #include <vector>
 namespace
 {
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.planners.pilz.joint_limits_aggregator");
+static const rclcpp::Logger LOGGER =
+    rclcpp::get_logger("moveit.pilz_industrial_motion_planner.joint_limits_aggregator");
 }
-}  // namespace
 
 pilz_industrial_motion_planner::JointLimitsContainer
 pilz_industrial_motion_planner::JointLimitsAggregator::getAggregatedLimits(
@@ -55,7 +52,7 @@ pilz_industrial_motion_planner::JointLimitsAggregator::getAggregatedLimits(
 {
   JointLimitsContainer container;
 
-  RCLCPP_INFO_STREAM(getLogger(), "Reading limits from namespace " << param_namespace);
+  RCLCPP_INFO_STREAM(LOGGER, "Reading limits from namespace " << param_namespace);
 
   // Iterate over all joint models and generate the map
   for (auto joint_model : joint_models)
@@ -119,7 +116,7 @@ void pilz_industrial_motion_planner::JointLimitsAggregator::updatePositionLimitF
   {
     // LCOV_EXCL_START
     case 0:
-      RCLCPP_WARN_STREAM(getLogger(), "no bounds set for joint " << joint_model->getName());
+      RCLCPP_WARN_STREAM(LOGGER, "no bounds set for joint " << joint_model->getName());
       break;
     // LCOV_EXCL_STOP
     case 1:
@@ -129,7 +126,7 @@ void pilz_industrial_motion_planner::JointLimitsAggregator::updatePositionLimitF
       break;
     // LCOV_EXCL_START
     default:
-      RCLCPP_WARN_STREAM(getLogger(), "Multi-DOF-Joint '" << joint_model->getName() << "' not supported.");
+      RCLCPP_WARN_STREAM(LOGGER, "Multi-DOF-Joint '" << joint_model->getName() << "' not supported.");
       joint_limit.has_position_limits = true;
       joint_limit.min_position = 0;
       joint_limit.max_position = 0;
@@ -137,8 +134,8 @@ void pilz_industrial_motion_planner::JointLimitsAggregator::updatePositionLimitF
       // LCOV_EXCL_STOP
   }
 
-  RCLCPP_DEBUG_STREAM(getLogger(), "Limit(" << joint_model->getName() << " min:" << joint_limit.min_position
-                                            << " max:" << joint_limit.max_position);
+  RCLCPP_DEBUG_STREAM(LOGGER, "Limit(" << joint_model->getName() << " min:" << joint_limit.min_position
+                                       << " max:" << joint_limit.max_position);
 }
 
 void pilz_industrial_motion_planner::JointLimitsAggregator::updateVelocityLimitFromJointModel(
@@ -148,7 +145,7 @@ void pilz_industrial_motion_planner::JointLimitsAggregator::updateVelocityLimitF
   {
     // LCOV_EXCL_START
     case 0:
-      RCLCPP_WARN_STREAM(getLogger(), "no bounds set for joint " << joint_model->getName());
+      RCLCPP_WARN_STREAM(LOGGER, "no bounds set for joint " << joint_model->getName());
       break;
     // LCOV_EXCL_STOP
     case 1:
@@ -157,7 +154,7 @@ void pilz_industrial_motion_planner::JointLimitsAggregator::updateVelocityLimitF
       break;
     // LCOV_EXCL_START
     default:
-      RCLCPP_WARN_STREAM(getLogger(), "Multi-DOF-Joint '" << joint_model->getName() << "' not supported.");
+      RCLCPP_WARN_STREAM(LOGGER, "Multi-DOF-Joint '" << joint_model->getName() << "' not supported.");
       joint_limit.has_velocity_limits = true;
       joint_limit.max_velocity = 0;
       break;

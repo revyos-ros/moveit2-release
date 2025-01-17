@@ -34,9 +34,9 @@
 
 /* Author: Joseph Schornak */
 
-#include <moveit_ros_control_interface/ControllerHandle.hpp>
+#include <moveit_ros_control_interface/ControllerHandle.h>
 #include <pluginlib/class_list_macros.hpp>
-#include <moveit_simple_controller_manager/gripper_controller_handle.hpp>
+#include <moveit_simple_controller_manager/gripper_controller_handle.h>
 #include <rclcpp/node.hpp>
 #include <memory>
 

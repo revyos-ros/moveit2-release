@@ -32,30 +32,46 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <moveit/planner_logic_plugins/single_plan_execution.hpp>
+#include <moveit/planner_logic_plugins/single_plan_execution.h>
+
+namespace
+{
+const rclcpp::Logger LOGGER = rclcpp::get_logger("hybrid_planning_manager");
+}
 
 namespace moveit::hybrid_planning
 {
+bool SinglePlanExecution::initialize(const std::shared_ptr<HybridPlanningManager>& hybrid_planning_manager)
+{
+  hybrid_planning_manager_ = hybrid_planning_manager;
+  return true;
+}
+
 ReactionResult SinglePlanExecution::react(const HybridPlanningEvent& event)
 {
   switch (event)
   {
     case HybridPlanningEvent::HYBRID_PLANNING_REQUEST_RECEIVED:
+      // Handle new hybrid planning request
+      if (!hybrid_planning_manager_->sendGlobalPlannerAction())  // Start global planning
+      {
+        hybrid_planning_manager_->sendHybridPlanningResponse(false);
+      }
       // Reset local planner started flag
       local_planner_started_ = false;
-      // Handle new hybrid planning request
-      return ReactionResult(event, "", moveit_msgs::msg::MoveItErrorCodes::SUCCESS,
-                            HybridPlanningAction::SEND_GLOBAL_SOLVER_REQUEST);
+      return ReactionResult(event, "", moveit_msgs::msg::MoveItErrorCodes::SUCCESS);
     case HybridPlanningEvent::GLOBAL_SOLUTION_AVAILABLE:
       // Do nothing since we wait for the global planning action to finish
       return ReactionResult(event, "Do nothing", moveit_msgs::msg::MoveItErrorCodes::SUCCESS);
     case HybridPlanningEvent::GLOBAL_PLANNING_ACTION_SUCCESSFUL:
       // Activate local planner once global solution is available
       if (!local_planner_started_)
-      {  // ensure the local planner is not started twice
+      {                                                           // ensure the local planner is not started twice
+        if (!hybrid_planning_manager_->sendLocalPlannerAction())  // Start local planning
+        {
+          hybrid_planning_manager_->sendHybridPlanningResponse(false);
+        }
         local_planner_started_ = true;
-        return ReactionResult(event, "", moveit_msgs::msg::MoveItErrorCodes::SUCCESS,
-                              HybridPlanningAction::SEND_LOCAL_SOLVER_REQUEST);
       }
       return ReactionResult(event, "", moveit_msgs::msg::MoveItErrorCodes::SUCCESS);
     case HybridPlanningEvent::GLOBAL_PLANNING_ACTION_ABORTED:
@@ -64,16 +80,15 @@ ReactionResult SinglePlanExecution::react(const HybridPlanningEvent& event)
                             moveit_msgs::msg::MoveItErrorCodes::PLANNING_FAILED);
     case HybridPlanningEvent::LOCAL_PLANNING_ACTION_SUCCESSFUL:
       // Finish hybrid planning action successfully because local planning action succeeded
-      return ReactionResult(event, "", moveit_msgs::msg::MoveItErrorCodes::SUCCESS,
-                            HybridPlanningAction::RETURN_HP_SUCCESS);
+      hybrid_planning_manager_->sendHybridPlanningResponse(true);
+      return ReactionResult(event, "", moveit_msgs::msg::MoveItErrorCodes::SUCCESS);
     case HybridPlanningEvent::LOCAL_PLANNING_ACTION_ABORTED:
       // Local planning failed so abort hybrid planning
       return ReactionResult(event, "Local planner failed to find a solution",
                             moveit_msgs::msg::MoveItErrorCodes::PLANNING_FAILED);
     default:
       // Unknown event, abort hybrid planning
-      return ReactionResult(event, "Unknown event", moveit_msgs::msg::MoveItErrorCodes::FAILURE,
-                            HybridPlanningAction::RETURN_HP_SUCCESS);
+      return ReactionResult(event, "Unknown event", moveit_msgs::msg::MoveItErrorCodes::FAILURE);
   }
 }
 

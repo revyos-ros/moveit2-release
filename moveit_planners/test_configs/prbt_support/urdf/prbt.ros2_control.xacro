@@ -21,15 +21,9 @@
 					<param name="min">-3.15</param>
 					<param name="max">3.15</param>
 				</command_interface>
-				<state_interface name="position">
-					<param name="initial_value">0.0</param>
-				</state_interface>
-				<state_interface name="velocity">
-					<param name="initial_value">0.0</param>
-				</state_interface>
-				<state_interface name="effort">
-					<param name="initial_value">0.0</param>
-				</state_interface>
+				<state_interface name="position"/>
+				<state_interface name="velocity"/>
+				<state_interface name="effort"/>
 				<param name="initial_position">${initial_positions['joint_1']}</param>  <!-- initial position for the FakeSystem -->
 			</joint>
 			<joint name="${prefix}joint_2">
@@ -41,15 +35,9 @@
 					<param name="min">-3.15</param>
 					<param name="max">3.15</param>
 				</command_interface>
-				<state_interface name="position">
-					<param name="initial_value">0.0</param>
-				</state_interface>
-				<state_interface name="velocity">
-					<param name="initial_value">0.0</param>
-				</state_interface>
-				<state_interface name="effort">
-					<param name="initial_value">0.0</param>
-				</state_interface>
+				<state_interface name="position"/>
+				<state_interface name="velocity"/>
+				<state_interface name="effort"/>
 				<param name="initial_position">${initial_positions['joint_2']}</param>  <!-- initial position for the FakeSystem -->
 			</joint>
 			<joint name="${prefix}joint_3">
@@ -61,15 +49,9 @@
 					<param name="min">-3.15</param>
 					<param name="max">3.15</param>
 				</command_interface>
-				<state_interface name="position">
-					<param name="initial_value">0.0</param>
-				</state_interface>
-				<state_interface name="velocity">
-					<param name="initial_value">0.0</param>
-				</state_interface>
-				<state_interface name="effort">
-					<param name="initial_value">0.0</param>
-				</state_interface>
+				<state_interface name="position"/>
+				<state_interface name="velocity"/>
+				<state_interface name="effort"/>
 				<param name="initial_position">${initial_positions['joint_3']}</param>  <!-- initial position for the FakeSystem -->
 			</joint>
 			<joint name="${prefix}joint_4">
@@ -81,15 +63,9 @@
 					<param name="min">-3.15</param>
 					<param name="max">3.15</param>
 				</command_interface>
-				<state_interface name="position">
-					<param name="initial_value">0.0</param>
-				</state_interface>
-				<state_interface name="velocity">
-					<param name="initial_value">0.0</param>
-				</state_interface>
-				<state_interface name="effort">
-					<param name="initial_value">0.0</param>
-				</state_interface>
+				<state_interface name="position"/>
+				<state_interface name="velocity"/>
+				<state_interface name="effort"/>
 				<param name="initial_position">${initial_positions['joint_4']}</param>  <!-- initial position for the FakeSystem -->
 			</joint>
 			<joint name="${prefix}joint_5">
@@ -101,15 +77,9 @@
 					<param name="min">-3.15</param>
 					<param name="max">3.15</param>
 				</command_interface>
-				<state_interface name="position">
-					<param name="initial_value">0.0</param>
-				</state_interface>
-				<state_interface name="velocity">
-					<param name="initial_value">0.0</param>
-				</state_interface>
-				<state_interface name="effort">
-					<param name="initial_value">0.0</param>
-				</state_interface>
+				<state_interface name="position"/>
+				<state_interface name="velocity"/>
+				<state_interface name="effort"/>
 				<param name="initial_position">${initial_positions['joint_5']}</param>  <!-- initial position for the FakeSystem -->
 			</joint>
 			<joint name="${prefix}joint_6">
@@ -121,15 +91,9 @@
 					<param name="min">-3.15</param>
 					<param name="max">3.15</param>
 				</command_interface>
-				<state_interface name="position">
-					<param name="initial_value">0.0</param>
-				</state_interface>
-				<state_interface name="velocity">
-					<param name="initial_value">0.0</param>
-				</state_interface>
-				<state_interface name="effort">
-					<param name="initial_value">0.0</param>
-				</state_interface>
+				<state_interface name="position"/>
+				<state_interface name="velocity"/>
+				<state_interface name="effort"/>
 				<param name="initial_position">${initial_positions['joint_6']}</param>  <!-- initial position for the FakeSystem -->
 			</joint>
 		</ros2_control>
