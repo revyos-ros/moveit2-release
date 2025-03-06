@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-setup-framework
+Section: misc
+Priority: optional
+Maintainer: David V. Lu!! <davidvlu@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), libfmt-dev, ros-jazzy-ament-cmake, ros-jazzy-ament-index-cpp, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-moveit-ros-planning, ros-jazzy-moveit-ros-visualization, ros-jazzy-pluginlib, ros-jazzy-rclcpp, ros-jazzy-rviz-common, ros-jazzy-rviz-rendering, ros-jazzy-srdfdom, ros-jazzy-urdf, ros-jazzy-ros-workspace
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-setup-framework
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libfmt-dev, ros-jazzy-ament-index-cpp, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-moveit-ros-planning, ros-jazzy-moveit-ros-visualization, ros-jazzy-pluginlib, ros-jazzy-rclcpp, ros-jazzy-rviz-common, ros-jazzy-rviz-rendering, ros-jazzy-srdfdom, ros-jazzy-urdf, ros-jazzy-ros-workspace
+Description: C++ Interface for defining setup steps for MoveIt Setup Assistant
