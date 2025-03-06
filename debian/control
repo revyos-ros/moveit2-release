@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-setup-assistant
+Section: misc
+Priority: optional
+Maintainer: Henning Kayser <henningkayser@picknik.ai>
+Build-Depends: debhelper (>= 9.0.0), qtbase5-dev, ros-jazzy-ament-cmake, ros-jazzy-ament-cmake-gtest <!nocheck>, ros-jazzy-ament-index-cpp, ros-jazzy-moveit-resources-panda-moveit-config <!nocheck>, ros-jazzy-moveit-setup-framework, ros-jazzy-moveit-setup-srdf-plugins, ros-jazzy-pluginlib, ros-jazzy-rclcpp, ros-jazzy-ros-workspace
+Homepage: http://moveit.ros.org
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-setup-assistant
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, qtbase5-dev, ros-jazzy-ament-index-cpp, ros-jazzy-moveit-configs-utils, ros-jazzy-moveit-setup-app-plugins, ros-jazzy-moveit-setup-controllers, ros-jazzy-moveit-setup-core-plugins, ros-jazzy-moveit-setup-framework, ros-jazzy-moveit-setup-srdf-plugins, ros-jazzy-pluginlib, ros-jazzy-rclcpp, ros-jazzy-ros-workspace
+Description: Generates a configuration package that makes it easy to use MoveIt
