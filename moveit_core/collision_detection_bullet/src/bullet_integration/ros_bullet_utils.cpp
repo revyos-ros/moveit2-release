@@ -31,12 +31,11 @@
 
 /* Author: Jorge Nicho*/
 
-#include <moveit/collision_detection_bullet/bullet_integration/ros_bullet_utils.h>
+#include <moveit/collision_detection_bullet/bullet_integration/ros_bullet_utils.hpp>
 
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
-
-const rclcpp::Logger BULLET_LOGGER = rclcpp::get_logger("collision_detection.bullet");
+#include <moveit/utils/logger.hpp>
 
 namespace collision_detection_bullet
 {
@@ -57,9 +56,13 @@ void getActiveLinkNamesRecursive(std::vector<std::string>& active_links, const u
     {
       const urdf::LinkConstSharedPtr child_link = urdf_link->child_links[i];
       if ((child_link->parent_joint) && (child_link->parent_joint->type != urdf::Joint::FIXED))
+      {
         getActiveLinkNamesRecursive(active_links, child_link, true);
+      }
       else
+      {
         getActiveLinkNamesRecursive(active_links, child_link, active);
+      }
     }
   }
 }
@@ -94,7 +97,7 @@ shapes::ShapePtr constructShape(const urdf::Geometry* geom)
     }
     break;
     default:
-      RCLCPP_ERROR(BULLET_LOGGER, "Unknown geometry type: %d", static_cast<int>(geom->type));
+      RCLCPP_ERROR(getLogger(), "Unknown geometry type: %d", static_cast<int>(geom->type));
       break;
   }
 
@@ -110,4 +113,8 @@ Eigen::Isometry3d urdfPose2Eigen(const urdf::Pose& pose)
   return result;
 }
 
+rclcpp::Logger getLogger()
+{
+  return moveit::getLogger("moveit.core.collision_detection_bullet");
+}
 }  // namespace collision_detection_bullet

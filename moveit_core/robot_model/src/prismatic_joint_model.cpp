@@ -34,7 +34,7 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/robot_model/prismatic_joint_model.h>
+#include <moveit/robot_model/prismatic_joint_model.hpp>
 #include <limits>
 
 namespace moveit
@@ -68,14 +68,18 @@ void PrismaticJointModel::getVariableDefaultPositions(double* values, const Boun
 {
   // if zero is a valid value
   if (bounds[0].min_position_ <= 0.0 && bounds[0].max_position_ >= 0.0)
+  {
     values[0] = 0.0;
+  }
   else
+  {
     values[0] = (bounds[0].min_position_ + bounds[0].max_position_) / 2.0;
+  }
 }
 
 bool PrismaticJointModel::satisfiesPositionBounds(const double* values, const Bounds& bounds, double margin) const
 {
-  return !(values[0] < bounds[0].min_position_ - margin || values[0] > bounds[0].max_position_ + margin);
+  return values[0] >= bounds[0].min_position_ - margin && values[0] <= bounds[0].max_position_ + margin;
 }
 
 void PrismaticJointModel::getVariableRandomPositions(random_numbers::RandomNumberGenerator& rng, double* values,

@@ -35,16 +35,16 @@
 /* Author: Ioan Sucan */
 
 #include <chrono>
-#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
+#include <moveit/planning_scene_monitor/planning_scene_monitor.hpp>
+#include <moveit/utils/logger.hpp>
 
 using namespace std::chrono_literals;
-
-static const rclcpp::Logger LOGGER = rclcpp::get_logger("display_random_state");
 
 int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
   auto node = rclcpp::Node::make_shared("display_random_state");
+  moveit::setNodeLoggerName(node->get_name());
 
   bool valid = false;
   bool invalid = false;
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
   executor.add_node(node);
 
   robot_model_loader::RobotModelLoader::Options opt;
-  opt.robot_description_ = "robot_description";
+  opt.robot_description = "robot_description";
   auto rml = std::make_shared<robot_model_loader::RobotModelLoader>(node, opt);
   planning_scene_monitor::PlanningSceneMonitor psm(node, rml);
   psm.startWorldGeometryMonitor();
@@ -79,15 +79,19 @@ int main(int argc, char** argv)
   {
     if (!psm.getPlanningScene())
     {
-      RCLCPP_ERROR(LOGGER, "Planning scene did not load properly, exiting...");
+      RCLCPP_ERROR(node->get_logger(), "Planning scene did not load properly, exiting...");
       break;
     }
 
     std::cout << "Type a number and hit Enter. That number of ";
     if (valid)
+    {
       std::cout << "valid ";
+    }
     else if (invalid)
+    {
       std::cout << "invalid ";
+    }
     std::cout << "states will be randomly generated at an interval of one second and published as a planning scene."
               << '\n';
     std::size_t n;

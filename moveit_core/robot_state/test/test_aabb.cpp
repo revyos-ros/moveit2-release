@@ -34,9 +34,9 @@
 
 /* Author: Martin Pecka */
 
-#include <moveit/robot_model/aabb.h>
-#include <moveit/robot_model/robot_model.h>
-#include <moveit/robot_state/robot_state.h>
+#include <moveit/robot_model/aabb.hpp>
+#include <moveit/robot_model/robot_model.hpp>
+#include <moveit/robot_state/robot_state.hpp>
 #include <urdf_parser/urdf_parser.h>
 #include <fstream>
 #include <string>
@@ -48,7 +48,7 @@
 #else
 #include <tf2/LinearMath/Vector3.h>
 #endif
-#include <moveit/utils/robot_model_test_utils.h>
+#include <moveit/utils/robot_model_test_utils.hpp>
 
 // To visualize bbox of the PR2, set this to 1.
 #ifndef VISUALIZE_PR2_RVIZ

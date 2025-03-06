@@ -36,16 +36,17 @@
    Desc:   Wraps a trajectory_visualization playback class for Rviz into a stand alone display
 */
 
-#include <moveit/trajectory_rviz_plugin/trajectory_display.h>
+#include <moveit/trajectory_rviz_plugin/trajectory_display.hpp>
 #include <rviz_common/properties/string_property.hpp>
+#include <moveit/utils/logger.hpp>
 
 #include <memory>
 
 namespace moveit_rviz_plugin
 {
-static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.ros.visualization.trajectory_display");
 
-TrajectoryDisplay::TrajectoryDisplay() : Display()
+TrajectoryDisplay::TrajectoryDisplay() : Display(), logger_(moveit::getLogger("moveit.ros.trajectory_display"))
+
 {
   // The robot description property is only needed when using the trajectory playback standalone (not within motion
   // planning plugin)
@@ -65,7 +66,7 @@ void TrajectoryDisplay::onInitialize()
   auto ros_node_abstraction = context_->getRosNodeAbstraction().lock();
   if (!ros_node_abstraction)
   {
-    RCLCPP_INFO(LOGGER, "Unable to lock weak_ptr from DisplayContext in TrajectoryDisplay constructor");
+    RCLCPP_INFO(logger_, "Unable to lock weak_ptr from DisplayContext in TrajectoryDisplay constructor");
     return;
   }
   node_ = ros_node_abstraction->get_raw_node();
@@ -80,11 +81,11 @@ void TrajectoryDisplay::loadRobotModel()
 
     if (!rdf_loader_->getURDF())
     {
-      this->setStatus(rviz_common::properties::StatusProperty::Error, "Robot Model",
-                      "Failed to load from parameter " + robot_description_property_->getString());
+      setStatus(rviz_common::properties::StatusProperty::Error, "Robot Model",
+                "Failed to load from parameter " + robot_description_property_->getString());
       return;
     }
-    this->setStatus(rviz_common::properties::StatusProperty::Ok, "Robot Model", "Successfully loaded");
+    setStatus(rviz_common::properties::StatusProperty::Ok, "Robot Model", "Successfully loaded");
 
     const srdf::ModelSharedPtr& srdf =
         rdf_loader_->getSRDF() ? rdf_loader_->getSRDF() : std::make_shared<srdf::Model>();
@@ -137,9 +138,13 @@ void TrajectoryDisplay::update(float wall_dt, float ros_dt)
 void TrajectoryDisplay::changedRobotDescription()
 {
   if (isEnabled())
+  {
     reset();
+  }
   else
+  {
     loadRobotModel();
+  }
 }
 
 }  // namespace moveit_rviz_plugin

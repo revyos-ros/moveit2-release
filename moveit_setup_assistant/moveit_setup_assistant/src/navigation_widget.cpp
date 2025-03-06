@@ -90,16 +90,20 @@ void NavigationWidget::setNavs(const QList<QString>& navs)
   setModel(model_);
 }
 
-void NavigationWidget::setEnabled(const int& index, bool enabled)
+void NavigationWidget::setEnabled(int index, bool enabled)
 {
   if (enabled)
+  {
     model_->item(index)->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsDragEnabled |
                                   Qt::ItemIsDropEnabled | Qt::ItemIsEnabled);
+  }
   else
+  {
     model_->item(index)->setFlags(Qt::NoItemFlags);
+  }
 }
 
-void NavigationWidget::setSelected(const int& index)
+void NavigationWidget::setSelected(int index)
 {
   // First make sure item is enabled
   setEnabled(index, true);
@@ -113,7 +117,7 @@ void NavigationWidget::setSelected(const int& index)
   selectionModel()->select(selection, QItemSelectionModel::Select);
 }
 
-bool NavigationWidget::isEnabled(const int& index) const
+bool NavigationWidget::isEnabled(int index) const
 {
   return model_->item(index)->flags() > Qt::NoItemFlags;
 }
@@ -171,11 +175,17 @@ void NavDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
 
   // Font color
   if (is_selected)
+  {
     painter->setPen(palette.color(QPalette::HighlightedText));
+  }
   else if (!option.state.testFlag(QStyle::State_Enabled))
+  {
     painter->setPen(palette.color(QPalette::Dark));
+  }
   else
+  {
     painter->setPen(palette.color(QPalette::ButtonText));
+  }
 
   painter->drawText(text_rect, Qt::AlignLeft | Qt::AlignVCenter, nav_name);
 

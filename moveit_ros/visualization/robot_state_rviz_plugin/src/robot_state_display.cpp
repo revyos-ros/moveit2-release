@@ -34,9 +34,9 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/robot_state_rviz_plugin/robot_state_display.h>
-#include <moveit/robot_state/conversions.h>
-#include <moveit/utils/message_checks.h>
+#include <moveit/robot_state_rviz_plugin/robot_state_display.hpp>
+#include <moveit/robot_state/conversions.hpp>
+#include <moveit/utils/message_checks.hpp>
 
 // #include <rviz/visualization_manager.h>
 #include <rviz_default_plugins/robot/robot.hpp>
@@ -334,9 +334,13 @@ void RobotStateDisplay::newRobotStateCallback(const moveit_msgs::msg::DisplayRob
   {
     robot_->setVisible(!state_msg->hide);
     if (robot_->isVisible())
+    {
       setStatus(rviz_common::properties::StatusProperty::Ok, "RobotState", "");
+    }
     else
+    {
       setStatus(rviz_common::properties::StatusProperty::Warn, "RobotState", "Hidden");
+    }
   }
 
   update_state_ = true;

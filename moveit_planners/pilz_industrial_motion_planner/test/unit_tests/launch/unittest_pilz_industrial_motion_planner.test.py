@@ -15,12 +15,11 @@ from common_parameters import load_moveit_config
 
 @pytest.mark.rostest
 def generate_test_description():
-
     # Load the context
     test_config = load_moveit_config()
 
-    planning_plugin = {
-        "planning_plugin": "pilz_industrial_motion_planner/CommandPlanner"
+    planning_plugins = {
+        "planning_plugins": ["pilz_industrial_motion_planner/CommandPlanner"]
     }
 
     # run test
@@ -30,7 +29,7 @@ def generate_test_description():
         name="unittest_pilz_industrial_motion_planner",
         parameters=[
             test_config.to_dict(),
-            planning_plugin,
+            planning_plugins,
         ],
         output="screen",
     )

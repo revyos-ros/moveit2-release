@@ -2,25 +2,70 @@
 Changelog for package moveit_planners
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.5.8 (2025-02-09)
-------------------
-* fix chomp depend, closes `#3228 <https://github.com/ros-planning/moveit2/issues/3228>`_ (backport `#3229 <https://github.com/ros-planning/moveit2/issues/3229>`_) (`#3230 <https://github.com/ros-planning/moveit2/issues/3230>`_)
+2.12.2 (2025-02-15)
+-------------------
+* fix chomp inclued, closes `#3228 <https://github.com/ros-planning/moveit2/issues/3228>`_ (`#3229 <https://github.com/ros-planning/moveit2/issues/3229>`_) (`#3231 <https://github.com/ros-planning/moveit2/issues/3231>`_)
 * Contributors: Michael Ferguson, mergify[bot]
 
-2.5.7 (2024-12-29)
+2.12.1 (2024-12-18)
+-------------------
+
+2.12.0 (2024-11-29)
+-------------------
+* have moveit_planners depend on chomp (`#3015 <https://github.com/ros-planning/moveit2/issues/3015>`_)
+* Contributors: Michael Ferguson
+
+2.11.0 (2024-09-16)
+-------------------
+
+2.10.0 (2024-06-13)
+-------------------
+* Migrate ros-planning org to moveit (`#2847 <https://github.com/moveit/moveit2/issues/2847>`_)
+  * Rename github.com/ros-planning -> github.com/moveit
+  * Rename ros-planning.github.io -> moveit.github.io
+  * Rename ros-planning organization in docker and CI workflow files
+  - ghcr.io/ros-planning -> ghcr.io/moveit
+  - github.repository == 'moveit/*''
+* CMake format and lint in pre-commit (`#2683 <https://github.com/moveit/moveit2/issues/2683>`_)
+* Contributors: Robert Haschke, Tyler Weaver
+
+2.9.0 (2024-01-09)
+------------------
+* Merge branch 'main' into dependabot/github_actions/SonarSource/sonarcloud-github-c-cpp-2
+* Contributors: Sebastian Jahr
+
+2.8.0 (2023-09-10)
 ------------------
 
-2.5.6 (2024-11-17)
+2.7.4 (2023-05-18)
+------------------
+* Migrate STOMP from ros-planning/stomp_moveit (`#2158 <https://github.com/ros-planning/moveit2/issues/2158>`_)
+* Migrate stomp_moveit into moveit_planners
+  * Move package into moveit_planners subdirectory
+  * Rename stomp_moveit package to moveit_planners_stomp
+  * List moveit_planners_stomp as package dependency
+* Contributors: Henning Kayser
+
+2.7.3 (2023-04-24)
 ------------------
 
-2.5.5 (2023-09-10)
+2.7.2 (2023-04-18)
 ------------------
 
-2.5.4 (2022-11-04)
+2.7.1 (2023-03-23)
 ------------------
-* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_) (`#1555 <https://github.com/ros-planning/moveit2/issues/1555>`_)
-  Co-authored-by: Sebastian Jahr <sebastian.jahr@picknik.ai>
-* Contributors: mergify[bot]
+
+2.7.0 (2023-01-29)
+------------------
+* Fix BSD license in package.xml (`#1796 <https://github.com/ros-planning/moveit2/issues/1796>`_)
+  * fix BSD license in package.xml
+  * this must also be spdx compliant
+* Contributors: Christian Henkel
+
+2.6.0 (2022-11-10)
+------------------
+* Improve CMake usage (`#1550 <https://github.com/ros-planning/moveit2/issues/1550>`_)
+* Contributors: Sebastian Jahr
 
 2.5.3 (2022-07-28)
 ------------------

@@ -34,15 +34,15 @@
 
 /* Author: Jens Petit */
 
-#include <moveit/robot_model/robot_model.h>
-#include <moveit/robot_state/robot_state.h>
-#include <moveit/utils/robot_model_test_utils.h>
-#include <moveit/planning_scene/planning_scene.h>
+#include <moveit/robot_model/robot_model.hpp>
+#include <moveit/robot_state/robot_state.hpp>
+#include <moveit/utils/robot_model_test_utils.hpp>
+#include <moveit/planning_scene/planning_scene.hpp>
 #include <gtest/gtest.h>
 #include <thread>
 
-#include <moveit/collision_detection/collision_common.h>
-#include <moveit/collision_detection/collision_plugin_cache.h>
+#include <moveit/collision_detection/collision_common.hpp>
+#include <moveit/collision_detection/collision_plugin_cache.hpp>
 
 const int TRIALS = 1000;
 const int THREADS = 2;
@@ -126,9 +126,11 @@ TEST_P(CollisionDetectorTests, Threaded)
   }
 
   for (unsigned int i = 0; i < THREADS; ++i)
+  {
     threads.emplace_back(std::thread([i, &scene = *planning_scene_, &state = states[i], expected = collisions[i]] {
       return runCollisionDetectionAssert(i, TRIALS, scene, state, expected);
     }));
+  }
 
   for (unsigned int i = 0; i < states.size(); ++i)
   {

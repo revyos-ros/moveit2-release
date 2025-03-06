@@ -38,8 +38,6 @@
 #include <moveit_setup_controllers/moveit_controllers_config.hpp>
 #include <moveit_setup_controllers/ros2_controllers.hpp>
 
-static const rclcpp::Logger LOGGER = rclcpp::get_logger("test_controllers");
-
 using moveit_setup::expectYamlEquivalence;
 using moveit_setup::getSharePath;
 using moveit_setup::controllers::ControllerInfo;
@@ -148,7 +146,7 @@ TEST_F(ControllersTest, AddDefaultControllers)
   // Number of the planning groups defined in the model srdf
   size_t group_count = srdf_config->getGroups().size();
 
-  // Test that addDefaultControllers() did accually add a controller for the new_group
+  // Test that addDefaultControllers() did actually add a controller for the new_group
   EXPECT_EQ(ros2_controllers_config->getControllers().size(), group_count);
 }
 

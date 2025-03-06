@@ -46,18 +46,18 @@
 #include <kdl/trajectory.hpp>
 #include <kdl/trajectory_segment.hpp>
 #include <kdl/velocityprofile_trap.hpp>
-#include <moveit/planning_scene/planning_scene.h>
-#include <moveit/robot_model/joint_model_group.h>
-#include <moveit/robot_model/robot_model.h>
-#include <moveit/robot_model_loader/robot_model_loader.h>
+#include <moveit/planning_scene/planning_scene.hpp>
+#include <moveit/robot_model/joint_model_group.hpp>
+#include <moveit/robot_model/robot_model.hpp>
+#include <moveit/robot_model_loader/robot_model_loader.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
-#include <pilz_industrial_motion_planner/cartesian_trajectory.h>
-#include <pilz_industrial_motion_planner/cartesian_trajectory_point.h>
-#include <pilz_industrial_motion_planner/limits_container.h>
-#include <pilz_industrial_motion_planner/trajectory_functions.h>
-#include "test_utils.h"
+#include <pilz_industrial_motion_planner/cartesian_trajectory.hpp>
+#include <pilz_industrial_motion_planner/cartesian_trajectory_point.hpp>
+#include <pilz_industrial_motion_planner/limits_container.hpp>
+#include <pilz_industrial_motion_planner/trajectory_functions.hpp>
+#include "test_utils.hpp"
 
 #define _USE_MATH_DEFINES
 
@@ -133,7 +133,7 @@ protected:
    * @param epsilon
    * @return
    */
-  bool tfNear(const Eigen::Isometry3d& pose1, const Eigen::Isometry3d& pose2, const double& epsilon);
+  bool tfNear(const Eigen::Isometry3d& pose1, const Eigen::Isometry3d& pose2, double epsilon);
 
   /**
    * @brief check if two sets of joint positions are close
@@ -183,15 +183,16 @@ protected:
   random_numbers::RandomNumberGenerator rng_{ random_seed_ };
 };
 
-bool TrajectoryFunctionsTestBase::tfNear(const Eigen::Isometry3d& pose1, const Eigen::Isometry3d& pose2,
-                                         const double& epsilon)
+bool TrajectoryFunctionsTestBase::tfNear(const Eigen::Isometry3d& pose1, const Eigen::Isometry3d& pose2, double epsilon)
 {
   for (std::size_t i = 0; i < 3; ++i)
+  {
     for (std::size_t j = 0; j < 4; ++j)
     {
       if (fabs(pose1(i, j) - pose2(i, j)) > fabs(epsilon))
         return false;
     }
+  }
   return true;
 }
 
@@ -310,9 +311,13 @@ TEST_F(TrajectoryFunctionsTestFlangeAndGripper, testIKSolver)
     {
       ik_expect.push_back(rstate.getVariablePosition(joint_name));
       if (rstate.getVariablePosition(joint_name) > 0)
+      {
         ik_seed.push_back(rstate.getVariablePosition(joint_name) - IK_SEED_OFFSET);
+      }
       else
+      {
         ik_seed.push_back(rstate.getVariablePosition(joint_name) + IK_SEED_OFFSET);
+      }
     }
 
     std::vector<std::vector<double>> ik_solutions;
@@ -360,9 +365,13 @@ TEST_F(TrajectoryFunctionsTestFlangeAndGripper, testIKRobotState)
     {
       ik_expect[joint_name] = rstate.getVariablePosition(joint_name);
       if (rstate.getVariablePosition(joint_name) > 0)
+      {
         ik_seed[joint_name] = rstate.getVariablePosition(joint_name) - IK_SEED_OFFSET;
+      }
       else
+      {
         ik_seed[joint_name] = rstate.getVariablePosition(joint_name) + IK_SEED_OFFSET;
+      }
     }
 
     rstate.setVariablePositions(ik_seed);
@@ -406,7 +415,7 @@ TEST_F(TrajectoryFunctionsTestFlangeAndGripper, testIKRobotStateWithIdentityColl
   const moveit::core::LinkModel* tip_link = robot_model_->getLinkModel(tcp_link_);
   Eigen::Isometry3d tip_pose_in_base = state.getFrameTransform(tcp_link_);
 
-  // Attach an object with an ignored subframe, and no transform
+  // Attach an object with ignored subframes, and no transform
   Eigen::Isometry3d object_pose_in_tip = Eigen::Isometry3d::Identity();
   moveit::core::FixedTransformsMap subframes({ { "ignored", Eigen::Isometry3d::Identity() } });
   attachToLink(state, tip_link, "object", object_pose_in_tip, subframes);
@@ -432,7 +441,7 @@ TEST_F(TrajectoryFunctionsTestFlangeAndGripper, testIKRobotStateWithTransformedC
   const moveit::core::LinkModel* tip_link = robot_model_->getLinkModel(tcp_link_);
   Eigen::Isometry3d tip_pose_in_base = state.getFrameTransform(tcp_link_);
 
-  // Attach an object with no subframes, and a non-trivial transform
+  // Attach an object with ignored subframes, and a non-trivial transform
   Eigen::Isometry3d object_pose_in_tip;
   object_pose_in_tip = Eigen::Translation3d(1, 2, 3);
   object_pose_in_tip *= Eigen::AngleAxis(M_PI_2, Eigen::Vector3d::UnitX());
