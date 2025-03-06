@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-ros-move-group
+Section: misc
+Priority: optional
+Maintainer: Michael Görner <me@v4hn.de>
+Build-Depends: debhelper (>= 9.0.0), libfmt-dev, ros-jazzy-ament-cmake, ros-jazzy-ament-cmake-gtest <!nocheck>, ros-jazzy-moveit-common, ros-jazzy-moveit-configs-utils <!nocheck>, ros-jazzy-moveit-core, ros-jazzy-moveit-resources-fanuc-moveit-config <!nocheck>, ros-jazzy-moveit-resources-panda-moveit-config <!nocheck>, ros-jazzy-moveit-ros-occupancy-map-monitor, ros-jazzy-moveit-ros-planning, ros-jazzy-pluginlib (>= 1.11.2), ros-jazzy-rclcpp, ros-jazzy-rclcpp-action, ros-jazzy-ros-testing <!nocheck>, ros-jazzy-std-srvs, ros-jazzy-tf2, ros-jazzy-tf2-geometry-msgs, ros-jazzy-tf2-ros, ros-jazzy-ros-workspace
+Homepage: http://moveit.ros.org
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-ros-move-group
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libfmt-dev, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-moveit-kinematics, ros-jazzy-moveit-ros-occupancy-map-monitor, ros-jazzy-moveit-ros-planning, ros-jazzy-pluginlib (>= 1.11.2), ros-jazzy-rclcpp, ros-jazzy-rclcpp-action, ros-jazzy-std-srvs, ros-jazzy-tf2, ros-jazzy-tf2-geometry-msgs, ros-jazzy-tf2-ros, ros-jazzy-ros-workspace
+Description: The move_group node for MoveIt
