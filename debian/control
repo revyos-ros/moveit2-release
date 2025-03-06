@@ -1,0 +1,13 @@
+Source: ros-jazzy-moveit-runtime
+Section: misc
+Priority: optional
+Maintainer: Henning Kayser <henningkayser@picknik.ai>
+Build-Depends: debhelper (>= 9.0.0), ros-jazzy-ament-cmake, ros-jazzy-ros-workspace
+Homepage: http://moveit.ros.org
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-runtime
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-jazzy-moveit-core, ros-jazzy-moveit-planners, ros-jazzy-moveit-plugins, ros-jazzy-moveit-ros-move-group, ros-jazzy-moveit-ros-perception, ros-jazzy-moveit-ros-planning, ros-jazzy-moveit-ros-planning-interface, ros-jazzy-moveit-ros-warehouse, ros-jazzy-ros-workspace
+Description: moveit_runtime meta package contains MoveIt packages that are essential for its runtime (e.g.
+ running MoveIt on robots).
