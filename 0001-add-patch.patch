@@ -1,4 +1,4 @@
-From cbe3a925fac635679c0b36d838f3e859b26be03a Mon Sep 17 00:00:00 2001
+From ae87be453edaddf756649f50c8bb15ca2e8f487c Mon Sep 17 00:00:00 2001
 From: Zheng Junjie <zhengjunjie@iscas.ac.cn>
 Date: Mon, 4 Nov 2024 11:51:37 +0800
 Subject: [PATCH] add patch
@@ -65,5 +65,5 @@ index 000000000..69ad5886b
 +2.46.0
 +
 -- 
-2.47.1
+2.41.0
 
