@@ -34,26 +34,20 @@
 
 /* Author: Kentaro Wada */
 
-#include "execute_trajectory_action_capability.hpp"
+#include "execute_trajectory_action_capability.h"
 
-#include <moveit/moveit_cpp/moveit_cpp.hpp>
-#include <moveit/plan_execution/plan_execution.hpp>
-#include <moveit/trajectory_processing/trajectory_tools.hpp>
-#include <moveit/kinematic_constraints/utils.hpp>
-#include <moveit/move_group/capability_names.hpp>
-#include <moveit/utils/logger.hpp>
+#include <moveit/moveit_cpp/moveit_cpp.h>
+#include <moveit/plan_execution/plan_execution.h>
+#include <moveit/trajectory_processing/trajectory_tools.h>
+#include <moveit/kinematic_constraints/utils.h>
+#include <moveit/move_group/capability_names.h>
 
 namespace move_group
 {
-namespace
-{
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.ros.move_group.clear_octomap_service");
-}
-}  // namespace
+static const rclcpp::Logger LOGGER =
+    rclcpp::get_logger("moveit_move_group_default_capabilities.execute_trajectory_action_capability");
 
-MoveGroupExecuteTrajectoryAction::MoveGroupExecuteTrajectoryAction() : MoveGroupCapability("execute_trajectory_action")
+MoveGroupExecuteTrajectoryAction::MoveGroupExecuteTrajectoryAction() : MoveGroupCapability("ExecuteTrajectoryAction")
 {
 }
 
@@ -67,6 +61,9 @@ MoveGroupExecuteTrajectoryAction::~MoveGroupExecuteTrajectoryAction()
 
 void MoveGroupExecuteTrajectoryAction::initialize()
 {
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+
   auto node = context_->moveit_cpp_->getNode();
   callback_group_ = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive,
                                                 false /* don't spin with node executor */);
@@ -77,9 +74,13 @@ void MoveGroupExecuteTrajectoryAction::initialize()
       node->get_node_base_interface(), node->get_node_clock_interface(), node->get_node_logging_interface(),
       node->get_node_waitables_interface(), EXECUTE_ACTION_NAME,
       [](const rclcpp_action::GoalUUID& /*unused*/, const std::shared_ptr<const ExecTrajectory::Goal>& /*unused*/) {
+        RCLCPP_INFO(LOGGER, "Received goal request");
         return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
       },
-      [](const std::shared_ptr<ExecTrajectoryGoal>& /* unused */) { return rclcpp_action::CancelResponse::ACCEPT; },
+      [](const std::shared_ptr<ExecTrajectoryGoal>& /* unused */) {
+        RCLCPP_INFO(LOGGER, "Received request to cancel goal");
+        return rclcpp_action::CancelResponse::ACCEPT;
+      },
       [this](const auto& goal) { executePathCallback(goal); }, rcl_action_server_get_default_options(),
       callback_group_);
 }
@@ -117,9 +118,9 @@ void MoveGroupExecuteTrajectoryAction::executePathCallback(const std::shared_ptr
 void MoveGroupExecuteTrajectoryAction::executePath(const std::shared_ptr<ExecTrajectoryGoal>& goal,
                                                    std::shared_ptr<ExecTrajectory::Result>& action_res)
 {
-  RCLCPP_INFO(getLogger(), "Execution request received");
+  RCLCPP_INFO(LOGGER, "Execution request received");
 
-  if (context_->trajectory_execution_manager_->push(goal->get_goal()->trajectory, goal->get_goal()->controller_names))
+  if (context_->trajectory_execution_manager_->push(goal->get_goal()->trajectory))
   {
     setExecuteTrajectoryState(MONITOR, goal);
     context_->trajectory_execution_manager_->execute();
@@ -140,7 +141,7 @@ void MoveGroupExecuteTrajectoryAction::executePath(const std::shared_ptr<ExecTra
     {
       action_res->error_code.val = moveit_msgs::msg::MoveItErrorCodes::CONTROL_FAILED;
     }
-    RCLCPP_INFO_STREAM(getLogger(), "Execution completed: " << status.asString());
+    RCLCPP_INFO_STREAM(LOGGER, "Execution completed: " << status.asString());
   }
   else
   {

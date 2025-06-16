@@ -47,7 +47,7 @@
 #include <QVBoxLayout>
 #include <QProcess>
 
-#include <moveit/robot_state/conversions.hpp>
+#include <moveit/robot_state/conversions.h>
 #include <moveit_msgs/msg/display_robot_state.hpp>
 
 #include <regex>
@@ -122,7 +122,7 @@ void SimulationWidget::onInit()
   layout->addWidget(copy_urdf_);
 
   // Finish Layout --------------------------------------------------
-  setLayout(layout);
+  this->setLayout(layout);
 }
 
 void SimulationWidget::focusGiven()

@@ -34,7 +34,7 @@
 
 /* Author: Yannick Jonetzko */
 
-#include <moveit/rviz_plugin_render_tools/trajectory_panel.hpp>
+#include <moveit/rviz_plugin_render_tools/trajectory_panel.h>
 #include <QHBoxLayout>
 
 namespace moveit_rviz_plugin
@@ -131,13 +131,9 @@ void TrajectoryPanel::sliderValueChanged(int value)
 void TrajectoryPanel::buttonClicked()
 {
   if (paused_)
-  {
     pauseButton(false);
-  }
   else
-  {
     pauseButton(true);
-  }
 }
 
 }  // namespace moveit_rviz_plugin

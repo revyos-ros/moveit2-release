@@ -34,21 +34,15 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/ompl_interface/parameterization/model_based_state_space.hpp>
+#include <moveit/ompl_interface/parameterization/model_based_state_space.h>
 #include <utility>
-#include <moveit/utils/logger.hpp>
 
 namespace ompl_interface
 {
-namespace
-{
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.planners.ompl.model_based_state_space");
-}
-}  // namespace
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.ompl_planning.model_based_state_space");
+}  // namespace ompl_interface
 
-ModelBasedStateSpace::ModelBasedStateSpace(ModelBasedStateSpaceSpecification spec)
+ompl_interface::ModelBasedStateSpace::ModelBasedStateSpace(ModelBasedStateSpaceSpecification spec)
   : ompl::base::StateSpace(), spec_(std::move(spec))
 {
   // set the state space name
@@ -60,7 +54,7 @@ ModelBasedStateSpace::ModelBasedStateSpace(ModelBasedStateSpaceSpecification spe
   // make sure we have bounds for every joint stored within the spec (use default bounds if not specified)
   if (!spec_.joint_bounds_.empty() && spec_.joint_bounds_.size() != joint_model_vector_.size())
   {
-    RCLCPP_ERROR(getLogger(), "Joint group '%s' has incorrect bounds specified. Using the default bounds instead.",
+    RCLCPP_ERROR(LOGGER, "Joint group '%s' has incorrect bounds specified. Using the default bounds instead.",
                  spec_.joint_model_group_->getName().c_str());
     spec_.joint_bounds_.clear();
   }
@@ -86,22 +80,20 @@ ModelBasedStateSpace::ModelBasedStateSpace(ModelBasedStateSpaceSpecification spe
       [this] { return getTagSnapToSegment(); });
 }
 
-ModelBasedStateSpace::~ModelBasedStateSpace() = default;
+ompl_interface::ModelBasedStateSpace::~ModelBasedStateSpace() = default;
 
-double ModelBasedStateSpace::getTagSnapToSegment() const
+double ompl_interface::ModelBasedStateSpace::getTagSnapToSegment() const
 {
   return tag_snap_to_segment_;
 }
 
-void ModelBasedStateSpace::setTagSnapToSegment(double snap)
+void ompl_interface::ModelBasedStateSpace::setTagSnapToSegment(double snap)
 {
   if (snap < 0.0 || snap > 1.0)
-  {
-    RCLCPP_WARN(getLogger(),
+    RCLCPP_WARN(LOGGER,
                 "Snap to segment for tags is a ratio. It's value must be between 0.0 and 1.0. "
                 "Value remains as previously set (%lf)",
                 tag_snap_to_segment_);
-  }
   else
   {
     tag_snap_to_segment_ = snap;
@@ -109,20 +101,21 @@ void ModelBasedStateSpace::setTagSnapToSegment(double snap)
   }
 }
 
-ompl::base::State* ModelBasedStateSpace::allocState() const
+ompl::base::State* ompl_interface::ModelBasedStateSpace::allocState() const
 {
   auto* state = new StateType();
   state->values = new double[variable_count_];
   return state;
 }
 
-void ModelBasedStateSpace::freeState(ompl::base::State* state) const
+void ompl_interface::ModelBasedStateSpace::freeState(ompl::base::State* state) const
 {
   delete[] state->as<StateType>()->values;
   delete state->as<StateType>();
 }
 
-void ModelBasedStateSpace::copyState(ompl::base::State* destination, const ompl::base::State* source) const
+void ompl_interface::ModelBasedStateSpace::copyState(ompl::base::State* destination,
+                                                     const ompl::base::State* source) const
 {
   memcpy(destination->as<StateType>()->values, source->as<StateType>()->values, state_values_size_);
   destination->as<StateType>()->tag = source->as<StateType>()->tag;
@@ -130,24 +123,24 @@ void ModelBasedStateSpace::copyState(ompl::base::State* destination, const ompl:
   destination->as<StateType>()->distance = source->as<StateType>()->distance;
 }
 
-unsigned int ModelBasedStateSpace::getSerializationLength() const
+unsigned int ompl_interface::ModelBasedStateSpace::getSerializationLength() const
 {
   return state_values_size_ + sizeof(int);
 }
 
-void ModelBasedStateSpace::serialize(void* serialization, const ompl::base::State* state) const
+void ompl_interface::ModelBasedStateSpace::serialize(void* serialization, const ompl::base::State* state) const
 {
   *reinterpret_cast<int*>(serialization) = state->as<StateType>()->tag;
   memcpy(reinterpret_cast<char*>(serialization) + sizeof(int), state->as<StateType>()->values, state_values_size_);
 }
 
-void ModelBasedStateSpace::deserialize(ompl::base::State* state, const void* serialization) const
+void ompl_interface::ModelBasedStateSpace::deserialize(ompl::base::State* state, const void* serialization) const
 {
   state->as<StateType>()->tag = *reinterpret_cast<const int*>(serialization);
   memcpy(state->as<StateType>()->values, reinterpret_cast<const char*>(serialization) + sizeof(int), state_values_size_);
 }
 
-unsigned int ModelBasedStateSpace::getDimension() const
+unsigned int ompl_interface::ModelBasedStateSpace::getDimension() const
 {
   unsigned int d = 0;
   for (const moveit::core::JointModel* i : joint_model_vector_)
@@ -155,12 +148,12 @@ unsigned int ModelBasedStateSpace::getDimension() const
   return d;
 }
 
-double ModelBasedStateSpace::getMaximumExtent() const
+double ompl_interface::ModelBasedStateSpace::getMaximumExtent() const
 {
   return spec_.joint_model_group_->getMaximumExtent(spec_.joint_bounds_);
 }
 
-double ModelBasedStateSpace::getMeasure() const
+double ompl_interface::ModelBasedStateSpace::getMeasure() const
 {
   double m = 1.0;
   for (const moveit::core::JointModel::Bounds* bounds : spec_.joint_bounds_)
@@ -173,42 +166,38 @@ double ModelBasedStateSpace::getMeasure() const
   return m;
 }
 
-double ModelBasedStateSpace::distance(const ompl::base::State* state1, const ompl::base::State* state2) const
+double ompl_interface::ModelBasedStateSpace::distance(const ompl::base::State* state1,
+                                                      const ompl::base::State* state2) const
 {
   if (distance_function_)
-  {
     return distance_function_(state1, state2);
-  }
   else
-  {
     return spec_.joint_model_group_->distance(state1->as<StateType>()->values, state2->as<StateType>()->values);
-  }
 }
 
-bool ModelBasedStateSpace::equalStates(const ompl::base::State* state1, const ompl::base::State* state2) const
+bool ompl_interface::ModelBasedStateSpace::equalStates(const ompl::base::State* state1,
+                                                       const ompl::base::State* state2) const
 {
   for (unsigned int i = 0; i < variable_count_; ++i)
-  {
     if (fabs(state1->as<StateType>()->values[i] - state2->as<StateType>()->values[i]) >
         std::numeric_limits<double>::epsilon())
       return false;
-  }
   return true;
 }
 
-void ModelBasedStateSpace::enforceBounds(ompl::base::State* state) const
+void ompl_interface::ModelBasedStateSpace::enforceBounds(ompl::base::State* state) const
 {
   spec_.joint_model_group_->enforcePositionBounds(state->as<StateType>()->values, spec_.joint_bounds_);
 }
 
-bool ModelBasedStateSpace::satisfiesBounds(const ompl::base::State* state) const
+bool ompl_interface::ModelBasedStateSpace::satisfiesBounds(const ompl::base::State* state) const
 {
   return spec_.joint_model_group_->satisfiesPositionBounds(state->as<StateType>()->values, spec_.joint_bounds_,
                                                            std::numeric_limits<double>::epsilon());
 }
 
-void ModelBasedStateSpace::interpolate(const ompl::base::State* from, const ompl::base::State* to, const double t,
-                                       ompl::base::State* state) const
+void ompl_interface::ModelBasedStateSpace::interpolate(const ompl::base::State* from, const ompl::base::State* to,
+                                                       const double t, ompl::base::State* state) const
 {
   // clear any cached info (such as validity known or not)
   state->as<StateType>()->clearKnownInformation();
@@ -221,32 +210,26 @@ void ModelBasedStateSpace::interpolate(const ompl::base::State* from, const ompl
 
     // compute tag
     if (from->as<StateType>()->tag >= 0 && t < 1.0 - tag_snap_to_segment_)
-    {
       state->as<StateType>()->tag = from->as<StateType>()->tag;
-    }
     else if (to->as<StateType>()->tag >= 0 && t > tag_snap_to_segment_)
-    {
       state->as<StateType>()->tag = to->as<StateType>()->tag;
-    }
     else
-    {
       state->as<StateType>()->tag = -1;
-    }
   }
 }
 
-double* ModelBasedStateSpace::getValueAddressAtIndex(ompl::base::State* state, const unsigned int index) const
+double* ompl_interface::ModelBasedStateSpace::getValueAddressAtIndex(ompl::base::State* state,
+                                                                     const unsigned int index) const
 {
   if (index >= variable_count_)
     return nullptr;
   return state->as<StateType>()->values + index;
 }
 
-void ModelBasedStateSpace::setPlanningVolume(double minX, double maxX, double minY, double maxY, double minZ,
-                                             double maxZ)
+void ompl_interface::ModelBasedStateSpace::setPlanningVolume(double minX, double maxX, double minY, double maxY,
+                                                             double minZ, double maxZ)
 {
   for (std::size_t i = 0; i < joint_model_vector_.size(); ++i)
-  {
     if (joint_model_vector_[i]->getType() == moveit::core::JointModel::PLANAR)
     {
       joint_bounds_storage_[i][0].min_position_ = minX;
@@ -263,10 +246,9 @@ void ModelBasedStateSpace::setPlanningVolume(double minX, double maxX, double mi
       joint_bounds_storage_[i][2].min_position_ = minZ;
       joint_bounds_storage_[i][2].max_position_ = maxZ;
     }
-  }
 }
 
-ompl::base::StateSamplerPtr ModelBasedStateSpace::allocDefaultStateSampler() const
+ompl::base::StateSamplerPtr ompl_interface::ModelBasedStateSpace::allocDefaultStateSampler() const
 {
   class DefaultStateSampler : public ompl::base::StateSampler
   {
@@ -305,12 +287,12 @@ ompl::base::StateSamplerPtr ModelBasedStateSpace::allocDefaultStateSampler() con
       new DefaultStateSampler(this, spec_.joint_model_group_, &spec_.joint_bounds_)));
 }
 
-void ModelBasedStateSpace::printSettings(std::ostream& out) const
+void ompl_interface::ModelBasedStateSpace::printSettings(std::ostream& out) const
 {
   out << "ModelBasedStateSpace '" << getName() << "' at " << this << '\n';
 }
 
-void ModelBasedStateSpace::printState(const ompl::base::State* state, std::ostream& out) const
+void ompl_interface::ModelBasedStateSpace::printState(const ompl::base::State* state, std::ostream& out) const
 {
   for (const moveit::core::JointModel* j : joint_model_vector_)
   {
@@ -318,7 +300,7 @@ void ModelBasedStateSpace::printState(const ompl::base::State* state, std::ostre
     const int idx = spec_.joint_model_group_->getVariableGroupIndex(j->getName());
     const int vc = j->getVariableCount();
     for (int i = 0; i < vc; ++i)
-      out << state->as<StateType>()->values[idx + i] << ' ';
+      out << state->as<StateType>()->values[idx + i] << " ";
     out << '\n';
   }
 
@@ -329,33 +311,32 @@ void ModelBasedStateSpace::printState(const ompl::base::State* state, std::ostre
   if (state->as<StateType>()->isValidityKnown())
   {
     if (state->as<StateType>()->isMarkedValid())
-    {
       out << "* valid state \n";
-    }
     else
-    {
       out << "* invalid state \n";
-    }
   }
   out << "Tag: " << state->as<StateType>()->tag << '\n';
 }
 
-void ModelBasedStateSpace::copyToRobotState(moveit::core::RobotState& rstate, const ompl::base::State* state) const
+void ompl_interface::ModelBasedStateSpace::copyToRobotState(moveit::core::RobotState& rstate,
+                                                            const ompl::base::State* state) const
 {
   rstate.setJointGroupPositions(spec_.joint_model_group_, state->as<StateType>()->values);
   rstate.update();
 }
 
-void ModelBasedStateSpace::copyToOMPLState(ompl::base::State* state, const moveit::core::RobotState& rstate) const
+void ompl_interface::ModelBasedStateSpace::copyToOMPLState(ompl::base::State* state,
+                                                           const moveit::core::RobotState& rstate) const
 {
   rstate.copyJointGroupPositions(spec_.joint_model_group_, state->as<StateType>()->values);
   // clear any cached info (such as validity known or not)
   state->as<StateType>()->clearKnownInformation();
 }
 
-void ModelBasedStateSpace::copyJointToOMPLState(ompl::base::State* state, const moveit::core::RobotState& robot_state,
-                                                const moveit::core::JointModel* joint_model,
-                                                int ompl_state_joint_index) const
+void ompl_interface::ModelBasedStateSpace::copyJointToOMPLState(ompl::base::State* state,
+                                                                const moveit::core::RobotState& robot_state,
+                                                                const moveit::core::JointModel* joint_model,
+                                                                int ompl_state_joint_index) const
 {
   // Copy one joint (multiple variables possibly)
   memcpy(getValueAddressAtIndex(state, ompl_state_joint_index),
@@ -365,5 +346,3 @@ void ModelBasedStateSpace::copyJointToOMPLState(ompl::base::State* state, const 
   // clear any cached info (such as validity known or not)
   state->as<StateType>()->clearKnownInformation();
 }
-
-}  // namespace ompl_interface

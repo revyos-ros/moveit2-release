@@ -32,20 +32,17 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <pilz_industrial_motion_planner/planning_context_loader_ptp.hpp>
-#include <moveit/planning_scene/planning_scene.hpp>
-#include <pilz_industrial_motion_planner/planning_context_ptp.hpp>
-#include <moveit/utils/logger.hpp>
+#include <pilz_industrial_motion_planner/planning_context_loader_ptp.h>
+#include <moveit/planning_scene/planning_scene.h>
+#include <pilz_industrial_motion_planner/planning_context_ptp.h>
 
 #include <pluginlib/class_list_macros.hpp>
 
 namespace
 {
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.planners.pilz.planning_context_loader.ptp");
+static const rclcpp::Logger LOGGER =
+    rclcpp::get_logger("moveit.pilz_industrial_motion_planner.planning_context_loader_ptp");
 }
-}  // namespace
 
 pilz_industrial_motion_planner::PlanningContextLoaderPTP::PlanningContextLoaderPTP()
 {
@@ -68,12 +65,12 @@ bool pilz_industrial_motion_planner::PlanningContextLoaderPTP::loadContext(
   {
     if (!limits_set_)
     {
-      RCLCPP_ERROR_STREAM(getLogger(),
+      RCLCPP_ERROR_STREAM(LOGGER,
                           "Joint Limits are not defined. Cannot load planning context. Call setLimits loadContext");
     }
     if (!model_set_)
     {
-      RCLCPP_ERROR_STREAM(getLogger(), "Robot model was not set");
+      RCLCPP_ERROR_STREAM(LOGGER, "Robot model was not set");
     }
     return false;
   }

@@ -37,12 +37,12 @@
 */
 
 #include <gtest/gtest.h>
-#include <moveit/kinematic_constraints/utils.hpp>
-#include <moveit/planning_scene_monitor/planning_scene_monitor.hpp>
-#include <moveit/robot_state/conversions.hpp>
+#include <moveit/kinematic_constraints/utils.h>
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
+#include <moveit/robot_state/conversions.h>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
-#include <tf2_ros/buffer.hpp>
+#include <tf2_ros/buffer.h>
 
 #include <moveit_msgs/action/hybrid_planner.hpp>
 #include <moveit_msgs/msg/display_robot_state.hpp>
@@ -63,12 +63,25 @@ public:
 
     executor_.add_node(node_);
 
-    hp_action_client_ = rclcpp_action::create_client<moveit_msgs::action::HybridPlanner>(node_, "run_hybrid_planning");
+    std::string hybrid_planning_action_name = "";
+    node_->declare_parameter("hybrid_planning_action_name", "");
+    if (node_->has_parameter("hybrid_planning_action_name"))
+    {
+      node_->get_parameter<std::string>("hybrid_planning_action_name", hybrid_planning_action_name);
+    }
+    else
+    {
+      RCLCPP_ERROR(node_->get_logger(), "hybrid_planning_action_name parameter was not defined");
+      std::exit(EXIT_FAILURE);
+    }
+
+    hp_action_client_ =
+        rclcpp_action::create_client<moveit_msgs::action::HybridPlanner>(node_, hybrid_planning_action_name);
 
     // Add new collision object as soon as global trajectory is available.
     global_solution_subscriber_ = node_->create_subscription<moveit_msgs::msg::MotionPlanResponse>(
         "global_trajectory", rclcpp::SystemDefaultsQoS(),
-        [](const moveit_msgs::msg::MotionPlanResponse::SharedPtr /* unused */) {});
+        [this](const moveit_msgs::msg::MotionPlanResponse::SharedPtr /* unused */) {});
 
     RCLCPP_INFO(node_->get_logger(), "Initialize Planning Scene Monitor");
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
@@ -182,7 +195,7 @@ public:
     send_goal_options_.feedback_callback =
         [this](rclcpp_action::ClientGoalHandle<moveit_msgs::action::HybridPlanner>::SharedPtr /*unused*/,
                const std::shared_ptr<const moveit_msgs::action::HybridPlanner::Feedback> feedback) {
-          RCLCPP_INFO(node_->get_logger(), "%s", feedback->feedback.c_str());
+          RCLCPP_INFO(node_->get_logger(), feedback->feedback.c_str());
         };
   }
 
@@ -222,8 +235,7 @@ TEST_F(HybridPlanningFixture, ActionCompletion)
 }
 
 // Make a hybrid planning request then abort it
-// TODO(sjahr): Fix and re-enable
-/*TEST_F(HybridPlanningFixture, ActionAbortion)
+TEST_F(HybridPlanningFixture, ActionAbortion)
 {
   std::thread run_thread([this]() {
     // Send the goal
@@ -242,7 +254,7 @@ TEST_F(HybridPlanningFixture, ActionCompletion)
   run_thread.join();
   ASSERT_FALSE(action_successful_);
   ASSERT_TRUE(action_aborted_);
-}*/
+}
 }  // namespace moveit_hybrid_planning
 
 int main(int argc, char** argv)

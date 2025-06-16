@@ -163,7 +163,7 @@ DoubleListWidget::DoubleListWidget(QWidget* parent, const QString& long_name, co
   }
 
   // Finish Layout --------------------------------------------------
-  setLayout(layout);
+  this->setLayout(layout);
 }
 
 // ******************************************************************************************

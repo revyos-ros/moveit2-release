@@ -34,22 +34,16 @@
 
 /* Author: Ioan Sucan, Dave Coleman */
 
-#include <moveit/ompl_interface/ompl_interface.hpp>
-#include <moveit/planning_interface/planning_interface.hpp>
-#include <moveit/planning_scene/planning_scene.hpp>
-#include <moveit/utils/logger.hpp>
+#include <moveit/ompl_interface/ompl_interface.h>
+#include <moveit/planning_interface/planning_interface.h>
+#include <moveit/planning_scene/planning_scene.h>
 
 #include <ompl/util/Console.h>
 
 namespace ompl_interface
 {
-namespace
-{
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.planners.ompl.planner_manager");
-}
-}  // namespace
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.ompl_planning.ompl_planner_manager");
+static const rclcpp::Logger OMPL_LOGGER = rclcpp::get_logger("ompl");
 
 class OMPLPlannerManager : public planning_interface::PlannerManager
 {
@@ -68,13 +62,13 @@ public:
           case ompl::msg::LOG_DEBUG:
           case ompl::msg::LOG_INFO:
             // LOG_INFO too verbose for MoveIt usage, so we reduce the logger level to DEBUG
-            RCLCPP_DEBUG(getLogger(), "%s:%i - %s", filename, line, text.c_str());
+            RCLCPP_DEBUG(OMPL_LOGGER, "%s:%i - %s", filename, line, text.c_str());
             break;
           case ompl::msg::LOG_WARN:
-            RCLCPP_WARN(getLogger(), "%s:%i - %s", filename, line, text.c_str());
+            RCLCPP_WARN(OMPL_LOGGER, "%s:%i - %s", filename, line, text.c_str());
             break;
           case ompl::msg::LOG_ERROR:
-            RCLCPP_ERROR(getLogger(), "%s:%i - %s", filename, line, text.c_str());
+            RCLCPP_ERROR(OMPL_LOGGER, "%s:%i - %s", filename, line, text.c_str());
             break;
           case ompl::msg::LOG_NONE:
           default:

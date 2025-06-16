@@ -34,8 +34,8 @@
 
 /* Author: Chittaranjan Srinivas Swaminathan */
 
-#include <chomp_interface/chomp_planning_context.hpp>
-#include <moveit/robot_state/conversions.hpp>
+#include <chomp_interface/chomp_planning_context.h>
+#include <moveit/robot_state/conversions.h>
 
 namespace chomp_interface
 {
@@ -47,22 +47,25 @@ CHOMPPlanningContext::CHOMPPlanningContext(const std::string& name, const std::s
   chomp_interface_ = std::make_shared<CHOMPInterface>(node);
 }
 
-void CHOMPPlanningContext::solve(planning_interface::MotionPlanDetailedResponse& res)
+bool CHOMPPlanningContext::solve(planning_interface::MotionPlanDetailedResponse& res)
 {
-  chomp_interface_->solve(planning_scene_, request_, chomp_interface_->getParams(), res);
+  return chomp_interface_->solve(planning_scene_, request_, chomp_interface_->getParams(), res);
 }
 
-void CHOMPPlanningContext::solve(planning_interface::MotionPlanResponse& res)
+bool CHOMPPlanningContext::solve(planning_interface::MotionPlanResponse& res)
 {
   planning_interface::MotionPlanDetailedResponse res_detailed;
-  solve(res_detailed);
-  if (res_detailed.error_code.val == moveit_msgs::msg::MoveItErrorCodes::SUCCESS)
+  bool planning_success = solve(res_detailed);
+
+  res.error_code_ = res_detailed.error_code_;
+
+  if (planning_success)
   {
-    res.trajectory = res_detailed.trajectory[0];
-    res.planning_time = res_detailed.processing_time[0];
+    res.trajectory_ = res_detailed.trajectory_[0];
+    res.planning_time_ = res_detailed.processing_time_[0];
   }
 
-  res.error_code = res_detailed.error_code;
+  return planning_success;
 }
 
 bool CHOMPPlanningContext::terminate()

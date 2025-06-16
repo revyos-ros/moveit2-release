@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <moveit/utils/rclcpp_utils.hpp>
+#include <moveit/utils/rclcpp_utils.h>
 
 namespace rclcpp
 {

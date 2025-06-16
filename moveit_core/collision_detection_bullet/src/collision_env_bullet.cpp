@@ -34,10 +34,10 @@
 
 /* Author: Jens Petit */
 
-#include <moveit/collision_detection_bullet/collision_env_bullet.hpp>
-#include <moveit/collision_detection_bullet/collision_detector_allocator_bullet.hpp>
-#include <moveit/collision_detection_bullet/bullet_integration/ros_bullet_utils.hpp>
-#include <moveit/collision_detection_bullet/bullet_integration/contact_checker_common.hpp>
+#include <moveit/collision_detection_bullet/collision_env_bullet.h>
+#include <moveit/collision_detection_bullet/collision_detector_allocator_bullet.h>
+#include <moveit/collision_detection_bullet/bullet_integration/ros_bullet_utils.h>
+#include <moveit/collision_detection_bullet/bullet_integration/contact_checker_common.h>
 #include <functional>
 #include <bullet/btBulletCollisionCommon.h>
 #include <rclcpp/logger.hpp>
@@ -45,10 +45,9 @@
 
 namespace collision_detection
 {
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.core.collision_detection.bullet");
 const std::string CollisionDetectorAllocatorBullet::NAME("Bullet");
 const double MAX_DISTANCE_MARGIN = 99;
-
-using collision_detection_bullet::getLogger;
 
 CollisionEnvBullet::CollisionEnvBullet(const moveit::core::RobotModelConstPtr& model, double padding, double scale)
   : CollisionEnv(model, padding, scale)
@@ -120,7 +119,7 @@ void CollisionEnvBullet::checkSelfCollisionHelper(const CollisionRequest& req, C
   std::lock_guard<std::mutex> guard(collision_env_mutex_);
 
   std::vector<collision_detection_bullet::CollisionObjectWrapperPtr> cows;
-  addAttachedObjects(state, cows);
+  addAttachedOjects(state, cows);
 
   if (req.distance)
   {
@@ -188,7 +187,7 @@ void CollisionEnvBullet::checkRobotCollisionHelper(const CollisionRequest& req, 
   }
 
   std::vector<collision_detection_bullet::CollisionObjectWrapperPtr> attached_cows;
-  addAttachedObjects(state, attached_cows);
+  addAttachedOjects(state, attached_cows);
   updateTransformsFromState(state, manager_);
 
   for (const collision_detection_bullet::CollisionObjectWrapperPtr& cow : attached_cows)
@@ -214,7 +213,7 @@ void CollisionEnvBullet::checkRobotCollisionHelperCCD(const CollisionRequest& re
   std::lock_guard<std::mutex> guard(collision_env_mutex_);
 
   std::vector<collision_detection_bullet::CollisionObjectWrapperPtr> attached_cows;
-  addAttachedObjects(state1, attached_cows);
+  addAttachedOjects(state1, attached_cows);
 
   for (const collision_detection_bullet::CollisionObjectWrapperPtr& cow : attached_cows)
   {
@@ -241,13 +240,13 @@ void CollisionEnvBullet::checkRobotCollisionHelperCCD(const CollisionRequest& re
 void CollisionEnvBullet::distanceSelf(const DistanceRequest& /*req*/, DistanceResult& /*res*/,
                                       const moveit::core::RobotState& /*state*/) const
 {
-  RCLCPP_INFO(getLogger(), "distanceSelf is not implemented for Bullet.");
+  RCLCPP_INFO(LOGGER, "distanceSelf is not implemented for Bullet.");
 }
 
 void CollisionEnvBullet::distanceRobot(const DistanceRequest& /*req*/, DistanceResult& /*res*/,
                                        const moveit::core::RobotState& /*state*/) const
 {
-  RCLCPP_INFO(getLogger(), "distanceRobot is not implemented for Bullet.");
+  RCLCPP_INFO(LOGGER, "distanceRobot is not implemented for Bullet.");
 }
 
 void CollisionEnvBullet::addToManager(const World::Object* obj)
@@ -257,13 +256,9 @@ void CollisionEnvBullet::addToManager(const World::Object* obj)
   for (const shapes::ShapeConstPtr& shape : obj->shapes_)
   {
     if (shape->type == shapes::MESH)
-    {
       collision_object_types.push_back(collision_detection_bullet::CollisionObjectType::CONVEX_HULL);
-    }
     else
-    {
       collision_object_types.push_back(collision_detection_bullet::CollisionObjectType::USE_SHAPE_TYPE);
-    }
   }
 
   auto cow = std::make_shared<collision_detection_bullet::CollisionObjectWrapper>(
@@ -332,8 +327,8 @@ void CollisionEnvBullet::notifyObjectChange(const ObjectConstPtr& obj, World::Ac
   }
 }
 
-void CollisionEnvBullet::addAttachedObjects(const moveit::core::RobotState& state,
-                                            std::vector<collision_detection_bullet::CollisionObjectWrapperPtr>& cows) const
+void CollisionEnvBullet::addAttachedOjects(const moveit::core::RobotState& state,
+                                           std::vector<collision_detection_bullet::CollisionObjectWrapperPtr>& cows) const
 {
   std::vector<const moveit::core::AttachedBody*> attached_bodies;
   state.getAttachedBodies(attached_bodies);
@@ -355,7 +350,7 @@ void CollisionEnvBullet::addAttachedObjects(const moveit::core::RobotState& stat
     }
     catch (std::exception&)
     {
-      RCLCPP_ERROR_STREAM(getLogger(), "Not adding " << body->getName() << " due to bad arguments.");
+      RCLCPP_ERROR_STREAM(LOGGER, "Not adding " << body->getName() << " due to bad arguments.");
     }
   }
 }
@@ -370,7 +365,7 @@ void CollisionEnvBullet::updatedPaddingOrScaling(const std::vector<std::string>&
     }
     else
     {
-      RCLCPP_ERROR(getLogger(), "Updating padding or scaling for unknown link: '%s'", link.c_str());
+      RCLCPP_ERROR(LOGGER, "Updating padding or scaling for unknown link: '%s'", link.c_str());
     }
   }
 }
@@ -444,7 +439,7 @@ void CollisionEnvBullet::addLinkAsCollisionObject(const urdf::LinkSharedPtr& lin
     }
     catch (std::exception&)
     {
-      RCLCPP_ERROR_STREAM(getLogger(), "Not adding " << link->name << " due to bad arguments.");
+      RCLCPP_ERROR_STREAM(LOGGER, "Not adding " << link->name << " due to bad arguments.");
     }
   }
 }

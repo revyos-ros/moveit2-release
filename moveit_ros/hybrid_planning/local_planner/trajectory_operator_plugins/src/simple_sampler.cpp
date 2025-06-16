@@ -32,14 +32,15 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <moveit/trajectory_operator_plugins/simple_sampler.hpp>
+#include <moveit/trajectory_operator_plugins/simple_sampler.h>
 
-#include <moveit/kinematic_constraints/utils.hpp>
+#include <moveit/kinematic_constraints/utils.h>
 
 namespace moveit::hybrid_planning
 {
 namespace
 {
+const rclcpp::Logger LOGGER = rclcpp::get_logger("local_planner_component");
 constexpr double WAYPOINT_RADIAN_TOLERANCE = 0.2;  // rad: L1-norm sum for all joints
 }  // namespace
 

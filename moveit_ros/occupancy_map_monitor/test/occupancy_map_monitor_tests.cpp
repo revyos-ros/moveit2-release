@@ -34,7 +34,7 @@
 
 /* Author: Tyler Weaver */
 
-#include <moveit/occupancy_map_monitor/occupancy_map_monitor.hpp>
+#include <moveit/occupancy_map_monitor/occupancy_map_monitor.h>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

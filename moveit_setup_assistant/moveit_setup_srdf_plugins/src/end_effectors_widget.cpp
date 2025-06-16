@@ -89,7 +89,7 @@ void EndEffectorsWidget::onInit()
   layout->addWidget(stacked_widget_);
 
   // Finish Layout --------------------------------------------------
-  setLayout(layout);
+  this->setLayout(layout);
 }
 
 // ******************************************************************************************

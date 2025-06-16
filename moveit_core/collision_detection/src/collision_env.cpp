@@ -34,30 +34,24 @@
 
 /* Author: Ioan Sucan, Jens Petit */
 
-#include <moveit/collision_detection/collision_env.hpp>
+#include <moveit/collision_detection/collision_env.h>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 #include <limits>
-#include <moveit/utils/logger.hpp>
 
-namespace
-{
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.core.collision_detection_env");
-}
-}  // namespace
+// Logger
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit_collision_detection.collision_robot");
 
 static inline bool validateScale(const double scale)
 {
   if (scale < std::numeric_limits<double>::epsilon())
   {
-    RCLCPP_ERROR(getLogger(), "Scale must be positive");
+    RCLCPP_ERROR(LOGGER, "Scale must be positive");
     return false;
   }
   if (scale > std::numeric_limits<double>::max())
   {
-    RCLCPP_ERROR(getLogger(), "Scale must be finite");
+    RCLCPP_ERROR(LOGGER, "Scale must be finite");
     return false;
   }
   return true;
@@ -67,12 +61,12 @@ static inline bool validatePadding(const double padding)
 {
   if (padding < 0.0)
   {
-    RCLCPP_ERROR(getLogger(), "Padding cannot be negative");
+    RCLCPP_ERROR(LOGGER, "Padding cannot be negative");
     return false;
   }
   if (padding > std::numeric_limits<double>::max())
   {
-    RCLCPP_ERROR(getLogger(), "Padding must be finite");
+    RCLCPP_ERROR(LOGGER, "Padding must be finite");
     return false;
   }
   return true;
@@ -167,13 +161,9 @@ double CollisionEnv::getLinkPadding(const std::string& link_name) const
 {
   auto it = link_padding_.find(link_name);
   if (it != link_padding_.end())
-  {
     return it->second;
-  }
   else
-  {
     return 0.0;
-  }
 }
 
 void CollisionEnv::setLinkPadding(const std::map<std::string, double>& padding)
@@ -212,13 +202,9 @@ double CollisionEnv::getLinkScale(const std::string& link_name) const
 {
   const auto it = link_scale_.find(link_name);
   if (it != link_scale_.end())
-  {
     return it->second;
-  }
   else
-  {
     return 1.0;
-  }
 }
 
 void CollisionEnv::setLinkScale(const std::map<std::string, double>& scale)

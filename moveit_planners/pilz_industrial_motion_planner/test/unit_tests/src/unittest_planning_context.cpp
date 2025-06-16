@@ -35,19 +35,19 @@
 #include <boost/core/demangle.hpp>
 #include <gtest/gtest.h>
 
-#include <moveit/planning_interface/planning_interface.hpp>
+#include <moveit/planning_interface/planning_interface.h>
 
-#include <moveit/kinematic_constraints/utils.hpp>
-#include <moveit/planning_scene/planning_scene.hpp>
-#include <moveit/robot_model/robot_model.hpp>
-#include <moveit/robot_model_loader/robot_model_loader.hpp>
+#include <moveit/kinematic_constraints/utils.h>
+#include <moveit/planning_scene/planning_scene.h>
+#include <moveit/robot_model/robot_model.h>
+#include <moveit/robot_model_loader/robot_model_loader.h>
 
-#include <pilz_industrial_motion_planner/joint_limits_container.hpp>
-#include <pilz_industrial_motion_planner/planning_context_circ.hpp>
-#include <pilz_industrial_motion_planner/planning_context_lin.hpp>
-#include <pilz_industrial_motion_planner/planning_context_ptp.hpp>
+#include <pilz_industrial_motion_planner/joint_limits_container.h>
+#include <pilz_industrial_motion_planner/planning_context_circ.h>
+#include <pilz_industrial_motion_planner/planning_context_lin.h>
+#include <pilz_industrial_motion_planner/planning_context_ptp.h>
 
-#include "test_utils.hpp"
+#include "test_utils.h"
 
 // parameters from parameter server
 const std::string PARAM_PLANNING_GROUP_NAME("planning_group");
@@ -107,12 +107,11 @@ protected:
 
     pilz_industrial_motion_planner::JointLimitsContainer joint_limits =
         testutils::createFakeLimits(robot_model_->getVariableNames());
-
-    cartesian_limits::Params cartesian_limit;
-    cartesian_limit.max_trans_vel = 1.0 * M_PI;
-    cartesian_limit.max_trans_acc = 1.0 * M_PI;
-    cartesian_limit.max_trans_dec = 1.0 * M_PI;
-    cartesian_limit.max_rot_vel = 1.0 * M_PI;
+    pilz_industrial_motion_planner::CartesianLimit cartesian_limit;
+    cartesian_limit.setMaxRotationalVelocity(1.0 * M_PI);
+    cartesian_limit.setMaxTranslationalAcceleration(1.0 * M_PI);
+    cartesian_limit.setMaxTranslationalDeceleration(1.0 * M_PI);
+    cartesian_limit.setMaxTranslationalVelocity(1.0 * M_PI);
 
     pilz_industrial_motion_planner::LimitsContainer limits;
     limits.setJointLimits(joint_limits);
@@ -207,9 +206,10 @@ TYPED_TEST_SUITE(PlanningContextTest, PlanningContextTestTypes, /* ... */);
 TYPED_TEST(PlanningContextTest, NoRequest)
 {
   planning_interface::MotionPlanResponse res;
-  this->planning_context_->solve(res);
+  bool result = this->planning_context_->solve(res);
 
-  EXPECT_EQ(moveit_msgs::msg::MoveItErrorCodes::INVALID_MOTION_PLAN, res.error_code.val)
+  EXPECT_FALSE(result) << testutils::demangle(typeid(TypeParam).name());
+  EXPECT_EQ(moveit_msgs::msg::MoveItErrorCodes::INVALID_MOTION_PLAN, res.error_code_.val)
       << testutils::demangle(typeid(TypeParam).name());
 }
 
@@ -224,15 +224,17 @@ TYPED_TEST(PlanningContextTest, SolveValidRequest)
   this->planning_context_->setMotionPlanRequest(req);
 
   // TODO Formulate valid request
-  this->planning_context_->solve(res);
+  bool result = this->planning_context_->solve(res);
 
-  EXPECT_EQ(moveit_msgs::msg::MoveItErrorCodes::SUCCESS, res.error_code.val)
+  EXPECT_TRUE(result) << testutils::demangle(typeid(TypeParam).name());
+  EXPECT_EQ(moveit_msgs::msg::MoveItErrorCodes::SUCCESS, res.error_code_.val)
       << testutils::demangle(typeid(TypeParam).name());
 
   planning_interface::MotionPlanDetailedResponse res_detailed;
-  this->planning_context_->solve(res_detailed);
+  bool result_detailed = this->planning_context_->solve(res_detailed);
 
-  EXPECT_EQ(moveit_msgs::msg::MoveItErrorCodes::SUCCESS, res.error_code.val)
+  EXPECT_TRUE(result_detailed) << testutils::demangle(typeid(TypeParam).name());
+  EXPECT_EQ(moveit_msgs::msg::MoveItErrorCodes::SUCCESS, res.error_code_.val)
       << testutils::demangle(typeid(TypeParam).name());
 }
 
@@ -245,9 +247,10 @@ TYPED_TEST(PlanningContextTest, SolveValidRequestDetailedResponse)
   planning_interface::MotionPlanRequest req = this->getValidRequest(testutils::demangle(typeid(TypeParam).name()));
 
   this->planning_context_->setMotionPlanRequest(req);
-  this->planning_context_->solve(res);
+  bool result = this->planning_context_->solve(res);
 
-  EXPECT_EQ(moveit_msgs::msg::MoveItErrorCodes::SUCCESS, res.error_code.val)
+  EXPECT_TRUE(result) << testutils::demangle(typeid(TypeParam).name());
+  EXPECT_EQ(moveit_msgs::msg::MoveItErrorCodes::SUCCESS, res.error_code_.val)
       << testutils::demangle(typeid(TypeParam).name());
 }
 
@@ -264,9 +267,10 @@ TYPED_TEST(PlanningContextTest, SolveOnTerminated)
   bool result_termination = this->planning_context_->terminate();
   EXPECT_TRUE(result_termination) << testutils::demangle(typeid(TypeParam).name());
 
-  this->planning_context_->solve(res);
+  bool result = this->planning_context_->solve(res);
+  EXPECT_FALSE(result) << testutils::demangle(typeid(TypeParam).name());
 
-  EXPECT_EQ(moveit_msgs::msg::MoveItErrorCodes::PLANNING_FAILED, res.error_code.val)
+  EXPECT_EQ(moveit_msgs::msg::MoveItErrorCodes::PLANNING_FAILED, res.error_code_.val)
       << testutils::demangle(typeid(TypeParam).name());
 }
 

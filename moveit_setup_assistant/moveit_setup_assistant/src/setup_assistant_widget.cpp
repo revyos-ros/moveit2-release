@@ -157,10 +157,10 @@ SetupAssistantWidget::SetupAssistantWidget(const rviz_common::ros_integration::R
   connect(navs_view_, SIGNAL(clicked(const QModelIndex&)), this, SLOT(navigationClicked(const QModelIndex&)));
 
   // Final Layout Setup ---------------------------------------------
-  setLayout(layout);
+  this->setLayout(layout);
 
   // Title
-  setWindowTitle("MoveIt Setup Assistant");  // title of window
+  this->setWindowTitle("MoveIt Setup Assistant");  // title of window
 
   // Show screen before message
   QApplication::processEvents();

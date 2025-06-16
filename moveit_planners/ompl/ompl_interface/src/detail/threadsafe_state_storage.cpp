@@ -34,7 +34,7 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/ompl_interface/detail/threadsafe_state_storage.hpp>
+#include <moveit/ompl_interface/detail/threadsafe_state_storage.h>
 
 ompl_interface::TSStateStorage::TSStateStorage(const moveit::core::RobotModelPtr& robot_model)
   : start_state_(robot_model)

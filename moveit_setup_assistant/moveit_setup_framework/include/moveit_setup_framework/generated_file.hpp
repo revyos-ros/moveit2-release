@@ -37,7 +37,7 @@
 #pragma once
 #include <moveit_setup_framework/utilities.hpp>
 #include <moveit_setup_framework/generated_time.hpp>
-#include <moveit/macros/class_forward.hpp>
+#include <moveit/macros/class_forward.h>
 #include <chrono>
 #include <memory>
 #include <string>

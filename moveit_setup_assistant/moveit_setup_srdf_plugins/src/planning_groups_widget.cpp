@@ -967,13 +967,9 @@ void PlanningGroupsWidget::focusGiven()
 void PlanningGroupsWidget::alterTree(const QString& link)
 {
   if (link.contains("expand"))
-  {
     groups_tree_->expandAll();
-  }
   else
-  {
     groups_tree_->collapseAll();
-  }
 }
 
 // ******************************************************************************************

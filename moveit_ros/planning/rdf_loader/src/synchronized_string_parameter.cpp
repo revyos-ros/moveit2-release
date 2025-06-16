@@ -34,7 +34,7 @@
 
 /* Author: David V. Lu!! */
 
-#include <moveit/rdf_loader/synchronized_string_parameter.hpp>
+#include <moveit/rdf_loader/synchronized_string_parameter.h>
 
 namespace rdf_loader
 {

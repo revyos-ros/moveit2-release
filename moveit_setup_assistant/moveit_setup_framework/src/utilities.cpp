@@ -53,8 +53,7 @@ bool extractPackageNameFromPath(const std::filesystem::path& path, std::string& 
   }
 
   // truncate path step by step and check if it contains a package.xml
-  // This runs until the path is either empty "" or at the root "/" or "C:\\"
-  while (!sub_path.empty() && sub_path != sub_path.root_path())
+  while (!sub_path.empty())
   {
     if (std::filesystem::is_regular_file(sub_path / "package.xml"))
     {
@@ -91,13 +90,9 @@ bool hasRequiredAttributes(const tinyxml2::XMLElement& e, const std::vector<XMLA
       continue;  // attribute not required
     const char* value = e.Attribute(attr.name);
     if (value && strcmp(attr.value, value) == 0)
-    {
       continue;  // attribute has required value
-    }
     else
-    {
       return false;
-    }
   }
   return true;
 };

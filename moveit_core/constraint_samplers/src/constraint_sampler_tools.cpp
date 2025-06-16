@@ -34,24 +34,17 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/constraint_samplers/constraint_sampler_tools.hpp>
-#include <moveit/constraint_samplers/constraint_sampler_manager.hpp>
+#include <moveit/constraint_samplers/constraint_sampler_tools.h>
+#include <moveit/constraint_samplers/constraint_sampler_manager.h>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/time.hpp>
-#include <moveit/utils/logger.hpp>
 
 namespace constraint_samplers
 {
-namespace
-{
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.core.constraint_sampler_tools");
-}
-}  // namespace
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit_constraint_samplers.constraint_sampler_tools");
 
 void visualizeDistribution(const moveit_msgs::msg::Constraints& constr,
                            const planning_scene::PlanningSceneConstPtr& scene, const std::string& group,
@@ -73,7 +66,7 @@ double countSamplesPerSecond(const ConstraintSamplerPtr& sampler, const moveit::
 {
   if (!sampler)
   {
-    RCLCPP_ERROR(getLogger(), "No sampler specified for counting samples per second");
+    RCLCPP_ERROR(LOGGER, "No sampler specified for counting samples per second");
     return 0.0;
   }
   moveit::core::RobotState ks(reference_state);
@@ -90,7 +83,7 @@ double countSamplesPerSecond(const ConstraintSamplerPtr& sampler, const moveit::
         valid++;
     }
   } while (rclcpp::Clock().now() < end);
-  return static_cast<double>(valid) / static_cast<double>(total);
+  return (double)valid / (double)total;
 }
 
 void visualizeDistribution(const ConstraintSamplerPtr& sampler, const moveit::core::RobotState& reference_state,
@@ -99,7 +92,7 @@ void visualizeDistribution(const ConstraintSamplerPtr& sampler, const moveit::co
 {
   if (!sampler)
   {
-    RCLCPP_ERROR(getLogger(), "No sampler specified for visualizing distribution of samples");
+    RCLCPP_ERROR(LOGGER, "No sampler specified for visualizing distribution of samples");
     return;
   }
   const moveit::core::LinkModel* lm = reference_state.getLinkModel(link_name);

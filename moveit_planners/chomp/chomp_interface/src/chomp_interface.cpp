@@ -34,18 +34,11 @@
 
 /* Author: E. Gil Jones */
 
-#include <chomp_interface/chomp_interface.hpp>
-#include <moveit/utils/logger.hpp>
+#include <chomp_interface/chomp_interface.h>
 
 namespace chomp_interface
 {
-namespace
-{
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.planners.chomp");
-}
-}  // namespace
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("chomp_optimizer");
 
 CHOMPInterface::CHOMPInterface(const rclcpp::Node::SharedPtr& node) : ChompPlanner(), node_(node)
 {
@@ -78,7 +71,7 @@ void CHOMPInterface::loadParams()
   if (node_->get_parameter("chomp.trajectory_initialization_method", method) &&
       !params_.setTrajectoryInitializationMethod(method))
   {
-    RCLCPP_ERROR(getLogger(),
+    RCLCPP_ERROR(LOGGER,
                  "Attempted to set trajectory_initialization_method to invalid value '%s'. Using default '%s' "
                  "instead.",
                  method.c_str(), params_.trajectory_initialization_method_.c_str());

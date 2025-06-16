@@ -34,22 +34,14 @@
 
 /* Author: Ioan Sucan, Robert Haschke */
 
-#include "query_planners_service_capability.hpp"
-#include <moveit/moveit_cpp/moveit_cpp.hpp>
-#include <moveit/planning_pipeline/planning_pipeline.hpp>
-#include <moveit/move_group/capability_names.hpp>
-#include <moveit/utils/logger.hpp>
+#include "query_planners_service_capability.h"
+#include <moveit/moveit_cpp/moveit_cpp.h>
+#include <moveit/planning_pipeline/planning_pipeline.h>
+#include <moveit/move_group/capability_names.h>
 
 namespace move_group
 {
-namespace
-{
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.ros.move_group.query_planners_service_capability");
-}
-}  // namespace
-MoveGroupQueryPlannersService::MoveGroupQueryPlannersService() : MoveGroupCapability("query_planners_service")
+MoveGroupQueryPlannersService::MoveGroupQueryPlannersService() : MoveGroupCapability("QueryPlannersService")
 {
 }
 
@@ -57,152 +49,118 @@ void MoveGroupQueryPlannersService::initialize()
 {
   query_service_ = context_->moveit_cpp_->getNode()->create_service<moveit_msgs::srv::QueryPlannerInterfaces>(
       QUERY_PLANNERS_SERVICE_NAME,
-      [this](const std::shared_ptr<moveit_msgs::srv::QueryPlannerInterfaces::Request>& req,
+      [this](const std::shared_ptr<rmw_request_id_t>& request_header,
+             const std::shared_ptr<moveit_msgs::srv::QueryPlannerInterfaces::Request>& req,
              const std::shared_ptr<moveit_msgs::srv::QueryPlannerInterfaces::Response>& res) {
-        queryInterface(req, res);
+        return queryInterface(request_header, req, res);
       });
 
   get_service_ = context_->moveit_cpp_->getNode()->create_service<moveit_msgs::srv::GetPlannerParams>(
-      GET_PLANNER_PARAMS_SERVICE_NAME,
-      [this](const std::shared_ptr<moveit_msgs::srv::GetPlannerParams::Request>& req,
-             const std::shared_ptr<moveit_msgs::srv::GetPlannerParams::Response>& res) { getParams(req, res); });
+      GET_PLANNER_PARAMS_SERVICE_NAME, [this](const std::shared_ptr<rmw_request_id_t>& request_header,
+                                              const std::shared_ptr<moveit_msgs::srv::GetPlannerParams::Request>& req,
+                                              const std::shared_ptr<moveit_msgs::srv::GetPlannerParams::Response>& res) {
+        return getParams(request_header, req, res);
+      });
 
   set_service_ = context_->moveit_cpp_->getNode()->create_service<moveit_msgs::srv::SetPlannerParams>(
-      SET_PLANNER_PARAMS_SERVICE_NAME,
-      [this](const std::shared_ptr<moveit_msgs::srv::SetPlannerParams::Request>& req,
-             const std::shared_ptr<moveit_msgs::srv::SetPlannerParams::Response>& res) { setParams(req, res); });
+      SET_PLANNER_PARAMS_SERVICE_NAME, [this](const std::shared_ptr<rmw_request_id_t>& request_header,
+                                              const std::shared_ptr<moveit_msgs::srv::SetPlannerParams::Request>& req,
+                                              const std::shared_ptr<moveit_msgs::srv::SetPlannerParams::Response>& res) {
+        return setParams(request_header, req, res);
+      });
 }
 
-void MoveGroupQueryPlannersService::queryInterface(
-    const std::shared_ptr<moveit_msgs::srv::QueryPlannerInterfaces::Request>& /* unused */,
+bool MoveGroupQueryPlannersService::queryInterface(
+    const std::shared_ptr<rmw_request_id_t>& /* unused */,
+    const std::shared_ptr<moveit_msgs::srv::QueryPlannerInterfaces::Request>& /*req*/,
     const std::shared_ptr<moveit_msgs::srv::QueryPlannerInterfaces::Response>& res)
 {
   for (const auto& planning_pipelines : context_->moveit_cpp_->getPlanningPipelines())
   {
+    const auto& pipeline_id = planning_pipelines.first;
     const auto& planning_pipeline = planning_pipelines.second;
-
-    // TODO(sjahr): Update for multiple planner plugins
-    const auto& planner_plugin_names = planning_pipeline->getPlannerPluginNames();
-    if (planner_plugin_names.empty())
+    const planning_interface::PlannerManagerPtr& planner_interface = planning_pipeline->getPlannerManager();
+    if (planner_interface)
     {
-      RCLCPP_ERROR(getLogger(), "Pipeline '%s' does not have any planner plugins.", planning_pipelines.first.c_str());
-      return;
+      std::vector<std::string> algs;
+      planner_interface->getPlanningAlgorithms(algs);
+      moveit_msgs::msg::PlannerInterfaceDescription pi_desc;
+      pi_desc.name = planner_interface->getDescription();
+      pi_desc.pipeline_id = pipeline_id;
+      planner_interface->getPlanningAlgorithms(pi_desc.planner_ids);
+      res->planner_interfaces.push_back(pi_desc);
     }
-    const auto planner_interface = planning_pipeline->getPlannerManager(planner_plugin_names.at(0));
-    if (!planner_interface)
-    {
-      RCLCPP_ERROR(getLogger(), "Requesting planner '%s' from '%s' returned a null pointer.",
-                   planner_plugin_names.at(0).c_str(), planning_pipelines.first.c_str());
-    }
-    std::vector<std::string> algs;
-    planner_interface->getPlanningAlgorithms(algs);
-    moveit_msgs::msg::PlannerInterfaceDescription pi_desc;
-    pi_desc.name = planner_interface->getDescription();
-    pi_desc.pipeline_id = planning_pipelines.first;
-    planner_interface->getPlanningAlgorithms(pi_desc.planner_ids);
-    res->planner_interfaces.push_back(pi_desc);
   }
+  return true;
 }
 
-void MoveGroupQueryPlannersService::getParams(const std::shared_ptr<moveit_msgs::srv::GetPlannerParams::Request>& req,
+bool MoveGroupQueryPlannersService::getParams(const std::shared_ptr<rmw_request_id_t>& /* unused */,
+                                              const std::shared_ptr<moveit_msgs::srv::GetPlannerParams::Request>& req,
                                               const std::shared_ptr<moveit_msgs::srv::GetPlannerParams::Response>& res)
 {
   const planning_pipeline::PlanningPipelinePtr planning_pipeline = resolvePlanningPipeline(req->pipeline_id);
   if (!planning_pipeline)
-  {
-    RCLCPP_ERROR(getLogger(), "Pipeline '%s' does not exist.", req->pipeline_id.c_str());
-    return;
-  }
+    return false;
 
-  // TODO(sjahr): Update for multiple planner plugins
-  const auto& planner_plugin_names = planning_pipeline->getPlannerPluginNames();
-  if (planner_plugin_names.empty())
+  const planning_interface::PlannerManagerPtr& planner_interface = planning_pipeline->getPlannerManager();
+  if (planner_interface)
   {
-    RCLCPP_ERROR(getLogger(), "Pipeline '%s' does not have any planner plugins.", req->pipeline_id.c_str());
-    return;
-  }
-  const auto planner_interface = planning_pipeline->getPlannerManager(planner_plugin_names.at(0));
-  if (!planner_interface)
-  {
-    RCLCPP_ERROR(getLogger(), "Requesting planner '%s' from '%s' returned a null pointer.",
-                 planner_plugin_names.at(0).c_str(), req->pipeline_id.c_str());
-  }
-  std::map<std::string, std::string> config;
+    std::map<std::string, std::string> config;
 
-  const planning_interface::PlannerConfigurationMap& configs = planner_interface->getPlannerConfigurations();
+    const planning_interface::PlannerConfigurationMap& configs = planner_interface->getPlannerConfigurations();
 
-  planning_interface::PlannerConfigurationMap::const_iterator it =
-      configs.find(req->planner_config);  // fetch default params first
-  if (it != configs.end())
-  {
-    config.insert(it->second.config.begin(), it->second.config.end());
-  }
-
-  if (!req->group.empty())
-  {  // merge in group-specific params
-    it = configs.find(req->group + "[" + req->planner_config + "]");
+    planning_interface::PlannerConfigurationMap::const_iterator it =
+        configs.find(req->planner_config);  // fetch default params first
     if (it != configs.end())
-    {
       config.insert(it->second.config.begin(), it->second.config.end());
+
+    if (!req->group.empty())
+    {  // merge in group-specific params
+      it = configs.find(req->group + "[" + req->planner_config + "]");
+      if (it != configs.end())
+        config.insert(it->second.config.begin(), it->second.config.end());
+    }
+
+    for (const auto& key_value_pair : config)
+    {
+      res->params.keys.push_back(key_value_pair.first);
+      res->params.values.push_back(key_value_pair.second);
     }
   }
-
-  for (const auto& key_value_pair : config)
-  {
-    res->params.keys.push_back(key_value_pair.first);
-    res->params.values.push_back(key_value_pair.second);
-  }
+  return true;
 }
 
-void MoveGroupQueryPlannersService::setParams(
+bool MoveGroupQueryPlannersService::setParams(
+    const std::shared_ptr<rmw_request_id_t>& /* unused */,
     const std::shared_ptr<moveit_msgs::srv::SetPlannerParams::Request>& req,
     const std::shared_ptr<moveit_msgs::srv::SetPlannerParams::Response>& /*res*/)
 {
   if (req->params.keys.size() != req->params.values.size())
-  {
-    RCLCPP_ERROR(getLogger(), "Number of parameter names does not match the number of parameters");
-    return;
-  }
+    return false;
 
   const planning_pipeline::PlanningPipelinePtr planning_pipeline = resolvePlanningPipeline(req->pipeline_id);
   if (!planning_pipeline)
-  {
-    RCLCPP_ERROR(getLogger(), "Pipeline '%s' does not exist.", req->pipeline_id.c_str());
-    return;
-  }
+    return false;
 
-  // TODO(sjahr): Update for multiple planner plugins
-  const auto& planner_plugin_names = planning_pipeline->getPlannerPluginNames();
-  if (planner_plugin_names.empty())
-  {
-    RCLCPP_ERROR(getLogger(), "Pipeline '%s' does not have any planner plugins.", req->pipeline_id.c_str());
-    return;
-  }
-  auto planner_interface = planning_pipeline->getPlannerManager(planner_plugin_names.at(0));
-  if (!planner_interface)
-  {
-    RCLCPP_ERROR(getLogger(), "Requesting planner '%s' from '%s' returned a null pointer.",
-                 planner_plugin_names.at(0).c_str(), req->pipeline_id.c_str());
-    return;
-  }
+  const planning_interface::PlannerManagerPtr& planner_interface = planning_pipeline->getPlannerManager();
 
-  planning_interface::PlannerConfigurationMap configs = planner_interface->getPlannerConfigurations();
-  const std::string config_name =
-      req->group.empty() ? req->planner_config : req->group + "[" + req->planner_config + "]";
-
-  planning_interface::PlannerConfigurationSettings& config = configs[config_name];
-  config.group = req->group;
-  config.name = config_name;
-  if (req->replace)
+  if (planner_interface)
   {
-    config.config.clear();
-  }
-  for (unsigned int i = 0, end = req->params.keys.size(); i < end; ++i)
-  {
-    config.config[req->params.keys.at(i)] = req->params.values.at(i);
-  }
+    planning_interface::PlannerConfigurationMap configs = planner_interface->getPlannerConfigurations();
+    const std::string config_name =
+        req->group.empty() ? req->planner_config : req->group + "[" + req->planner_config + "]";
 
-  planner_interface->setPlannerConfigurations(configs);
+    planning_interface::PlannerConfigurationSettings& config = configs[config_name];
+    config.group = req->group;
+    config.name = config_name;
+    if (req->replace)
+      config.config.clear();
+    for (unsigned int i = 0, end = req->params.keys.size(); i < end; ++i)
+      config.config[req->params.keys[i]] = req->params.values[i];
+
+    planner_interface->setPlannerConfigurations(configs);
+  }
+  return true;
 }
 }  // namespace move_group
 

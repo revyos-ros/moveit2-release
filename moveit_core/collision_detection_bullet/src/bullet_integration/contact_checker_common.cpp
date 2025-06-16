@@ -33,11 +33,12 @@
  * Author: Levi Armstrong
  */
 
-#include <moveit/collision_detection_bullet/bullet_integration/contact_checker_common.hpp>
+#include <moveit/collision_detection_bullet/bullet_integration/contact_checker_common.h>
 
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
-#include <moveit/collision_detection_bullet/bullet_integration/ros_bullet_utils.hpp>
+
+static const rclcpp::Logger BULLET_LOGGER = rclcpp::get_logger("collision_detection.bullet");
 
 namespace collision_detection_bullet
 {
@@ -53,7 +54,7 @@ collision_detection::Contact* processResult(ContactTestData& cdata, collision_de
     }
   }
 
-  RCLCPP_DEBUG_STREAM(getLogger(), "Contact btw " << key.first << " and " << key.second << " dist: " << contact.depth);
+  RCLCPP_DEBUG_STREAM(BULLET_LOGGER, "Contact btw " << key.first << " and " << key.second << " dist: " << contact.depth);
   // case if pair hasn't a contact yet
   if (!found)
   {
@@ -138,7 +139,7 @@ int createConvexHull(AlignedVector<Eigen::Vector3d>& vertices, std::vector<int>&
                               static_cast<btScalar>(shrinkClamp));
   if (val < 0)
   {
-    RCLCPP_ERROR(getLogger(), "Failed to create convex hull");
+    RCLCPP_ERROR(BULLET_LOGGER, "Failed to create convex hull");
     return -1;
   }
 

@@ -34,21 +34,15 @@
 
 /* Author: Acorn Pooley, Ioan Sucan */
 
-#include <moveit/collision_detection/world.hpp>
+#include <moveit/collision_detection/world.h>
 #include <geometric_shapes/check_isometry.h>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
-#include <moveit/utils/logger.hpp>
 
 namespace collision_detection
 {
-namespace
-{
-rclcpp::Logger getLogger()
-{
-  return moveit::getLogger("moveit.core.collision_detection_world");
-}
-}  // namespace
+// Logger
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit_collision_detection.world");
 
 World::World()
 {
@@ -80,7 +74,7 @@ void World::addToObject(const std::string& object_id, const Eigen::Isometry3d& p
 {
   if (shapes.size() != shape_poses.size())
   {
-    RCLCPP_ERROR(getLogger(),
+    RCLCPP_ERROR(LOGGER,
                  "Number of shapes and number of poses do not match. Not adding this object to collision world.");
     return;
   }
@@ -109,7 +103,6 @@ void World::addToObject(const std::string& object_id, const Eigen::Isometry3d& p
 std::vector<std::string> World::getObjectIds() const
 {
   std::vector<std::string> ids;
-  ids.reserve(objects_.size());
   for (const auto& object : objects_)
     ids.push_back(object.first);
   return ids;
@@ -119,13 +112,9 @@ World::ObjectConstPtr World::getObject(const std::string& object_id) const
 {
   const auto it = objects_.find(object_id);
   if (it == objects_.end())
-  {
     return ObjectConstPtr();
-  }
   else
-  {
     return it->second;
-  }
 }
 
 void World::ensureUnique(ObjectPtr& obj)
@@ -144,9 +133,7 @@ bool World::knowsTransform(const std::string& name) const
   // Check object names first
   const std::map<std::string, ObjectPtr>::const_iterator it = objects_.find(name);
   if (it != objects_.end())
-  {
     return true;
-  }
   else  // Then objects' subframes
   {
     for (const std::pair<const std::string, ObjectPtr>& object : objects_)
@@ -214,7 +201,7 @@ const Eigen::Isometry3d& World::getGlobalShapeTransform(const std::string& objec
   }
   else
   {
-    RCLCPP_ERROR_STREAM(getLogger(), "Could not find global shape transform for object " << object_id);
+    RCLCPP_ERROR_STREAM(LOGGER, "Could not find global shape transform for object " << object_id);
     static const Eigen::Isometry3d IDENTITY_TRANSFORM = Eigen::Isometry3d::Identity();
     return IDENTITY_TRANSFORM;
   }
@@ -229,7 +216,7 @@ const EigenSTL::vector_Isometry3d& World::getGlobalShapeTransforms(const std::st
   }
   else
   {
-    RCLCPP_ERROR_STREAM(getLogger(), "Could not find global shape transforms for object " << object_id);
+    RCLCPP_ERROR_STREAM(LOGGER, "Could not find global shape transforms for object " << object_id);
     static const EigenSTL::vector_Isometry3d IDENTITY_TRANSFORM_VECTOR;
     return IDENTITY_TRANSFORM_VECTOR;
   }
@@ -243,7 +230,6 @@ bool World::moveShapeInObject(const std::string& object_id, const shapes::ShapeC
   {
     const unsigned int n = it->second->shapes_.size();
     for (unsigned int i = 0; i < n; ++i)
-    {
       if (it->second->shapes_[i] == shape)
       {
         ensureUnique(it->second);
@@ -254,27 +240,6 @@ bool World::moveShapeInObject(const std::string& object_id, const shapes::ShapeC
         notify(it->second, MOVE_SHAPE);
         return true;
       }
-    }
-  }
-  return false;
-}
-
-bool World::moveShapesInObject(const std::string& object_id, const EigenSTL::vector_Isometry3d& shape_poses)
-{
-  auto it = objects_.find(object_id);
-  if (it != objects_.end())
-  {
-    if (shape_poses.size() == it->second->shapes_.size())
-    {
-      for (std::size_t i = 0; i < shape_poses.size(); ++i)
-      {
-        ASSERT_ISOMETRY(shape_poses[i])  // unsanitized input, could contain a non-isometry
-        it->second->shape_poses_[i] = shape_poses[i];
-        it->second->global_shape_poses_[i] = it->second->pose_ * shape_poses[i];
-      }
-      notify(it->second, MOVE_SHAPE);
-      return true;
-    }
   }
   return false;
 }
@@ -320,7 +285,6 @@ bool World::removeShapeFromObject(const std::string& object_id, const shapes::Sh
   {
     const unsigned int n = it->second->shapes_.size();
     for (unsigned int i = 0; i < n; ++i)
-    {
       if (it->second->shapes_[i] == shape)
       {
         ensureUnique(it->second);
@@ -339,7 +303,6 @@ bool World::removeShapeFromObject(const std::string& object_id, const shapes::Sh
         }
         return true;
       }
-    }
   }
   return false;
 }
@@ -383,10 +346,8 @@ void World::updateGlobalPosesInternal(ObjectPtr& obj, bool update_shape_poses, b
 {
   // Update global shape poses
   if (update_shape_poses)
-  {
     for (unsigned int i = 0; i < obj->global_shape_poses_.size(); ++i)
       obj->global_shape_poses_[i] = obj->pose_ * obj->shape_poses_[i];
-  }
 
   // Update global subframe poses
   if (update_subframe_poses)
