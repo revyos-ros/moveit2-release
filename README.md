@@ -1,104 +1,186 @@
-<img src="http://moveit.ros.org/assets/logo/moveit_logo-black.png" alt="MoveIt Logo" width="200"/>
+# Fuzzy-Matching Trajectory Cache
 
-The [MoveIt Motion Planning Framework for ROS 2](http://moveit.ros.org).
-For the ROS 1 repository see [MoveIt 1](https://github.com/moveit/moveit).
-For the commercially supported version see [MoveIt Pro](http://picknik.ai/pro).
+A trajectory cache based on [`warehouse_ros`](https://github.com/moveit/warehouse_ros) for the move_group planning interface that supports fuzzy lookup for `MotionPlanRequest` and `GetCartesianPath` requests and trajectories.
 
-*Easy-to-use open source robotics manipulation platform for developing commercial applications, prototyping designs, and benchmarking algorithms.*
+The cache will work on manipulators with an arbitrary number of joints, across any number of move groups.
+Furthermore, the cache supports pruning and ranking of fetched trajectories, with extension points for injecting your own feature keying, cache insert, cache prune and cache sorting logic.
 
-## Continuous Integration Status
+## Citations
 
-[![Formatting (pre-commit)](https://github.com/moveit/moveit2/actions/workflows/format.yaml/badge.svg?branch=main)](https://github.com/moveit/moveit2/actions/workflows/format.yaml?query=branch%3Amain)
-[![CI (Jazzy)](https://github.com/moveit/moveit2/actions/workflows/ci.yaml/badge.svg?branch=jazzy)](https://github.com/moveit/moveit2/actions/workflows/ci.yaml?query=branch%3Ajazzy)
-[![Code Coverage](https://codecov.io/gh/ros-planning/moveit2/branch/jazzy/graph/badge.svg?token=W7uHKcY0ly)](https://codecov.io/gh/ros-planning/moveit2)
+If you use this package in your work, please cite it using the following:
 
-## Getting Started
+```
+@software{ong_2024_11215428,
+  author       = {Ong, Brandon},
+  title        = {A Fuzzy-Matching Trajectory Cache for MoveIt 2},
+  month        = may,
+  year         = 2024,
+  publisher    = {GitHub},
+  version      = {0.1.0},
+  doi          = {10.5281/zenodo.11215428},
+  url          = {https://doi.org/10.5281/zenodo.11215428}
+}
+```
 
-See our extensive [Tutorials and Documentation](https://moveit.picknik.ai/).
+## WARNING: The following are unsupported / RFE
 
-## Install
+Since this is an initial release, the following features are unsupported because they were a little too difficult for the time I had to implement this. So I am leaving it to the community to help!
 
-- [Binary Install](https://moveit.ros.org/install-moveit2/binary/)
-- [Source Build](https://moveit.ros.org/install-moveit2/source/)
+- **!!! This cache does NOT support collision detection, multi-DOF joints, or constraint regions!**
+  - Trajectories will be put into and fetched from the cache IGNORING collision. If your planning scene is expected to change significantly between cache lookups, it is likely that the fetched plan will result in collisions.
+  - To natively handle collisions this cache will need to hash the planning scene world msg (after zeroing out std_msgs/Header timestamps and sequences) and do an appropriate lookup, or do more complicated checks to see if the scene world is "close enough" or is a strictly less obstructed version of the scene in the cache entry.
+- The fuzzy lookup can't be configured on a per-joint basis.
 
-## More Info
+That said, there are ways to get around the lack of native collision support to enable use of this cache, such as:
+- Validating a fetched plan for collisions before execution.
+- Make use of the hybrid planning pipeline, using local planners for collision avoidance, while keeping the cache as a stand-in for a "global planner", where applicable.
 
-- [How to Get Involved](http://moveit.ros.org/about/get_involved/)
-- [Development Roadmap](https://moveit.ros.org/documentation/contributing/roadmap/)
-- [Future Release Dates](https://moveit.ros.org/#release-versions)
-- [MoveIt 2 Migration Guidelines](doc/MIGRATION_GUIDE.md)
-- [MoveIt 2 Migration Progress](https://docs.google.com/spreadsheets/d/1aPb3hNP213iPHQIYgcnCYh9cGFUlZmi_06E_9iTSsOI/edit?usp=sharing)
+## Example Usage
 
-## Supporters
+**PRE-REQUISITE**: The `warehouse_plugin` ROS parameter must be set to a [`warehouse_ros`](https://github.com/moveit/warehouse_ros) plugin you have installed, which determines what database backend should be used for the cache.
 
-This open source project is maintained by supporters from around the world — see our [MoveIt Maintainers and Core Contributors](https://moveit.ros.org/about/).
+```cpp
+auto cache = std::make_shared<TrajectoryCache>(node);
+cache->init(/*db_host=*/":memory:", /*db_port=*/0, /*exact_match_precision=*/1e-6);
 
-<a href="https://picknik.ai/">
-  <img src="https://picknik.ai/assets/images/logo.jpg" width="168">
-</a>
+// The default feature extractors key the cache on starting robot state and goal constraints in the plan request.
+// Keyed fuzzily with separate fuzziness on start and goal features.
+auto default_features = TrajectoryCache::getDefaultFeatures(start_tolerance, goal_tolerance);
 
-[PickNik Inc](https://picknik.ai/) is leading the development of MoveIt.
-If you would like to support this project, please contact hello@picknik.ai.
+std::string TrajectoryCache::getDefaultSortFeature();  // Sorts by planned execution time.
 
-<a href="http://rosin-project.eu">
-  <img src="http://rosin-project.eu/wp-content/uploads/rosin_ack_logo_wide.png"
-       alt="rosin_logo" height="60" >
-</a>
+move_group.setPoseTarget(...);
+moveit_msgs::msg::MotionPlanRequest motion_plan_req_msg;
+move_group.constructMotionPlanRequest(motion_plan_request_msg);
 
-The port to ROS 2 was supported by ROSIN - ROS-Industrial Quality-Assured Robot Software Components.
-More information: <a href="http://rosin-project.eu">rosin-project.eu</a>.
+// Use the cache INSTEAD of planning!
+auto fetched_trajectory =
+    cache->fetchBestMatchingTrajectory(*move_group_interface, robot_name, motion_plan_req_msg,
+                                       /*features=*/default_features,
+                                       /*sort_by=*/TrajectoryCache::getDefaultSortFeature(),
+                                       /*ascending=*/true);
 
-<img src="http://rosin-project.eu/wp-content/uploads/rosin_eu_flag.jpg"
-     alt="eu_flag" height="45" align="left" >
+if (fetched_trajectory)  // Great! We got a cache hit, we can execute it.
+{
+  move_group.execute(*fetched_trajectory);
+}
+else  // Otherwise, plan... And put it for posterity!
+{
+  moveit::planning_interface::MoveGroupInterface::Plan plan;
+  if (move_group.plan(plan) == moveit::core::MoveItErrorCode::SUCCESS)
+  {
+    cache->insertTrajectory(
+        *interface, robot_name, std::move(plan_req_msg), std::move(plan),
+        /*cache_insert_policy=*/BestSeenExecutionTimePolicy(),
+        /*prune_worse_trajectories=*/true, /*additional_features=*/{});
+  }
+}
+```
 
-This project has received funding from the European Union’s Horizon 2020
-research and innovation programme under grant agreement no. 732287.
+## Main Features
 
-## Generate API Doxygen Documentation
-See [How To Generate API Doxygen Reference Locally](https://moveit.picknik.ai/main/doc/how_to_guides/how_to_generate_api_doxygen_locally.html).
+### Overview
 
-# Buildfarm
-| Package | Rolling Binary | Jazzy Binary | Humble Binary |
-|:---:|:---:|:---:|:---:|
-| geometric_shapes  | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__geometric_shapes__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__geometric_shapes__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__geometric_shapes__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__geometric_shapes__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__geometric_shapes__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__geometric_shapes__ubuntu_jammy_amd64__binary) |
-| moveit | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit__ubuntu_jammy_amd64__binary) |
-| moveit_common | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_common__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_common__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_common__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_common__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_common__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_common__ubuntu_jammy_amd64__binary) |
-| moveit_configs_utils | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_configs_utils__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_configs_utils__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_configs_utils__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_configs_utils__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_configs_utils__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_configs_utils__ubuntu_jammy_amd64__binary) |
-| moveit_core | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_core__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_core__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_core__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_core__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_core__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_core__ubuntu_jammy_amd64__binary) |
-| moveit_hybrid_planning | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_hybrid_planning__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_hybrid_planning__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_hybrid_planning__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_hybrid_planning__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_hybrid_planning__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_hybrid_planning__ubuntu_jammy_amd64__binary) |
-| moveit_kinematics | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_kinematics__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_kinematics__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_kinematics__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_kinematics__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_kinematics__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_kinematics__ubuntu_jammy_amd64__binary) |
-| moveit_msgs | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_msgs__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_msgs__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_msgs__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_msgs__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_msgs__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_msgs__ubuntu_jammy_amd64__binary) |
-| moveit_planners | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_planners__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_planners__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_planners__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_planners__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_planners__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_planners__ubuntu_jammy_amd64__binary) |
-| moveit_planners_chomp | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_planners_chomp__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_planners_chomp__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_planners_chomp__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_planners_chomp__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_planners_chomp__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_planners_chomp__ubuntu_jammy_amd64__binary) |
-| moveit_planners_ompl | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_planners_ompl__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_planners_ompl__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_planners_ompl__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_planners_ompl__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_planners_ompl__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_planners_ompl__ubuntu_jammy_amd64__binary) |
-| moveit_planners_stomp | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_planners_stomp__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_planners_stomp__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_planners_stomp__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_planners_stomp__ubuntu_noble_amd64__binary) |  [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_planners_stomp__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_planners_stomp__ubuntu_jammy_amd64__binary) |
-| moveit_plugins | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_plugins__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_plugins__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_plugins__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_plugins__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_plugins__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_plugins__ubuntu_jammy_amd64__binary) |
-| moveit_py | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_py__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_py__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_py__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_py__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_py__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_py__ubuntu_jammy_amd64__binary) |
-| moveit_resources | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_resources__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_resources__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_resources__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_resources__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_resources__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_resources__ubuntu_jammy_amd64__binary)
-| moveit_ros | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_ros__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_ros__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_ros__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_ros__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_ros__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_ros__ubuntu_jammy_amd64__binary) |
-| moveit_ros_benchmarks | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_ros_benchmarks__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_ros_benchmarks__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_ros_benchmarks__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_ros_benchmarks__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_ros_benchmarks__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_ros_benchmarks__ubuntu_jammy_amd64__binary) |
-| moveit_ros_move_group | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_ros_move_group__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_ros_move_group__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_ros_move_group__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_ros_move_group__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_ros_move_group__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_ros_move_group__ubuntu_jammy_amd64__binary) |
-| moveit_ros_occupancy_map_monitor | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_ros_occupancy_map_monitor__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_ros_occupancy_map_monitor__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_ros_occupancy_map_monitor__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_ros_occupancy_map_monitor__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_ros_occupancy_map_monitor__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_ros_occupancy_map_monitor__ubuntu_jammy_amd64__binary) |
-| moveit_ros_perception | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_ros_perception__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_ros_perception__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_ros_perception__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_ros_perception__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_ros_perception__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_ros_perception__ubuntu_jammy_amd64__binary) |
-| moveit_ros_planning | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_ros_planning__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_ros_planning__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_ros_planning__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_ros_planning__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_ros_planning__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_ros_planning__ubuntu_jammy_amd64__binary) |
-| moveit_ros_planning_interface | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_ros_planning_interface__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_ros_planning_interface__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_ros_planning_interface__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_ros_planning_interface__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_ros_planning_interface__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_ros_planning_interface__ubuntu_jammy_amd64__binary) |
-| moveit_ros_robot_interaction | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_ros_robot_interaction__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_ros_robot_interaction__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_ros_robot_interaction__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_ros_robot_interaction__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_ros_robot_interaction__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_ros_robot_interaction__ubuntu_jammy_amd64__binary) |
-| moveit_ros_tests | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_ros_tests__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_ros_tests__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_ros_tests__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_ros_tests__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_ros_tests__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_ros_tests__ubuntu_jammy_amd64__binary) |
-| moveit_ros_trajectory_cache | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_ros_trajectory_cache__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_ros_trajectory_cache__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_ros_trajectory_cache__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_ros_trajectory_cache__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_ros_trajectory_cache__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_ros_trajectory_cache__ubuntu_jammy_amd64__binary) |
-| moveit_ros_visualization | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_ros_visualization__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_ros_visualization__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_ros_visualization__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_ros_visualization__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_ros_visualization__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_ros_visualization__ubuntu_jammy_amd64__binary) |
-| moveit_ros_warehouse | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_ros_warehouse__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_ros_warehouse__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_ros_warehouse__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_ros_warehouse__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_ros_warehouse__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_ros_warehouse__ubuntu_jammy_amd64__binary) |
-| moveit_runtime | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_runtime__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_runtime__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_runtime__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_runtime__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_runtime__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_runtime__ubuntu_jammy_amd64__binary) |
-| moveit_servo | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_servo__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_servo__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_servo__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_servo__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_servo__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_servo__ubuntu_jammy_amd64__binary) |
-| moveit_setup_app_plugins | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_setup_app_plugins__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_setup_app_plugins__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_setup_app_plugins__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_setup_app_plugins__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_setup_app_plugins__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_setup_app_plugins__ubuntu_jammy_amd64__binary) |
-| moveit_setup_assistant | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_setup_assistant__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_setup_assistant__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_setup_assistant__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_setup_assistant__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_setup_assistant__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_setup_assistant__ubuntu_jammy_amd64__binary) |
-| moveit_setup_controllers | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_setup_controllers__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_setup_controllers__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_setup_controllers__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_setup_controllers__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_setup_controllers__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_setup_controllers__ubuntu_jammy_amd64__binary) |
-| moveit_setup_core_plugins | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_setup_core_plugins__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_setup_core_plugins__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_setup_core_plugins__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_setup_core_plugins__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_setup_core_plugins__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_setup_core_plugins__ubuntu_jammy_amd64__binary) |
-| moveit_setup_framework | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_setup_framework__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_setup_framework__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_setup_framework__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_setup_framework__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_setup_framework__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_setup_framework__ubuntu_jammy_amd64__binary) |
-| moveit_setup_srdf_plugins | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_setup_srdf_plugins__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_setup_srdf_plugins__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_setup_srdf_plugins__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_setup_srdf_plugins__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_setup_srdf_plugins__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_setup_srdf_plugins__ubuntu_jammy_amd64__binary) |
-| moveit_simple_controller_manager | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__moveit_simple_controller_manager__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__moveit_simple_controller_manager__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__moveit_simple_controller_manager__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__moveit_simple_controller_manager__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__moveit_simple_controller_manager__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__moveit_simple_controller_manager__ubuntu_jammy_amd64__binary) |
-| pilz_industrial_motion_planner | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__pilz_industrial_motion_planner__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__pilz_industrial_motion_planner__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__pilz_industrial_motion_planner__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__pilz_industrial_motion_planner__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__pilz_industrial_motion_planner__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__pilz_industrial_motion_planner__ubuntu_jammy_amd64__binary) |
-| pilz_industrial_motion_planner_testutils | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__pilz_industrial_motion_planner_testutils__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__pilz_industrial_motion_planner_testutils__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__pilz_industrial_motion_planner_testutils__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__pilz_industrial_motion_planner_testutils__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__pilz_industrial_motion_planner_testutils__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__pilz_industrial_motion_planner_testutils__ubuntu_jammy_amd64__binary) |
-| random_numbers | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__random_numbers__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__random_numbers__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__random_numbers__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__random_numbers__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__random_numbers__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__random_numbers__ubuntu_jammy_amd64__binary) |
-| srdfdom | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__srdfdom__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__srdfdom__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__srdfdom__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__srdfdom__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__srdfdom__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__srdfdom__ubuntu_jammy_amd64__binary) |
-| warehouse_ros | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__warehouse_ros__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__warehouse_ros__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__warehouse_ros__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__warehouse_ros__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__warehouse_ros__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__warehouse_ros__ubuntu_jammy_amd64__binary) |
-| warehouse_ros_sqlite | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Rbin_uN64__warehouse_ros_sqlite__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Rbin_uN64__warehouse_ros_sqlite__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Jbin_uN64__warehouse_ros_sqlite__ubuntu_noble_amd64__binary)](https://build.ros2.org/job/Jbin_uN64__warehouse_ros_sqlite__ubuntu_noble_amd64__binary) | [![Build Status](https://build.ros2.org/buildStatus/icon?job=Hbin_uJ64__warehouse_ros_sqlite__ubuntu_jammy_amd64__binary)](https://build.ros2.org/job/Hbin_uJ64__warehouse_ros_sqlite__ubuntu_jammy_amd64__binary) |
+This trajectory cache package supports:
+- Inserting and fetching trajectories, keyed fuzzily on any feature of the plan request and plan response.
+- Ranking cache entries on any keying feature that is supported (e.g. sorting by execution time).
+- Optional cache pruning to keep fetch times and database sizes low.
+- Generic support for manipulators with any arbitrary number of joints, across any number of move_groups.
+- Cache namespacing and partitioning
+- Extension points for injecting your own feature keying, cache insert, cache prune, and cache sorting logic.
+
+The cache supports `MotionPlanRequest` and `GetCartesianPaths::Request` out of the box!
+
+### Fully Customizable Behavior
+
+This trajectory cache allows you to inject your own implementations to affect:
+- What features of the plan request and plan response to key the cache on
+- What cache insert and cache pruning policy to adopt
+
+For example, you may decide to write your own feature extractor to key the cache, and decide when to insert or prune a cache entry on features such as:
+- Minimum jerk time
+- Path length
+- Any other feature not supported by this package!
+
+### Pre-Existing Implementations
+
+The package provides some starter implementations that covers most general cases of motion planning.
+
+For more information, see the implementations of:
+- [`FeaturesInterface`](./include/moveit/trajectory_cache/features/features_interface.hpp)
+- [`CacheInsertPolicyInterface`](./include/moveit/trajectory_cache/cache_insert_policies/cache_insert_policy_interface.hpp)
+
+#### Cache Keying Features
+
+The following are features of the plan request and response that you can key the cache on.
+
+These support separately configurable fuzzy lookup on start and goal conditions!
+Additionally, these features "canonicalize" the inputs to reduce the cardinality of the cache, increasing the chances of cache hits. (e.g., restating poses relative to the planning frame).
+
+Supported Features:
+- "Start"
+  - `WorkspaceFeatures`: Planning workspace
+  - `StartStateJointStateFeatures`: Starting robot joint state
+- "Goal"
+  - `MaxSpeedAndAccelerationFeatures`: Max velocity, acceleration, and cartesian speed limits
+  - `GoalConstraintsFeatures`: Planning request `goal_constraints`
+    - This includes ALL joint, position, and orientation constraints (but not constraint regions)!
+  - `PathConstraintsFeatures`: Planning request `path_constraints`
+  - `TrajectoryConstraintsFeatures`: Planning request `trajectory_constraints`And also workspace parameters, and some others.
+- Planning request goal parameters
+
+Additionally, support for user-specified features are provided for query-only or cache metadata tagging constant features. (See [`constant_features.hpp`](./include/moveit/trajectory_cache/features/constant_features.hpp))
+
+Similar support exists for the cartesian variants of these.
+
+#### Cache Insert and Pruning Policies
+
+The following are cache insertion and pruning policies to govern when cache entries are inserted, and how they are (optionally) pruned.
+
+Supported Cache Insert Policies:
+- `BestSeenExecutionTimePolicy`: Only insert best seen execution time, optionally prune on best execution time.
+- `AlwaysInsertNeverPrunePolicy`: Always insert, never prune
+
+## Working Principle
+
+If a plan request has features (e.g., start, goal, and constraint conditions) that are "close enough" to an entry in the cache, then the cached trajectory should be reusable for that request, allowing us to skip planning.
+
+The cache extracts these features from the planning request and plan response, storing them in the cache database.
+When a new planning request is used to attempt to fetch a matching plan, the cache attempts to fuzzily match the request to pre-existing cache entries keyed on similar requests.
+Any "close enough" matches are then returned as valid cache hits for plan reuse, with the definition of "close enough" depending on the type of feature that is being extracted.
+
+## Benefits
+
+A trajectory cache helps:
+- Cut down on planning time
+- Allows for consistent predictable behavior of used together with a stochastic planner
+  - It effectively allows you to "freeze" a move
+
+To explain this, consider that planners in MoveIt generally fall under two main camps: stochastic/probabilistic, and optimization based.
+The probabilistic planners are fast, but usually non-deterministic, whereas the optimization based ones are usually slow, but deterministic.
+
+One way to get around this is to pre-plan and manually select and label robot trajectories to "freeze" in a trajectory database to then replay by name, which avoids needing to spend time to replan, and allows you to ensure that motions are constant and repeatable.
+However, this approach is not very flexible and not easily reused.
+
+The trajectory cache improves upon this approach by allowing a user to "freeze" and store successful plans, but **also** look up those plans in a more generalizable and natural way, using the planning request itself to key the cache, effectively allowing the cache to stand in for a planning call.
+
+Furthermore, the specific properties of this trajectory cache provides further unique benefits:
+1. With fuzzy matching, "frozen" plans are much easier to look up and reuse, while simultaneously increasing the chances of a cache hit.
+2. The ability to rank trajectories will, if used with a stochastic planner over sufficient runs, cause the cache to eventually converge to increasingly optimal plans.
+
+Finally, the cache makes use of pruning to optimize fetch times, and also finds ways to "canonicalize" features of the keying request to increase chances of a cache hit.
+
+## Best Practices
+
+- Since this cache does not yet support collisions, ensure the planning scene and obstacles remain static, or always validate the fetched plan for collisions
+- When using the default cache features, have looser start fuzziness, and stricter goal fuzziness
+- Move the robot to fixed starting poses where possible before planning to increase the chances of a cache hit
+- Use the cache where repetitive, non-dynamic motion is likely to occur (e.g. known plans, short planned moves, etc.)
+
+Additionally, you may build abstractions on top of the class, for example, to expose the following behaviors:
+- `TrainingOverwrite`: Always plan, and write to cache, pruning all worse trajectories for "matching" cache keys
+- `TrainingAppendOnly`: Always plan, and always add to the cache.
+- `ExecuteBestEffort`: Rely on cache wherever possible, but plan otherwise.
+- `ExecuteReadOnly`: Only execute if cache hit occurred.
+
+You can see how such behaviors effectively model the "dev" and "deploy" phases of a robot deployment, and how they could be useful.
