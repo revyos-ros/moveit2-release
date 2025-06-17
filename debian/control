@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-planners-ompl
+Section: misc
+Priority: optional
+Maintainer: Henning Kayser <henningkayser@picknik.ai>
+Build-Depends: debhelper (>= 9.0.0), libeigen3-dev <!nocheck>, libomp-dev, ros-jazzy-ament-cmake, ros-jazzy-ament-cmake-gtest <!nocheck>, ros-jazzy-eigen3-cmake-module, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-moveit-msgs, ros-jazzy-moveit-resources-fanuc-moveit-config <!nocheck>, ros-jazzy-moveit-resources-panda-moveit-config <!nocheck>, ros-jazzy-moveit-resources-pr2-description <!nocheck>, ros-jazzy-moveit-ros-planning, ros-jazzy-ompl, ros-jazzy-pluginlib (>= 1.11.2), ros-jazzy-rclcpp, ros-jazzy-tf2-eigen, ros-jazzy-tf2-eigen <!nocheck>, ros-jazzy-tf2-ros, ros-jazzy-ros-workspace
+Homepage: http://moveit.ros.org
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-planners-ompl
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libomp-dev, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-moveit-msgs, ros-jazzy-moveit-ros-planning, ros-jazzy-ompl, ros-jazzy-pluginlib (>= 1.11.2), ros-jazzy-rclcpp, ros-jazzy-tf2-eigen, ros-jazzy-tf2-ros, ros-jazzy-ros-workspace
+Description: MoveIt interface to OMPL
