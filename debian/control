@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-ros-benchmarks
+Section: misc
+Priority: optional
+Maintainer: Henning Kayser <henningkayser@picknik.ai>
+Build-Depends: debhelper (>= 9.0.0), libboost-date-time-dev, libboost-dev, libboost-filesystem-dev, ros-jazzy-ament-cmake, ros-jazzy-moveit-common, ros-jazzy-moveit-core, ros-jazzy-moveit-ros-planning, ros-jazzy-moveit-ros-warehouse, ros-jazzy-pluginlib (>= 1.11.2), ros-jazzy-rclcpp, ros-jazzy-tf2-eigen, ros-jazzy-ros-workspace
+Homepage: http://moveit.ros.org
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-ros-benchmarks
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libboost-date-time1.83.0, libboost-filesystem1.83.0, ros-jazzy-launch-param-builder, ros-jazzy-moveit-common, ros-jazzy-moveit-configs-utils, ros-jazzy-moveit-ros-planning, ros-jazzy-moveit-ros-warehouse, ros-jazzy-pluginlib (>= 1.11.2), ros-jazzy-rclcpp, ros-jazzy-tf2-eigen, ros-jazzy-ros-workspace
+Description: Enhanced tools for benchmarks in MoveIt
