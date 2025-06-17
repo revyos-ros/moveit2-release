@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <pilz_industrial_motion_planner/velocity_profile_atrap.h>
+#include <pilz_industrial_motion_planner/velocity_profile_atrap.hpp>
 
 namespace pilz_industrial_motion_planner
 {
@@ -217,7 +217,7 @@ bool VelocityProfileATrap::setProfileStartVelocity(double pos1, double pos2, dou
 
   if (s * vel1 <= 0)
   {
-    // TODO initial velocity is in opposite derection of start-end vector
+    // TODO initial velocity is in opposite direction of start-end vector
     return false;
   }
 
@@ -384,7 +384,7 @@ double VelocityProfileATrap::Acc(double time) const
 KDL::VelocityProfile* VelocityProfileATrap::Clone() const
 {
   VelocityProfileATrap* trap = new VelocityProfileATrap(max_vel_, max_acc_, max_dec_);
-  trap->setProfileAllDurations(this->start_pos_, this->end_pos_, this->t_a_, this->t_b_, this->t_c_);
+  trap->setProfileAllDurations(start_pos_, end_pos_, t_a_, t_b_, t_c_);
   return trap;
 }
 

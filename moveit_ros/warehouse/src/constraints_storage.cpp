@@ -34,7 +34,8 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/warehouse/constraints_storage.h>
+#include <moveit/warehouse/constraints_storage.hpp>
+#include <moveit/utils/logger.hpp>
 
 #include <utility>
 
@@ -44,13 +45,11 @@ const std::string moveit_warehouse::ConstraintsStorage::CONSTRAINTS_ID_NAME = "c
 const std::string moveit_warehouse::ConstraintsStorage::CONSTRAINTS_GROUP_NAME = "group_id";
 const std::string moveit_warehouse::ConstraintsStorage::ROBOT_NAME = "robot_id";
 
-static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.ros.warehouse.constraints_storage");
-
 using warehouse_ros::Metadata;
 using warehouse_ros::Query;
 
 moveit_warehouse::ConstraintsStorage::ConstraintsStorage(warehouse_ros::DatabaseConnection::Ptr conn)
-  : MoveItMessageStorage(std::move(conn))
+  : MoveItMessageStorage(std::move(conn)), logger_(moveit::getLogger("moveit.ros.warehouse_constraints_storage"))
 {
   createCollections();
 }
@@ -81,7 +80,7 @@ void moveit_warehouse::ConstraintsStorage::addConstraints(const moveit_msgs::msg
   metadata->append(ROBOT_NAME, robot);
   metadata->append(CONSTRAINTS_GROUP_NAME, group);
   constraints_collection_->insert(msg, metadata);
-  RCLCPP_DEBUG(LOGGER, "%s constraints '%s'", replace ? "Replaced" : "Added", msg.name.c_str());
+  RCLCPP_DEBUG(logger_, "%s constraints '%s'", replace ? "Replaced" : "Added", msg.name.c_str());
 }
 
 bool moveit_warehouse::ConstraintsStorage::hasConstraints(const std::string& name, const std::string& robot,
@@ -116,8 +115,10 @@ void moveit_warehouse::ConstraintsStorage::getKnownConstraints(std::vector<std::
     q->append(CONSTRAINTS_GROUP_NAME, group);
   std::vector<ConstraintsWithMetadata> constr = constraints_collection_->queryList(q, true, CONSTRAINTS_ID_NAME, true);
   for (const ConstraintsWithMetadata& it : constr)
+  {
     if (it->lookupField(CONSTRAINTS_ID_NAME))
       names.push_back(it->lookupString(CONSTRAINTS_ID_NAME));
+  }
 }
 
 bool moveit_warehouse::ConstraintsStorage::getConstraints(ConstraintsWithMetadata& msg_m, const std::string& name,
@@ -131,7 +132,9 @@ bool moveit_warehouse::ConstraintsStorage::getConstraints(ConstraintsWithMetadat
     q->append(CONSTRAINTS_GROUP_NAME, group);
   std::vector<ConstraintsWithMetadata> constr = constraints_collection_->queryList(q, false);
   if (constr.empty())
+  {
     return false;
+  }
   else
   {
     msg_m = constr.back();
@@ -154,7 +157,7 @@ void moveit_warehouse::ConstraintsStorage::renameConstraints(const std::string& 
   Metadata::Ptr m = constraints_collection_->createMetadata();
   m->append(CONSTRAINTS_ID_NAME, new_name);
   constraints_collection_->modifyMetadata(q, m);
-  RCLCPP_DEBUG(LOGGER, "Renamed constraints from '%s' to '%s'", old_name.c_str(), new_name.c_str());
+  RCLCPP_DEBUG(logger_, "Renamed constraints from '%s' to '%s'", old_name.c_str(), new_name.c_str());
 }
 
 void moveit_warehouse::ConstraintsStorage::removeConstraints(const std::string& name, const std::string& robot,
@@ -167,5 +170,5 @@ void moveit_warehouse::ConstraintsStorage::removeConstraints(const std::string& 
   if (!group.empty())
     q->append(CONSTRAINTS_GROUP_NAME, group);
   unsigned int rem = constraints_collection_->removeMessages(q);
-  RCLCPP_DEBUG(LOGGER, "Removed %u Constraints messages (named '%s')", rem, name.c_str());
+  RCLCPP_DEBUG(logger_, "Removed %u Constraints messages (named '%s')", rem, name.c_str());
 }

@@ -34,11 +34,11 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/robot_model/link_model.h>
-#include <moveit/robot_model/joint_model.h>
+#include <moveit/robot_model/link_model.hpp>
+#include <moveit/robot_model/joint_model.hpp>
 #include <geometric_shapes/check_isometry.h>
 #include <geometric_shapes/shape_operations.h>
-#include <moveit/robot_model/aabb.h>
+#include <moveit/robot_model/aabb.hpp>
 
 namespace moveit
 {
@@ -110,9 +110,13 @@ void LinkModel::setGeometry(const std::vector<shapes::ShapeConstPtr>& shapes, co
 
   centered_bounding_box_offset_ = aabb.center();
   if (shapes_.empty())
+  {
     shape_extents_.setZero();
+  }
   else
+  {
     shape_extents_ = aabb.sizes();
+  }
 }
 
 void LinkModel::setVisualMesh(const std::string& visual_mesh, const Eigen::Isometry3d& origin,

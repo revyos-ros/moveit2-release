@@ -34,23 +34,22 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/motion_planning_rviz_plugin/motion_planning_frame.h>
-#include <moveit/motion_planning_rviz_plugin/motion_planning_display.h>
-#include <moveit/robot_state/robot_state.h>
+#include <moveit/motion_planning_rviz_plugin/motion_planning_frame.hpp>
+#include <moveit/motion_planning_rviz_plugin/motion_planning_display.hpp>
+#include <moveit/robot_state/robot_state.hpp>
 
-#include <moveit/kinematic_constraints/utils.h>
-#include <moveit/robot_state/conversions.h>
+#include <moveit/kinematic_constraints/utils.hpp>
+#include <moveit/robot_state/conversions.hpp>
 
 #include <std_srvs/srv/empty.hpp>
 #include <moveit_msgs/msg/robot_state.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
-#include <moveit/trajectory_processing/time_optimal_trajectory_generation.h>
+#include <moveit/trajectory_processing/time_optimal_trajectory_generation.hpp>
 
 #include "ui_motion_planning_rviz_plugin_frame.h"
 
 namespace moveit_rviz_plugin
 {
-static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit_ros_visualization.motion_planning_frame_planning");
 
 void MotionPlanningFrame::planButtonClicked()
 {
@@ -100,7 +99,7 @@ void MotionPlanningFrame::pathConstraintsIndexChanged(int index)
     {
       std::string c = ui_->path_constraints_combo_box->itemText(index).toStdString();
       if (!move_group_->setPathConstraints(c))
-        RCLCPP_WARN_STREAM(LOGGER, "Unable to set the path constraints: " << c);
+        RCLCPP_WARN_STREAM(logger_, "Unable to set the path constraints: " << c);
     }
     else
       move_group_->clearPathConstraints();
@@ -114,7 +113,7 @@ void MotionPlanningFrame::onClearOctomapClicked()
 
   if (result.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
   {
-    RCLCPP_ERROR(LOGGER, "Failed to call clear_octomap_service");
+    RCLCPP_ERROR(logger_, "Failed to call clear_octomap_service");
   }
   ui_->clear_octomap_button->setEnabled(false);
 }
@@ -129,24 +128,22 @@ bool MotionPlanningFrame::computeCartesianPlan()
   const moveit::core::LinkModel* link = move_group_->getRobotModel()->getLinkModel(link_name);
   if (!link)
   {
-    RCLCPP_ERROR_STREAM(LOGGER, "Failed to determine unique end-effector link: " << link_name);
+    RCLCPP_ERROR_STREAM(logger_, "Failed to determine unique end-effector link: " << link_name);
     return false;
   }
   waypoints.push_back(tf2::toMsg(goal.getGlobalLinkTransform(link)));
 
   // setup default params
   double cart_step_size = 0.01;
-  double cart_jump_thresh = 0.0;
   bool avoid_collisions = true;
 
   // compute trajectory
   moveit_msgs::msg::RobotTrajectory trajectory;
-  double fraction =
-      move_group_->computeCartesianPath(waypoints, cart_step_size, cart_jump_thresh, trajectory, avoid_collisions);
+  double fraction = move_group_->computeCartesianPath(waypoints, cart_step_size, trajectory, avoid_collisions);
 
   if (fraction >= 1.0)
   {
-    RCLCPP_INFO(LOGGER, "Achieved %f %% of Cartesian path", fraction * 100.);
+    RCLCPP_INFO(logger_, "Achieved %f %% of Cartesian path", fraction * 100.);
 
     // Compute time parameterization to also provide velocities
     // https://groups.google.com/forum/#!topic/moveit-users/MOoFxy2exT4
@@ -155,12 +152,12 @@ bool MotionPlanningFrame::computeCartesianPlan()
     trajectory_processing::TimeOptimalTrajectoryGeneration time_parameterization;
     bool success = time_parameterization.computeTimeStamps(rt, ui_->velocity_scaling_factor->value(),
                                                            ui_->acceleration_scaling_factor->value());
-    RCLCPP_INFO(LOGGER, "Computing time stamps %s", success ? "SUCCEEDED" : "FAILED");
+    RCLCPP_INFO(logger_, "Computing time stamps %s", success ? "SUCCEEDED" : "FAILED");
 
     // Store trajectory in current_plan_
     current_plan_ = std::make_shared<moveit::planning_interface::MoveGroupInterface::Plan>();
-    rt.getRobotTrajectoryMsg(current_plan_->trajectory_);
-    current_plan_->planning_time_ = (rclcpp::Clock().now() - start).seconds();
+    rt.getRobotTrajectoryMsg(current_plan_->trajectory);
+    current_plan_->planning_time = (rclcpp::Clock().now() - start).seconds();
     return success;
   }
   return false;
@@ -189,7 +186,7 @@ void MotionPlanningFrame::computePlanButtonClicked()
   if (success)
   {
     ui_->execute_button->setEnabled(true);
-    ui_->result_label->setText(QString("Time: ").append(QString::number(current_plan_->planning_time_, 'f', 3)));
+    ui_->result_label->setText(QString("Time: ").append(QString::number(current_plan_->planning_time, 'f', 3)));
   }
   else
   {
@@ -246,9 +243,13 @@ void MotionPlanningFrame::onFinishedExecution(bool success)
 {
   // visualize result of execution
   if (success)
+  {
     ui_->result_label->setText("Executed");
+  }
   else
+  {
     ui_->result_label->setText(!ui_->stop_button->isEnabled() ? "Stopped" : "Failed");
+  }
   // disable stop button
   ui_->stop_button->setEnabled(false);
 
@@ -343,11 +344,11 @@ void MotionPlanningFrame::updateQueryStateHelper(moveit::core::RobotState& state
       }
       // Explain if no valid rand state found
       if (attempt_count >= MAX_ATTEMPTS)
-        RCLCPP_WARN(LOGGER, "Unable to find a random collision free configuration after %d attempts", MAX_ATTEMPTS);
+        RCLCPP_WARN(logger_, "Unable to find a random collision free configuration after %d attempts", MAX_ATTEMPTS);
     }
     else
     {
-      RCLCPP_WARN_STREAM(LOGGER, "Unable to get joint model group " << planning_display_->getCurrentPlanningGroup());
+      RCLCPP_WARN_STREAM(logger_, "Unable to get joint model group " << planning_display_->getCurrentPlanningGroup());
     }
     return;
   }
@@ -415,7 +416,7 @@ void MotionPlanningFrame::populatePlannersList(const std::vector<moveit_msgs::ms
 void MotionPlanningFrame::populatePlannerDescription(const moveit_msgs::msg::PlannerInterfaceDescription& desc)
 {
   std::string group = planning_display_->getCurrentPlanningGroup();
-  RCLCPP_DEBUG(LOGGER, "Found %zu planners for group '%s' and pipeline '%s'", desc.planner_ids.size(), group.c_str(),
+  RCLCPP_DEBUG(logger_, "Found %zu planners for group '%s' and pipeline '%s'", desc.planner_ids.size(), group.c_str(),
                desc.pipeline_id.c_str());
   ui_->planning_algorithm_combo_box->clear();
 
@@ -429,9 +430,11 @@ void MotionPlanningFrame::populatePlannerDescription(const moveit_msgs::msg::Pla
   {
     for (const std::string& planner_id : desc.planner_ids)
     {
-      RCLCPP_DEBUG(LOGGER, "planner id: %s", planner_id.c_str());
+      RCLCPP_DEBUG(logger_, "planner id: %s", planner_id.c_str());
       if (planner_id == group)
+      {
         found_group = true;
+      }
       else if (planner_id.substr(0, group.length()) == group)
       {
         if (planner_id.size() > group.length() && planner_id[group.length()] == '[')
@@ -447,8 +450,10 @@ void MotionPlanningFrame::populatePlannerDescription(const moveit_msgs::msg::Pla
     }
   }
   if (ui_->planning_algorithm_combo_box->count() == 0 && !found_group)
+  {
     for (const std::string& planner_id : desc.planner_ids)
       ui_->planning_algorithm_combo_box->addItem(QString::fromStdString(planner_id));
+  }
 
   ui_->planning_algorithm_combo_box->insertItem(0, "<unspecified>");
 
@@ -515,8 +520,10 @@ void MotionPlanningFrame::configureWorkspace()
   bz.max_position_ = ui_->wcenter_z->value() + ui_->wsize_z->value() / 2.0;
 
   if (move_group_)
+  {
     move_group_->setWorkspace(bx.min_position_, by.min_position_, bz.min_position_, bx.max_position_, by.max_position_,
                               bz.max_position_);
+  }
   planning_scene_monitor::PlanningSceneMonitorPtr psm = planning_display_->getPlanningSceneMonitor();
   // get non-const access to the robot_model and update planar & floating joints as indicated by the workspace settings
   if (psm && psm->getRobotModelLoader() && psm->getRobotModelLoader()->getModel())
@@ -524,6 +531,7 @@ void MotionPlanningFrame::configureWorkspace()
     const moveit::core::RobotModelPtr& robot_model = psm->getRobotModelLoader()->getModel();
     const std::vector<moveit::core::JointModel*>& jm = robot_model->getJointModels();
     for (moveit::core::JointModel* joint : jm)
+    {
       if (joint->getType() == moveit::core::JointModel::PLANAR)
       {
         joint->setVariableBounds(joint->getName() + "/" + joint->getLocalVariableNames()[0], bx);
@@ -535,6 +543,7 @@ void MotionPlanningFrame::configureWorkspace()
         joint->setVariableBounds(joint->getName() + "/" + joint->getLocalVariableNames()[1], by);
         joint->setVariableBounds(joint->getName() + "/" + joint->getLocalVariableNames()[2], bz);
       }
+    }
   }
 }
 

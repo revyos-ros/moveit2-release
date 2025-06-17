@@ -32,9 +32,9 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <pilz_industrial_motion_planner_testutils/jointconfiguration.h>
+#include <pilz_industrial_motion_planner_testutils/jointconfiguration.hpp>
 
-#include <moveit/kinematic_constraints/utils.h>
+#include <moveit/kinematic_constraints/utils.hpp>
 
 namespace pilz_industrial_motion_planner_testutils
 {
@@ -153,7 +153,7 @@ std::ostream& operator<<(std::ostream& os, const JointConfiguration& obj)
       os << ", ";
     }
   }
-  os << "]";
+  os << ']';
 
   return os;
 }

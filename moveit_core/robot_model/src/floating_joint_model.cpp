@@ -39,18 +39,23 @@
 #include <Eigen/Geometry>
 #include <geometric_shapes/check_isometry.h>
 #include <limits>
-#include <moveit/robot_model/floating_joint_model.h>
+#include <moveit/robot_model/floating_joint_model.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
+#include <moveit/utils/logger.hpp>
 
 namespace moveit
 {
 namespace core
 {
-static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit_robot_model.floating_joint_model");
 namespace
 {
 constexpr size_t STATE_SPACE_DIMENSION = 7;
+
+rclcpp::Logger getLogger()
+{
+  return moveit::getLogger("moveit.core.floating_joint_model");
+}
 
 }  // namespace
 
@@ -168,7 +173,7 @@ bool FloatingJointModel::satisfiesPositionBounds(const double* values, const Bou
   if (values[2] < bounds[2].min_position_ - margin || values[2] > bounds[2].max_position_ + margin)
     return false;
   double norm_sqr = values[3] * values[3] + values[4] * values[4] + values[5] * values[5] + values[6] * values[6];
-  return fabs(norm_sqr - 1.0) <= std::numeric_limits<float>::epsilon() * 10.0;
+  return fabs(norm_sqr - 1.0) <= std::numeric_limits<double>::epsilon() * 10.0;
 }
 
 bool FloatingJointModel::normalizeRotation(double* values) const
@@ -180,7 +185,7 @@ bool FloatingJointModel::normalizeRotation(double* values) const
     double norm = sqrt(norm_sqr);
     if (norm < std::numeric_limits<double>::epsilon() * 100.0)
     {
-      RCLCPP_WARN(LOGGER, "Quaternion is zero in RobotState representation. Setting to identity");
+      RCLCPP_WARN(getLogger(), "Quaternion is zero in RobotState representation. Setting to identity");
       values[3] = 0.0;
       values[4] = 0.0;
       values[5] = 0.0;
@@ -249,9 +254,13 @@ void FloatingJointModel::getVariableDefaultPositions(double* values, const Bound
   {
     // if zero is a valid value
     if (bounds[i].min_position_ <= 0.0 && bounds[i].max_position_ >= 0.0)
+    {
       values[i] = 0.0;
+    }
     else
+    {
       values[i] = (bounds[i].min_position_ + bounds[i].max_position_) / 2.0;
+    }
   }
 
   values[3] = 0.0;
@@ -265,19 +274,31 @@ void FloatingJointModel::getVariableRandomPositions(random_numbers::RandomNumber
 {
   if (bounds[0].max_position_ >= std::numeric_limits<double>::infinity() ||
       bounds[0].min_position_ <= -std::numeric_limits<double>::infinity())
+  {
     values[0] = 0.0;
+  }
   else
+  {
     values[0] = rng.uniformReal(bounds[0].min_position_, bounds[0].max_position_);
+  }
   if (bounds[1].max_position_ >= std::numeric_limits<double>::infinity() ||
       bounds[1].min_position_ <= -std::numeric_limits<double>::infinity())
+  {
     values[1] = 0.0;
+  }
   else
+  {
     values[1] = rng.uniformReal(bounds[1].min_position_, bounds[1].max_position_);
+  }
   if (bounds[2].max_position_ >= std::numeric_limits<double>::infinity() ||
       bounds[2].min_position_ <= -std::numeric_limits<double>::infinity())
+  {
     values[2] = 0.0;
+  }
   else
+  {
     values[2] = rng.uniformReal(bounds[2].min_position_, bounds[2].max_position_);
+  }
 
   double q[4];
   rng.quaternion(q);
@@ -293,22 +314,34 @@ void FloatingJointModel::getVariableRandomPositionsNearBy(random_numbers::Random
 {
   if (bounds[0].max_position_ >= std::numeric_limits<double>::infinity() ||
       bounds[0].min_position_ <= -std::numeric_limits<double>::infinity())
+  {
     values[0] = 0.0;
+  }
   else
+  {
     values[0] = rng.uniformReal(std::max(bounds[0].min_position_, near[0] - distance),
                                 std::min(bounds[0].max_position_, near[0] + distance));
+  }
   if (bounds[1].max_position_ >= std::numeric_limits<double>::infinity() ||
       bounds[1].min_position_ <= -std::numeric_limits<double>::infinity())
+  {
     values[1] = 0.0;
+  }
   else
+  {
     values[1] = rng.uniformReal(std::max(bounds[1].min_position_, near[1] - distance),
                                 std::min(bounds[1].max_position_, near[1] + distance));
+  }
   if (bounds[2].max_position_ >= std::numeric_limits<double>::infinity() ||
       bounds[2].min_position_ <= -std::numeric_limits<double>::infinity())
+  {
     values[2] = 0.0;
+  }
   else
+  {
     values[2] = rng.uniformReal(std::max(bounds[2].min_position_, near[2] - distance),
                                 std::min(bounds[2].max_position_, near[2] + distance));
+  }
 
   double da = angular_distance_weight_ * distance;
   if (da >= .25 * M_PI)

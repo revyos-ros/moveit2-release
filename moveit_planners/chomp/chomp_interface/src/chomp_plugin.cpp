@@ -32,18 +32,25 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <chomp_interface/chomp_planning_context.h>
-#include <moveit/collision_distance_field/collision_detector_allocator_hybrid.h>
-#include <moveit/planning_interface/planning_interface.h>
-#include <moveit/planning_scene/planning_scene.h>
-#include <moveit/robot_model/robot_model.h>
+#include <chomp_interface/chomp_planning_context.hpp>
+#include <moveit/collision_distance_field/collision_detector_allocator_hybrid.hpp>
+#include <moveit/planning_interface/planning_interface.hpp>
+#include <moveit/planning_scene/planning_scene.hpp>
+#include <moveit/robot_model/robot_model.hpp>
+#include <moveit/utils/logger.hpp>
 
 #include <pluginlib/class_list_macros.hpp>
 #include <vector>
 
 namespace chomp_interface
 {
-static const rclcpp::Logger LOGGER = rclcpp::get_logger("chomp_optimizer");
+namespace
+{
+rclcpp::Logger getLogger()
+{
+  return moveit::getLogger("moveit.planners.chomp.planner_manager");
+}
+}  // namespace
 
 class CHOMPPlannerManager : public planning_interface::PlannerManager
 {
@@ -55,17 +62,10 @@ public:
   bool initialize(const moveit::core::RobotModelConstPtr& model, const rclcpp::Node::SharedPtr& node,
                   const std::string& /* unused */) override
   {
-    planning_interface::PlannerConfigurationMap pconfig;
     for (const std::string& group : model->getJointModelGroupNames())
     {
       planning_contexts_[group] = std::make_shared<CHOMPPlanningContext>("chomp_planning_context", group, model, node);
-      const planning_interface::PlannerConfigurationSettings planner_config_settings{
-        group, group, std::map<std::string, std::string>()
-      };
-      pconfig[planner_config_settings.name] = planner_config_settings;
     }
-
-    setPlannerConfigurations(pconfig);
     return true;
   }
 
@@ -78,14 +78,14 @@ public:
 
     if (req.group_name.empty())
     {
-      RCLCPP_ERROR(LOGGER, "No group specified to plan for");
+      RCLCPP_ERROR(getLogger(), "No group specified to plan for");
       error_code.val = moveit_msgs::msg::MoveItErrorCodes::INVALID_GROUP_NAME;
       return planning_interface::PlanningContextPtr();
     }
 
     if (!planning_scene)
     {
-      RCLCPP_ERROR(LOGGER, "No planning scene supplied as input");
+      RCLCPP_ERROR(getLogger(), "No planning scene supplied as input");
       error_code.val = moveit_msgs::msg::MoveItErrorCodes::FAILURE;
       return planning_interface::PlanningContextPtr();
     }
@@ -118,11 +118,6 @@ public:
   {
     algs.resize(1);
     algs[0] = "CHOMP";
-  }
-
-  void setPlannerConfigurations(const planning_interface::PlannerConfigurationMap& pcs) override
-  {
-    config_settings_ = pcs;
   }
 
 protected:

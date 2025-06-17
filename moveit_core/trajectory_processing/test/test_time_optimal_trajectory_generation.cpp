@@ -37,17 +37,40 @@
  */
 
 #include <gtest/gtest.h>
-#include <moveit/trajectory_processing/time_optimal_trajectory_generation.h>
-#include <moveit/utils/robot_model_test_utils.h>
+#include <moveit/trajectory_processing/time_optimal_trajectory_generation.hpp>
+#include <moveit/utils/robot_model_test_utils.hpp>
 
 using trajectory_processing::Path;
 using trajectory_processing::TimeOptimalTrajectoryGeneration;
 using trajectory_processing::Trajectory;
 
+namespace
+{
+// The URDF used in moveit::core::loadTestingRobotModel() does not contain acceleration limits,
+// so add them here.
+// TODO(andyz): Function won't be needed once this issue has been addressed:
+// https://github.com/ros/urdfdom/issues/177
+void setAccelerationLimits(const moveit::core::RobotModelPtr& robot_model)
+{
+  const std::vector<moveit::core::JointModel*> joint_models = robot_model->getActiveJointModels();
+  for (auto& joint_model : joint_models)
+  {
+    std::vector<moveit_msgs::msg::JointLimits> joint_bounds_msg(joint_model->getVariableBoundsMsg());
+    // TODO: update individual bounds
+    for (auto& joint_bound : joint_bounds_msg)
+    {
+      joint_bound.has_acceleration_limits = true;
+      joint_bound.max_acceleration = 1.0;
+    }
+    joint_model->setVariableBounds(joint_bounds_msg);
+  }
+}
+}  // namespace
+
 TEST(time_optimal_trajectory_generation, test1)
 {
   Eigen::VectorXd waypoint(4);
-  std::list<Eigen::VectorXd> waypoints;
+  std::vector<Eigen::VectorXd> waypoints;
 
   waypoint << 1424.0, 984.999694824219, 2126.0, 0.0;
   waypoints.push_back(waypoint);
@@ -59,8 +82,13 @@ TEST(time_optimal_trajectory_generation, test1)
   Eigen::VectorXd max_accelerations(4);
   max_accelerations << 0.00249, 0.00249, 0.00249, 0.00249;
 
-  Trajectory trajectory(Path(waypoints, 100.0), max_velocities, max_accelerations, 10.0);
-  EXPECT_TRUE(trajectory.isValid());
+  auto path_maybe = Path::create(waypoints, 100.0);
+  ASSERT_TRUE(path_maybe.has_value());
+
+  auto trajectory_maybe = Trajectory::create(*path_maybe, max_velocities, max_accelerations, 10.0);
+  ASSERT_TRUE(trajectory_maybe.has_value());
+  const Trajectory& trajectory = trajectory_maybe.value();
+
   EXPECT_DOUBLE_EQ(40.080256821829849, trajectory.getDuration());
 
   // Test start matches
@@ -74,12 +102,17 @@ TEST(time_optimal_trajectory_generation, test1)
   EXPECT_DOUBLE_EQ(985.000244140625, trajectory.getPosition(trajectory.getDuration())[1]);
   EXPECT_DOUBLE_EQ(2126.0, trajectory.getPosition(trajectory.getDuration())[2]);
   EXPECT_DOUBLE_EQ(0.0, trajectory.getPosition(trajectory.getDuration())[3]);
+
+  // Start at rest and end at rest
+  const double traj_duration = trajectory.getDuration();
+  EXPECT_NEAR(0.0, trajectory.getVelocity(0.0)[0], 0.1);
+  EXPECT_NEAR(0.0, trajectory.getVelocity(traj_duration)[0], 0.1);
 }
 
 TEST(time_optimal_trajectory_generation, test2)
 {
   Eigen::VectorXd waypoint(4);
-  std::list<Eigen::VectorXd> waypoints;
+  std::vector<Eigen::VectorXd> waypoints;
 
   waypoint << 1427.0, 368.0, 690.0, 90.0;
   waypoints.push_back(waypoint);
@@ -97,8 +130,13 @@ TEST(time_optimal_trajectory_generation, test2)
   Eigen::VectorXd max_accelerations(4);
   max_accelerations << 0.002, 0.002, 0.002, 0.002;
 
-  Trajectory trajectory(Path(waypoints, 100.0), max_velocities, max_accelerations, 10.0);
-  EXPECT_TRUE(trajectory.isValid());
+  auto path_maybe = Path::create(waypoints, 100.0);
+  ASSERT_TRUE(path_maybe.has_value());
+
+  auto trajectory_maybe = Trajectory::create(*path_maybe, max_velocities, max_accelerations, 10.0);
+  ASSERT_TRUE(trajectory_maybe.has_value());
+  const Trajectory& trajectory = trajectory_maybe.value();
+
   EXPECT_DOUBLE_EQ(1922.1418427445944, trajectory.getDuration());
 
   // Test start matches
@@ -112,12 +150,17 @@ TEST(time_optimal_trajectory_generation, test2)
   EXPECT_DOUBLE_EQ(533.0, trajectory.getPosition(trajectory.getDuration())[1]);
   EXPECT_DOUBLE_EQ(951.0, trajectory.getPosition(trajectory.getDuration())[2]);
   EXPECT_DOUBLE_EQ(90.0, trajectory.getPosition(trajectory.getDuration())[3]);
+
+  // Start at rest and end at rest
+  const double traj_duration = trajectory.getDuration();
+  EXPECT_NEAR(0.0, trajectory.getVelocity(0.0)[0], 0.1);
+  EXPECT_NEAR(0.0, trajectory.getVelocity(traj_duration)[0], 0.1);
 }
 
 TEST(time_optimal_trajectory_generation, test3)
 {
   Eigen::VectorXd waypoint(4);
-  std::list<Eigen::VectorXd> waypoints;
+  std::vector<Eigen::VectorXd> waypoints;
 
   waypoint << 1427.0, 368.0, 690.0, 90.0;
   waypoints.push_back(waypoint);
@@ -135,8 +178,13 @@ TEST(time_optimal_trajectory_generation, test3)
   Eigen::VectorXd max_accelerations(4);
   max_accelerations << 0.002, 0.002, 0.002, 0.002;
 
-  Trajectory trajectory(Path(waypoints, 100.0), max_velocities, max_accelerations);
-  EXPECT_TRUE(trajectory.isValid());
+  auto path_maybe = Path::create(waypoints, 100.0);
+  ASSERT_TRUE(path_maybe.has_value());
+
+  auto trajectory_maybe = Trajectory::create(*path_maybe, max_velocities, max_accelerations);
+  ASSERT_TRUE(trajectory_maybe.has_value());
+  const Trajectory& trajectory = trajectory_maybe.value();
+
   EXPECT_DOUBLE_EQ(1919.5597888812974, trajectory.getDuration());
 
   // Test start matches
@@ -150,18 +198,24 @@ TEST(time_optimal_trajectory_generation, test3)
   EXPECT_DOUBLE_EQ(533.0, trajectory.getPosition(trajectory.getDuration())[1]);
   EXPECT_DOUBLE_EQ(951.0, trajectory.getPosition(trajectory.getDuration())[2]);
   EXPECT_DOUBLE_EQ(90.0, trajectory.getPosition(trajectory.getDuration())[3]);
+
+  // Start at rest and end at rest
+  const double traj_duration = trajectory.getDuration();
+  EXPECT_NEAR(0.0, trajectory.getVelocity(0.0)[0], 0.1);
+  EXPECT_NEAR(0.0, trajectory.getVelocity(traj_duration)[0], 0.1);
 }
 
 // Test the version of computeTimeStamps that takes custom velocity/acceleration limits
-TEST(time_optimal_trajectory_generation, test_custom_limits)
+TEST(time_optimal_trajectory_generation, testCustomLimits)
 {
   constexpr auto robot_name{ "panda" };
   constexpr auto group_name{ "panda_arm" };
 
   auto robot_model = moveit::core::loadTestingRobotModel(robot_name);
-  ASSERT_TRUE((bool)robot_model) << "Failed to load robot model" << robot_name;
+  ASSERT_TRUE(robot_model) << "Failed to load robot model" << robot_name;
+  setAccelerationLimits(robot_model);
   auto group = robot_model->getJointModelGroup(group_name);
-  ASSERT_TRUE((bool)group) << "Failed to load joint model group " << group_name;
+  ASSERT_TRUE(group) << "Failed to load joint model group " << group_name;
   moveit::core::RobotState waypoint_state(robot_model);
   waypoint_state.setToDefaultValues();
 
@@ -174,8 +228,14 @@ TEST(time_optimal_trajectory_generation, test_custom_limits)
 
   TimeOptimalTrajectoryGeneration totg;
   // Custom velocity & acceleration limits for some joints
-  std::unordered_map<std::string, double> vel_limits{ { "panda_joint1", 1.3 } };
-  std::unordered_map<std::string, double> accel_limits{ { "panda_joint2", 2.3 }, { "panda_joint3", 3.3 } };
+  std::unordered_map<std::string, double> vel_limits{ { "panda_joint1", 1.3 }, { "panda_joint2", 2.3 },
+                                                      { "panda_joint3", 3.3 }, { "panda_joint4", 4.3 },
+                                                      { "panda_joint5", 5.3 }, { "panda_joint6", 6.3 },
+                                                      { "panda_joint7", 7.3 } };
+  std::unordered_map<std::string, double> accel_limits{ { "panda_joint1", 1.3 }, { "panda_joint2", 2.3 },
+                                                        { "panda_joint3", 3.3 }, { "panda_joint4", 4.3 },
+                                                        { "panda_joint5", 5.3 }, { "panda_joint6", 6.3 },
+                                                        { "panda_joint7", 7.3 } };
   ASSERT_TRUE(totg.computeTimeStamps(trajectory, vel_limits, accel_limits)) << "Failed to compute time stamps";
 }
 
@@ -185,7 +245,7 @@ TEST(time_optimal_trajectory_generation, testLargeAccel)
   double path_tolerance = 0.1;
   double resample_dt = 0.1;
   Eigen::VectorXd waypoint(6);
-  std::list<Eigen::VectorXd> waypoints;
+  std::vector<Eigen::VectorXd> waypoints;
   Eigen::VectorXd max_velocities(6);
   Eigen::VectorXd max_accelerations(6);
 
@@ -239,9 +299,12 @@ TEST(time_optimal_trajectory_generation, testLargeAccel)
                        4.7292792634680003;
   // clang-format on
 
-  Trajectory parameterized(Path(waypoints, path_tolerance), max_velocities, max_accelerations, 0.001);
+  auto path_maybe = Path::create(waypoints, path_tolerance);
+  ASSERT_TRUE(path_maybe.has_value());
 
-  ASSERT_TRUE(parameterized.isValid());
+  auto trajectory_maybe = Trajectory::create(*path_maybe, max_velocities, max_accelerations, 0.001);
+  ASSERT_TRUE(trajectory_maybe.has_value());
+  const Trajectory& parameterized = trajectory_maybe.value();
 
   size_t sample_count = std::ceil(parameterized.getDuration() / resample_dt);
   for (size_t sample = 0; sample <= sample_count; ++sample)
@@ -252,20 +315,73 @@ TEST(time_optimal_trajectory_generation, testLargeAccel)
 
     ASSERT_EQ(acceleration.size(), 6);
     for (std::size_t i = 0; i < 6; ++i)
-      EXPECT_NEAR(acceleration(i), 0.0, 100.0) << "Invalid acceleration at position " << sample_count << "\n";
+      EXPECT_NEAR(acceleration(i), 0.0, 100.0) << "Invalid acceleration at position " << sample_count << '\n';
   }
 }
 
-// Test parameterizing a trajectory would always produce a trajectory with output end waypoint same as the input end waypoint
+// This test differentiates the trajectory velocities and verifies that the acceleration limit is actually respected.
+// A path tolerance of 0.0 makes this test fail. Output trajectory accelerations are all within the limits, but there
+// are jumps in velocity, i.e. the derivative of the velocity is not consistent with the acceleration.
+// The test is here mostly to prevent us from making a path tolerance of 0.0 a valid default again in the future.
+TEST(time_optimal_trajectory_generation, AccelerationLimitIsRespected)
+{
+  double path_tolerance = 0.001;
+  double resample_dt = 0.01;
+
+  // Waypoints.
+  std::vector<Eigen::VectorXd> waypoints;
+  waypoints.push_back(Eigen::Vector3d(0.0, 0.0, 0.0));
+  waypoints.push_back(Eigen::Vector3d(1.0, 0.0, 0.0));
+  waypoints.push_back(Eigen::Vector3d(1.0, 1.0, 0.0));
+
+  Eigen::VectorXd max_velocities = Eigen::VectorXd::Constant(3, 0.1);
+  Eigen::VectorXd max_accelerations = Eigen::VectorXd::Constant(3, 0.5);
+
+  auto path_maybe = Path::create(waypoints, path_tolerance);
+  ASSERT_TRUE(path_maybe.has_value());
+
+  auto trajectory_maybe = Trajectory::create(*path_maybe, max_velocities, max_accelerations, 0.001);
+  ASSERT_TRUE(trajectory_maybe.has_value());
+  const Trajectory& parameterized = trajectory_maybe.value();
+
+  size_t sample_count = std::ceil(parameterized.getDuration() / resample_dt);
+  Eigen::Vector3d previous_velocity = Eigen::Vector3d::Zero();
+  for (size_t sample = 0; sample <= sample_count; ++sample)
+  {
+    double t = std::min(parameterized.getDuration(), sample * resample_dt);
+    Eigen::Vector3d velocity = parameterized.getVelocity(t);
+
+    double acceleration = (velocity - previous_velocity).norm() / resample_dt;
+    EXPECT_LT(acceleration, max_accelerations.norm() + 1e-3);
+    previous_velocity = velocity;
+  }
+}
+
+// A path that requires a full 180 degree turn at any point is not supported by the current implementation.
+// Path::create() should fail.
+TEST(time_optimal_trajectory_generation, PathMakes180DegreeTurn)
+{
+  // Waypoints.
+  std::vector<Eigen::VectorXd> waypoints;
+  waypoints.push_back(Eigen::Vector3d(0.0, 0.0, 0.0));
+  waypoints.push_back(Eigen::Vector3d(1.0, 0.0, 0.0));
+  waypoints.push_back(Eigen::Vector3d(0.0, 0.0, 0.0));
+
+  EXPECT_FALSE(Path::create(waypoints, /*path_tolerance=*/0.01));
+}
+
+// Test parameterizing a trajectory would always produce a trajectory with output end waypoint same as the input end
+// waypoint
 TEST(time_optimal_trajectory_generation, testLastWaypoint)
 {
   constexpr auto robot_name{ "panda" };
-  constexpr auto group_name{ "hand" };
+  constexpr auto group_name{ "panda_arm" };
 
   auto robot_model = moveit::core::loadTestingRobotModel(robot_name);
-  ASSERT_TRUE((bool)robot_model) << "Failed to load robot model" << robot_name;
+  ASSERT_TRUE(robot_model) << "Failed to load robot model" << robot_name;
+  setAccelerationLimits(robot_model);
   auto group = robot_model->getJointModelGroup(group_name);
-  ASSERT_TRUE((bool)group) << "Failed to load joint model group " << group_name;
+  ASSERT_TRUE(group) << "Failed to load joint model group " << group_name;
   moveit::core::RobotState waypoint_state(robot_model);
   waypoint_state.setToDefaultValues();
 
@@ -274,96 +390,14 @@ TEST(time_optimal_trajectory_generation, testLastWaypoint)
     waypoint_state.setJointGroupPositions(group, waypoint);
     trajectory.addSuffixWayPoint(waypoint_state, 0.1);
   };
-  add_waypoint({ 0.000000000, 0.000000000 });
-  add_waypoint({ 0.000396742, 0.000396742 });
-  add_waypoint({ 0.000793484, 0.000793484 });
-  add_waypoint({ 0.001190226, 0.001190226 });
-  add_waypoint({ 0.001586968, 0.001586968 });
-  add_waypoint({ 0.001983710, 0.001983710 });
-  add_waypoint({ 0.002380452, 0.002380452 });
-  add_waypoint({ 0.002777194, 0.002777194 });
-  add_waypoint({ 0.003173936, 0.003173936 });
-  add_waypoint({ 0.003570678, 0.003570678 });
-  add_waypoint({ 0.003967420, 0.003967420 });
-  add_waypoint({ 0.004364162, 0.004364162 });
-  add_waypoint({ 0.004760904, 0.004760904 });
-  add_waypoint({ 0.005157646, 0.005157646 });
-  add_waypoint({ 0.005554388, 0.005554388 });
-  add_waypoint({ 0.005951130, 0.005951130 });
-  add_waypoint({ 0.006347872, 0.006347872 });
-  add_waypoint({ 0.006744614, 0.006744614 });
-  add_waypoint({ 0.007141356, 0.007141356 });
-  add_waypoint({ 0.007538098, 0.007538098 });
-  add_waypoint({ 0.007934840, 0.007934840 });
-  add_waypoint({ 0.008331582, 0.008331582 });
-  add_waypoint({ 0.008728324, 0.008728324 });
-  add_waypoint({ 0.009125066, 0.009125066 });
-  add_waypoint({ 0.009521808, 0.009521808 });
-  add_waypoint({ 0.009918550, 0.009918550 });
-  add_waypoint({ 0.010315292, 0.010315292 });
-  add_waypoint({ 0.010712034, 0.010712034 });
-  add_waypoint({ 0.011108776, 0.011108776 });
-  add_waypoint({ 0.011505518, 0.011505518 });
-  add_waypoint({ 0.011902261, 0.011902261 });
-  add_waypoint({ 0.012299003, 0.012299003 });
-  add_waypoint({ 0.012695745, 0.012695745 });
-  add_waypoint({ 0.013092487, 0.013092487 });
-  add_waypoint({ 0.013489229, 0.013489229 });
-  add_waypoint({ 0.013885971, 0.013885971 });
-  add_waypoint({ 0.014282713, 0.014282713 });
-  add_waypoint({ 0.014679455, 0.014679455 });
-  add_waypoint({ 0.015076197, 0.015076197 });
-  add_waypoint({ 0.015472939, 0.015472939 });
-  add_waypoint({ 0.015869681, 0.015869681 });
-  add_waypoint({ 0.016266423, 0.016266423 });
-  add_waypoint({ 0.016663165, 0.016663165 });
-  add_waypoint({ 0.017059907, 0.017059907 });
-  add_waypoint({ 0.017456649, 0.017456649 });
-  add_waypoint({ 0.017853391, 0.017853391 });
-  add_waypoint({ 0.018250133, 0.018250133 });
-  add_waypoint({ 0.018646875, 0.018646875 });
-  add_waypoint({ 0.019043617, 0.019043617 });
-  add_waypoint({ 0.019440359, 0.019440359 });
-  add_waypoint({ 0.019837101, 0.019837101 });
-  add_waypoint({ 0.020233843, 0.020233843 });
-  add_waypoint({ 0.020630585, 0.020630585 });
-  add_waypoint({ 0.021027327, 0.021027327 });
-  add_waypoint({ 0.021424069, 0.021424069 });
-  add_waypoint({ 0.021820811, 0.021820811 });
-  add_waypoint({ 0.022217553, 0.022217553 });
-  add_waypoint({ 0.022614295, 0.022614295 });
-  add_waypoint({ 0.023011037, 0.023011037 });
-  add_waypoint({ 0.023407779, 0.023407779 });
-  add_waypoint({ 0.023804521, 0.023804521 });
-  add_waypoint({ 0.024201263, 0.024201263 });
-  add_waypoint({ 0.024598005, 0.024598005 });
-  add_waypoint({ 0.024994747, 0.024994747 });
-  add_waypoint({ 0.025391489, 0.025391489 });
-  add_waypoint({ 0.025788231, 0.025788231 });
-  add_waypoint({ 0.026184973, 0.026184973 });
-  add_waypoint({ 0.026581715, 0.026581715 });
-  add_waypoint({ 0.026978457, 0.026978457 });
-  add_waypoint({ 0.027375199, 0.027375199 });
-  add_waypoint({ 0.027771941, 0.027771941 });
-  add_waypoint({ 0.028168683, 0.028168683 });
-  add_waypoint({ 0.028565425, 0.028565425 });
-  add_waypoint({ 0.028962167, 0.028962167 });
-  add_waypoint({ 0.029358909, 0.029358909 });
-  add_waypoint({ 0.029755651, 0.029755651 });
-  add_waypoint({ 0.030152393, 0.030152393 });
-  add_waypoint({ 0.030549135, 0.030549135 });
-  add_waypoint({ 0.030945877, 0.030945877 });
-  add_waypoint({ 0.031342619, 0.031342619 });
-  add_waypoint({ 0.031739361, 0.031739361 });
-  add_waypoint({ 0.032136103, 0.032136103 });
-  add_waypoint({ 0.032532845, 0.032532845 });
-  add_waypoint({ 0.032929587, 0.032929587 });
-  add_waypoint({ 0.033326329, 0.033326329 });
-  add_waypoint({ 0.033723071, 0.033723071 });
-  add_waypoint({ 0.034119813, 0.034119813 });
-  add_waypoint({ 0.034516555, 0.034516555 });
+  add_waypoint({ 0.000000000, 0.000000000, 0, 0, 0, 0, 0 });
+  add_waypoint({ 0.009521808, 0.009521808, 0, 0, 0, 0, 0 });
+  add_waypoint({ 0.011902261, 0.011902261, 0, 0, 0, 0, 0 });
+  add_waypoint({ 0.016663165, 0.016663165, 0, 0, 0, 0, 0 });
+  add_waypoint({ 0.026184973, 0.026184973, 0, 0, 0, 0, 0 });
+  add_waypoint({ 0.034516555, 0.034516555, 0, 0, 0, 0, 0 });
 
-  const std::vector<double> expected_last_waypoint = { 0.034913297, 0.034913297 };
+  const std::vector<double> expected_last_waypoint = { 0.034516555, 0.034516555, 0, 0, 0, 0, 0 };
   add_waypoint(expected_last_waypoint);
 
   TimeOptimalTrajectoryGeneration totg;
@@ -383,9 +417,10 @@ TEST(time_optimal_trajectory_generation, testPluginAPI)
   constexpr auto group_name{ "panda_arm" };
 
   auto robot_model = moveit::core::loadTestingRobotModel(robot_name);
-  ASSERT_TRUE((bool)robot_model) << "Failed to load robot model" << robot_name;
+  ASSERT_TRUE(robot_model) << "Failed to load robot model" << robot_name;
+  setAccelerationLimits(robot_model);
   auto group = robot_model->getJointModelGroup(group_name);
-  ASSERT_TRUE((bool)group) << "Failed to load joint model group " << group_name;
+  ASSERT_TRUE(group) << "Failed to load joint model group " << group_name;
   moveit::core::RobotState waypoint_state(robot_model);
   waypoint_state.setToDefaultValues();
 
@@ -396,9 +431,9 @@ TEST(time_optimal_trajectory_generation, testPluginAPI)
   trajectory.addSuffixWayPoint(waypoint_state, 0.1);
   waypoint_state.setJointGroupPositions(group, std::vector<double>{ 0.0, -3.5, 1.4, -1.2, -1.0, -0.2, 0.0 });
   trajectory.addSuffixWayPoint(waypoint_state, 0.1);
-  waypoint_state.setJointGroupPositions(group, std::vector<double>{ -0.5, -3.52, 1.35, -2.51, -0.88, 0.63, 0.0 });
+  waypoint_state.setJointGroupPositions(group, std::vector<double>{ -0.5, -3.00, 1.35, -2.51, -0.88, 0.63, 0.0 });
   trajectory.addSuffixWayPoint(waypoint_state, 0.1);
-  waypoint_state.setJointGroupPositions(group, std::vector<double>{ 0.0, -3.5, 1.4, -1.2, -1.0, -0.2, 0.0 });
+  waypoint_state.setJointGroupPositions(group, std::vector<double>{ 0.0, -3.5, 1.4, -1.2, -1.5, -0.2, 0.0 });
   trajectory.addSuffixWayPoint(waypoint_state, 0.1);
   waypoint_state.setJointGroupPositions(group, std::vector<double>{ -0.5, -3.52, 1.35, -2.51, -0.88, 0.63, 0.0 });
   trajectory.addSuffixWayPoint(waypoint_state, 0.1);
@@ -496,34 +531,110 @@ TEST(time_optimal_trajectory_generation, testPluginAPI)
   ASSERT_EQ(first_trajectory_msg_end, third_trajectory_msg_end);
 }
 
+TEST(time_optimal_trajectory_generation, testFixedNumWaypoints)
+{
+  // Test the version of computeTimeStamps() that gives a fixed num waypoints
+  constexpr size_t desired_num_waypoints = 42;
+
+  constexpr auto robot_name{ "panda" };
+  constexpr auto group_name{ "panda_arm" };
+
+  auto robot_model = moveit::core::loadTestingRobotModel(robot_name);
+  ASSERT_TRUE(robot_model) << "Failed to load robot model" << robot_name;
+  setAccelerationLimits(robot_model);
+  auto group = robot_model->getJointModelGroup(group_name);
+  ASSERT_TRUE(group) << "Failed to load joint model group " << group_name;
+  moveit::core::RobotState waypoint_state(robot_model);
+  waypoint_state.setToDefaultValues();
+
+  const double delta_t = 0.1;
+  robot_trajectory::RobotTrajectory trajectory(robot_model, group);
+  waypoint_state.setJointGroupPositions(group, std::vector<double>{ -0.5, -3.52, 1.35, -2.51, -0.88, 0.63, 0.0 });
+  trajectory.addSuffixWayPoint(waypoint_state, delta_t);
+  waypoint_state.setJointGroupPositions(group, std::vector<double>{ -0.45, -3.2, 1.2, -2.4, -0.8, 0.6, 0.0 });
+  trajectory.addSuffixWayPoint(waypoint_state, delta_t);
+
+  ASSERT_TRUE(trajectory_processing::totgComputeTimeStamps(desired_num_waypoints, trajectory)) << "Failed to compute "
+                                                                                                  "time stamps";
+  // Allow +/-1 waypoint due to floating point error
+  EXPECT_NEAR(trajectory.getWayPointCount(), desired_num_waypoints, 1);
+}
+
+TEST(time_optimal_trajectory_generation, testSingleDofDiscontinuity)
+{
+  // Test a (prior) specific failure case
+  Eigen::VectorXd waypoint(1);
+  std::vector<Eigen::VectorXd> waypoints;
+
+  const double start_position = 1.881943;
+  waypoint << start_position;
+  waypoints.push_back(waypoint);
+  waypoint << 2.600542;
+  waypoints.push_back(waypoint);
+
+  Eigen::VectorXd max_velocities(1);
+  max_velocities << 4.54;
+  Eigen::VectorXd max_accelerations(1);
+  max_accelerations << 28.0;
+
+  auto path_maybe = Path::create(waypoints, 0.1 /* path tolerance */);
+  ASSERT_TRUE(path_maybe.has_value());
+
+  auto trajectory_maybe = Trajectory::create(*path_maybe, max_velocities, max_accelerations, 0.001 /* timestep */);
+  ASSERT_TRUE(trajectory_maybe.has_value());
+  const Trajectory& trajectory = trajectory_maybe.value();
+
+  EXPECT_GT(trajectory.getDuration(), 0.0);
+  const double traj_duration = trajectory.getDuration();
+  EXPECT_NEAR(0.320681, traj_duration, 1e-3);
+
+  // Start matches
+  EXPECT_DOUBLE_EQ(start_position, trajectory.getPosition(0.0)[0]);
+  // Start at rest and end at rest
+  EXPECT_NEAR(0.0, trajectory.getVelocity(0.0)[0], 0.1);
+  EXPECT_NEAR(0.0, trajectory.getVelocity(traj_duration)[0], 0.1);
+
+  // Check vels and accels at all points
+  for (double time = 0; time < traj_duration; time += 0.01)
+  {
+    // This trajectory has a single switching point
+    double t_switch = 0.1603407;
+    if (time < t_switch)
+    {
+      EXPECT_NEAR(trajectory.getAcceleration(time)[0], max_accelerations[0], 1e-3) << "Time: " << time;
+    }
+    else if (time > t_switch)
+    {
+      EXPECT_NEAR(trajectory.getAcceleration(time)[0], -max_accelerations[0], 1e-3) << "Time: " << time;
+    }
+  }
+}
+
 TEST(time_optimal_trajectory_generation, testRelevantZeroMaxAccelerationsInvalidateTrajectory)
 {
   const Eigen::Vector2d max_velocity(1, 1);
-  const Path path(std::list<Eigen::VectorXd>{ Eigen::Vector2d(0, 0), Eigen::Vector2d(1, 1) });
+  const Path path = *Path::create({ Eigen::Vector2d(0, 0), Eigen::Vector2d(1, 1) });
 
-  EXPECT_FALSE(Trajectory(path, max_velocity, /*max_acceleration=*/Eigen::Vector2d(0, 1)).isValid());
-  EXPECT_FALSE(Trajectory(path, max_velocity, /*max_acceleration=*/Eigen::Vector2d(1, 0)).isValid());
-  EXPECT_FALSE(Trajectory(path, max_velocity, /*max_acceleration=*/Eigen::Vector2d(0, 0)).isValid());
+  EXPECT_FALSE(Trajectory::create(path, max_velocity, /*max_acceleration=*/Eigen::Vector2d(0, 1)));
+  EXPECT_FALSE(Trajectory::create(path, max_velocity, /*max_acceleration=*/Eigen::Vector2d(1, 0)));
+  EXPECT_FALSE(Trajectory::create(path, max_velocity, /*max_acceleration=*/Eigen::Vector2d(0, 0)));
 }
 
 TEST(time_optimal_trajectory_generation, testIrrelevantZeroMaxAccelerationsDontInvalidateTrajectory)
 {
   const Eigen::Vector2d max_velocity(1, 1);
 
-  EXPECT_TRUE(Trajectory(Path(std::list<Eigen::VectorXd>{ Eigen::Vector2d(0, 0), Eigen::Vector2d(0, 1) }), max_velocity,
-                         /*max_acceleration=*/Eigen::Vector2d(0, 1))
-                  .isValid());
-  EXPECT_TRUE(Trajectory(Path(std::list<Eigen::VectorXd>{ Eigen::Vector2d(0, 0), Eigen::Vector2d(1, 0) }), max_velocity,
-                         /*max_acceleration=*/Eigen::Vector2d(1, 0))
-                  .isValid());
+  EXPECT_TRUE(Trajectory::create(*Path::create({ Eigen::Vector2d(0, 0), Eigen::Vector2d(0, 1) }), max_velocity,
+                                 /*max_acceleration=*/Eigen::Vector2d(0, 1)));
+  EXPECT_TRUE(Trajectory::create(*Path::create({ Eigen::Vector2d(0, 0), Eigen::Vector2d(1, 0) }), max_velocity,
+                                 /*max_acceleration=*/Eigen::Vector2d(1, 0)));
 }
 
 TEST(time_optimal_trajectory_generation, testTimeStepZeroMakesTrajectoryInvalid)
 {
-  EXPECT_FALSE(Trajectory(Path(std::list<Eigen::VectorXd>{ Eigen::Vector2d(0, 0), Eigen::Vector2d(1, 1) }),
-                          /*max_velocity=*/Eigen::Vector2d(1, 1), /*max_acceleration=*/Eigen::Vector2d(1, 1),
-                          /*time_step=*/0)
-                   .isValid());
+  EXPECT_FALSE(Trajectory::create(*Path::create({ Eigen::Vector2d(0, 0), Eigen::Vector2d(1, 1) }),
+                                  /*max_velocity=*/Eigen::Vector2d(1, 1), /*max_acceleration=*/Eigen::Vector2d(1, 1),
+                                  /*time_step=*/0));
 }
 
 int main(int argc, char** argv)

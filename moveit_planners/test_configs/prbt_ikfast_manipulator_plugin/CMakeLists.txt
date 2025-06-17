@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(moveit_resources_prbt_ikfast_manipulator_plugin)
+project(moveit_resources_prbt_ikfast_manipulator_plugin LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -12,7 +12,7 @@ endif()
 
 # enable aligned new in gcc7+
 if(CMAKE_COMPILER_IS_GNUCXX)
-  if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.0)
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.0)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -faligned-new")
   endif()
 endif()
@@ -25,38 +25,53 @@ find_package(tf2_kdl REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(tf2_eigen_kdl REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(generate_parameter_library REQUIRED)
 
 include_directories(include)
 
+generate_parameter_library(
+  prbt_ikfast_kinematics_parameters # cmake target name for the parameter
+                                    # library
+  src/prbt_ikfast_kinematics_parameters.yaml # path to input yaml file
+)
+
 add_library(prbt_manipulator_moveit_ikfast_plugin SHARED
-  src/prbt_manipulator_ikfast_moveit_plugin.cpp)
+            src/prbt_manipulator_ikfast_moveit_plugin.cpp)
 
 if(NOT WIN32)
   # suppress warnings about unused variables in OpenRave's solver code
-  target_compile_options(prbt_manipulator_moveit_ikfast_plugin PRIVATE -Wno-unused-variable)
+  target_compile_options(prbt_manipulator_moveit_ikfast_plugin
+                         PRIVATE -Wno-unused-variable)
 endif()
-ament_target_dependencies(prbt_manipulator_moveit_ikfast_plugin
+ament_target_dependencies(
+  prbt_manipulator_moveit_ikfast_plugin
   moveit_core
   pluginlib
   rclcpp
   tf2_kdl
   tf2_eigen
   tf2_eigen_kdl
-  tf2_geometry_msgs
-)
+  tf2_geometry_msgs)
 
-pluginlib_export_plugin_description_file(moveit_core prbt_manipulator_moveit_ikfast_plugin_description.xml)
+target_link_libraries(prbt_manipulator_moveit_ikfast_plugin
+                      prbt_ikfast_kinematics_parameters)
+
+pluginlib_export_plugin_description_file(
+  moveit_core prbt_manipulator_moveit_ikfast_plugin_description.xml)
 
 install(
   TARGETS prbt_manipulator_moveit_ikfast_plugin
-  EXPORT export_${PROJECT_NAME}
+          prbt_ikfast_kinematics_parameters
+  EXPORT moveit_resources_prbt_ikfast_manipulator_pluginTargets
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include
-)
+  INCLUDES
+  DESTINATION include/moveit_resources_prbt_ikfast_manipulator_plugin)
 
-ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
-ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
+ament_export_targets(moveit_resources_prbt_ikfast_manipulator_pluginTargets
+                     HAS_LIBRARY_TARGET)
+ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS}
+                          generate_parameter_library)
 
 ament_package()

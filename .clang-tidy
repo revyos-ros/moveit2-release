@@ -1,6 +1,7 @@
 ---
 Checks:          '-*,
                   performance-*,
+                  -performance-enum-size,
                   llvm-namespace-comment,
                   modernize-redundant-void-arg,
                   modernize-use-nullptr,
@@ -11,15 +12,16 @@ Checks:          '-*,
                   modernize-make-unique,
                   modernize-avoid-bind,
                   misc-unused-parameters,
+                  readability-braces-around-statements,
                   readability-named-parameter,
                   readability-redundant-smartptr-get,
                   readability-redundant-string-cstr,
                   readability-simplify-boolean-expr,
                   readability-container-size-empty,
                   readability-identifier-naming,
+                  readability-static-definition-in-anonymous-namespace,
                   '
 HeaderFilterRegex: ''
-AnalyzeTemporaryDtors: false
 CheckOptions:
   - key:             llvm-namespace-comment.ShortNamespaceLines
     value:           '10'
@@ -36,21 +38,28 @@ CheckOptions:
     value:           CamelCase
   - key:             readability-identifier-naming.UnionCase
     value:           CamelCase
+  # function names
+  - key:             readability-identifier-naming.FunctionCase
+    value:           camelBack
   # method names
   - key:             readability-identifier-naming.MethodCase
     value:           camelBack
   # variable names
   - key:             readability-identifier-naming.VariableCase
     value:           lower_case
-  - key:             readability-identifier-naming.ClassMemberSuffix
+  - key:             readability-identifier-naming.ProtectedMemberSuffix
+    value:           '_'
+  - key:             readability-identifier-naming.PrivateMemberSuffix
     value:           '_'
   # const static or global variables are UPPER_CASE
   - key:             readability-identifier-naming.EnumConstantCase
     value:           UPPER_CASE
+  - key:             readability-identifier-naming.StaticVariableCasePrefix
+    value:           's_'
   - key:             readability-identifier-naming.StaticConstantCase
     value:           UPPER_CASE
-  - key:             readability-identifier-naming.ClassConstantCase
+  - key:             readability-identifier-naming.GlobalConstantCase
     value:           UPPER_CASE
-  - key:             readability-identifier-naming.GlobalVariableCase
+  - key:             readability-identifier-naming.ClassConstantCase
     value:           UPPER_CASE
 ...

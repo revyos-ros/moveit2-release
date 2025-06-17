@@ -34,7 +34,7 @@
 #include <moveit_setup_framework/data/srdf_config.hpp>
 #include <moveit_setup_framework/data_warehouse.hpp>
 #include <moveit_setup_framework/utilities.hpp>
-#include <moveit/rdf_loader/rdf_loader.h>
+#include <moveit/rdf_loader/rdf_loader.hpp>
 
 namespace moveit_setup
 {
@@ -290,9 +290,13 @@ bool SRDFConfig::GeneratedJointLimits::writeYaml(YAML::Emitter& emitter)
     // Output property
     emitter << YAML::Key << "has_velocity_limits";
     if (b.velocity_bounded_)
+    {
       emitter << YAML::Value << "true";
+    }
     else
+    {
       emitter << YAML::Value << "false";
+    }
 
     // Output property
     emitter << YAML::Key << "max_velocity";
@@ -301,9 +305,13 @@ bool SRDFConfig::GeneratedJointLimits::writeYaml(YAML::Emitter& emitter)
     // Output property
     emitter << YAML::Key << "has_acceleration_limits";
     if (b.acceleration_bounded_)
+    {
       emitter << YAML::Value << "true";
+    }
     else
+    {
       emitter << YAML::Value << "false";
+    }
 
     // Output property
     emitter << YAML::Key << "max_acceleration";

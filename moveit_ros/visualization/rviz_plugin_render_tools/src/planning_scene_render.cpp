@@ -34,9 +34,9 @@
 
 /* Author: Ioan Sucan */
 
-#include <moveit/rviz_plugin_render_tools/planning_scene_render.h>
-#include <moveit/rviz_plugin_render_tools/robot_state_visualization.h>
-#include <moveit/rviz_plugin_render_tools/render_shapes.h>
+#include <moveit/rviz_plugin_render_tools/planning_scene_render.hpp>
+#include <moveit/rviz_plugin_render_tools/robot_state_visualization.hpp>
+#include <moveit/rviz_plugin_render_tools/render_shapes.hpp>
 #include <rviz_common/display_context.hpp>
 
 #include <OgreSceneNode.h>
@@ -75,7 +75,7 @@ void PlanningSceneRender::renderPlanningScene(const planning_scene::PlanningScen
                                               const Ogre::ColourValue& default_env_color,
                                               const Ogre::ColourValue& default_attached_color,
                                               OctreeVoxelRenderMode octree_voxel_rendering,
-                                              OctreeVoxelColorMode octree_color_mode, float default_scene_alpha)
+                                              OctreeVoxelColorMode octree_color_mode, double default_scene_alpha)
 {
   if (!scene)
     return;
@@ -102,7 +102,7 @@ void PlanningSceneRender::renderPlanningScene(const planning_scene::PlanningScen
   {
     collision_detection::CollisionEnv::ObjectConstPtr object = scene->getWorld()->getObject(id);
     Ogre::ColourValue color = default_env_color;
-    float alpha = default_scene_alpha;
+    double alpha = default_scene_alpha;
     if (scene->hasObjectColor(id))
     {
       const std_msgs::msg::ColorRGBA& c = scene->getObjectColor(id);
