@@ -1,0 +1,12 @@
+Source: ros-jazzy-moveit-py
+Section: misc
+Priority: optional
+Maintainer: Peter David Fagan <peterdavidfagan@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), python3-pytest <!nocheck>, ros-jazzy-ament-cmake, ros-jazzy-ament-cmake-pytest <!nocheck>, ros-jazzy-geometry-msgs, ros-jazzy-moveit-core, ros-jazzy-moveit-ros-planning, ros-jazzy-moveit-ros-planning-interface, ros-jazzy-octomap-msgs, ros-jazzy-pybind11-vendor, ros-jazzy-rclcpp, ros-jazzy-rclpy, ros-jazzy-ros-workspace
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-moveit-py
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-jazzy-ament-index-python, ros-jazzy-geometry-msgs, ros-jazzy-moveit-core, ros-jazzy-moveit-ros-planning, ros-jazzy-moveit-ros-planning-interface, ros-jazzy-octomap-msgs, ros-jazzy-rclcpp, ros-jazzy-rclpy, ros-jazzy-ros-workspace
+Description: Python binding for MoveIt 2
